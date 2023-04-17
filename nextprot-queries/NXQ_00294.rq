@@ -1,0 +1,34 @@
+#id:NXQ_00294
+#title:Variants in MECP2 causing Rett Syndrome
+#tags:disease,variant,snorql-only,tutorial
+#acs:NX_P51608
+#count:184
+#time:0.205
+
+select distinct ?start ?stop ?original ?modified where { 
+  entry:NX_P51608 :isoform ?iso. #MECP2 entry 
+  ?iso :swissprotDisplayed true. #Swissprot canonical isoform 
+  {
+  ?iso :variant ?v.
+  ?v :disease cv:DI-00999. #UniProtKB term for Rett Syndrome
+  ?v :start ?start.
+  ?v :end ?stop.
+  filter((?stop - ?start) = 0) #single amino acid variants (SAAVs)
+  ?v :original ?original.
+  ?v :variation ?modified.
+  }
+  union
+  {
+  ?iso :proteoform ?pf.
+  ?pf :diseaseRelatedVariant ?ann.
+  filter not exists {?ann :negativeEvidence ?negev} # No negative disease evidence
+  ?ann :impactedObject /:term cv:C75488. #NCI Thesaurus term for Rett Syndrome
+  ?pf :difference ?v.
+  ?v :start ?start.
+  ?v :end ?stop.
+  filter((?stop - ?start) = 0)
+  ?v :original ?original.
+  ?v :variation ?modified.
+  }
+}
+order by asc(?start)

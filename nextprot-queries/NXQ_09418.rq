@@ -1,0 +1,13 @@
+#id:NXQ_09418
+#title:Check there are no entries whose gene is located on chromosome "unknown" for which the strand is NOT unknown
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.743
+
+select distinct ?entry ?strand where {
+  ?entry :gene  ?gene .
+  ?gene :chromosome "unknown"^^xsd:string .
+  ?gene :strand ?strand .
+   filter (!regex (?strand, '0'))
+}

@@ -1,0 +1,10 @@
+#id:NXQ_09535
+#title:Check there are no entries with the Swiss-Prot keyword CRISPR-cas system evasion by virus (KW-1257)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.811
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1257.
+}

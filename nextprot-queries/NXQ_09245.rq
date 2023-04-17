@@ -1,0 +1,12 @@
+#id:NXQ_09245
+#title:Check there are no entries with peroxisome transit peptide annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,sequence
+#acs:
+#count:0
+#time:0.752
+
+select distinct ?entry where {
+  ?entry :isoform /:peroxisomeTransitPeptide /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

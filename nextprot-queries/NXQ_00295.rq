@@ -1,0 +1,30 @@
+#id:NXQ_00295
+#title:References for SCN1A variants causing Dravet syndrome
+#tags:disease,publication,variant,snorql-only,tutorial
+#acs:"PubMed:26993267","PubMed:22612257","PubMed:25818041"
+#count:108
+#time:0.125
+
+select distinct (str(?publiid) as ?PMID) ?title where {
+  entry:NX_P35498 :isoform ?iso. #SCN1A entry
+  ?iso :swissprotDisplayed true. #Swissprot canonical isoform 
+  {
+  ?iso :variant ?v.
+  ?v :disease cv:DI-01023. #UniProtKB term for Dravet syndrome
+  ?v :evidence /:reference ?pub.
+  ?pub :title ?title.
+  ?pub :from ?xref .
+  ?xref :accession ?publiid ; :provenance db:PubMed .
+  }
+  union
+  {
+  ?iso :proteoform ?pf.
+  ?pf :diseaseRelatedVariant ?ann.
+  filter not exists {?ann :negativeEvidence ?negev} # No negative disease evidence
+  ?ann :impactedObject /:term cv:C116573. #NCI Thesaurus term for Dravet syndrome
+  ?ann :evidence /:reference ?pub.
+  ?pub :title ?title.
+  ?pub :from ?xref .
+  ?xref :accession ?publiid ; :provenance db:PubMed .
+  }
+}

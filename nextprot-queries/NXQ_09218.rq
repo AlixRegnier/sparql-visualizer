@@ -1,0 +1,12 @@
+#id:NXQ_09218
+#title:Check there are no entries with induction annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,expression
+#acs:
+#count:0
+#time:0.723
+
+select distinct ?entry where {
+  ?entry :isoform /:induction /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

@@ -1,0 +1,11 @@
+#id:NXQ_DEREF_002
+#title:Generic query template for an instance
+#tags:deref_instance_
+
+CONSTRUCT  {
+    <INSTANCE> ?predicate ?object
+}
+WHERE {
+    <INSTANCE> ?predicate ?object .
+    FILTER (!isBlank(?object))
+}

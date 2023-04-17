@@ -1,0 +1,13 @@
+#id:NXQ_09275
+#title:Check there are no entries with binary interaction annotations from IntAct for which the evidence code is NOT physical interaction evidence used in manual assertion
+#tags:QC,evidence,ECO,interaction
+#acs:
+#count:0
+#time:0.697
+
+select distinct ?entry where {
+  ?entry :isoform / :binaryInteraction /:evidence ?ev1.
+  ?ev1 :assignedBy source:IntAct.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000353))
+}

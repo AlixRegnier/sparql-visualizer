@@ -1,0 +1,12 @@
+#id:NXQ_09273
+#title:Check there are no entries with zinc finger region annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,sequence,region
+#acs:
+#count:0
+#time:0.699
+
+select distinct ?entry where {
+  ?entry :isoform /:zincFingerRegion /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

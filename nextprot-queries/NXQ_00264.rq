@@ -1,0 +1,26 @@
+#id:NXQ_00264
+#title:Proteins with ENV polyprotein domains and matching viral species
+#tags:federated query,ortholog,snorql-only
+#acs:B6SEH9,P61550,B6SEH8  
+#count:13
+#time:7
+
+PREFIX orth: <http://purl.orthodb.org/>
+PREFIX interpro: <http://www.ebi.ac.uk/interpro/entry/>
+PREFIX up: <http://purl.uniprot.org/core/>
+
+select distinct ?entry (str(?ipac) AS ?ipacSTR) (group_concat(?taxlab ; SEPARATOR = ",") AS ?taxlab1) where {
+  VALUES ?ipac {"IPR018154"^^xsd:string "IPR008981"^^xsd:string }. # Interpro patterns for TLV/ENV coat polyprotein
+  bind (iri(CONCAT("http://www.ebi.ac.uk/interpro/entry/",str(?ipac))) as ?ipref) .
+  SERVICE <https://sparql.orthodb.org/sparql/> {
+   select distinct ?ipref ?taxlab where {
+   ?taxon a orth:Species; rdfs:subClassOf+  ?clade.
+   ?clade a orth:Clade; up:scientificName 'Viruses'.
+   ?gene_v up:organism / a ?taxon; orth:xref [a orth:Xref; orth:xrefResource ?ipref].
+   ?taxon up:scientificName ?taxlab .
+   } 
+  }
+  ?entry a :Entry .
+  ?entry :reference ?ref .
+  ?ref a :Xref ; :provenance db:InterPro; :accession ?ipac .  
+}

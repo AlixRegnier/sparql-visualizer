@@ -1,0 +1,12 @@
+#id:NXQ_00239
+#title:Proteins with cross-references to InterPro
+#tags:cross-reference,domain,snorql-only,tutorial
+#acs:A0A075B6H9,O95487,O95622
+#count:76343
+#time:3.1
+
+select distinct ?entry ?iprac where {
+ ?entry :reference ?ref.
+ ?ref :provenance db:InterPro.
+ ?ref :accession ?iprac}
+order by ?entry ?iprac

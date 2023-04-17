@@ -1,0 +1,18 @@
+#id:NXQ_00026
+#title:Proteins interacting with at least one protein which is located in the mitochondrion
+#tags:PPI,subcellular location,tutorial
+#acs:A0JLT2,A0PJW6,A2A2Y4,O00193,O00198,O00217,O00220,O00221,O00231,O00254
+#count:2882
+#time:1.7
+
+select distinct ?entry where {
+  values ?mitoloc {cv:SL-0173 cv:GO_0005739} # SL and GO values for mitochondrion
+  
+  ?entry :isoform / :interaction ?it .
+  ?it :quality :GOLD . # remove this filter for lower quality interactions
+  ?it :interactant ?interactant.
+  ?interactant :isoform? / :cellularComponent ?loc .
+  # the question mark at :isoform allows to select also isoform-specific interactions
+  ?loc :term / :childOf ?mitoloc.
+  filter not exists { ?loc :negativeEvidence ?negev. } # No negative localization evidence
+}

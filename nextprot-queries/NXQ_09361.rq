@@ -1,0 +1,13 @@
+#id:NXQ_09361
+#title:Check there are no entries with nonconsecutive residue annotations with evidence from UniProt that is negative
+#comment:Not displayed
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.62
+
+select distinct ?entry where {
+  ?entry :isoform /:nonConsecutiveResidue /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

@@ -1,0 +1,10 @@
+#id:NXQ_09564
+#title:Check there are no entries with the Swiss-Prot keyword Ethylene biosynthesis (KW-0266)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.748
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0266.
+}

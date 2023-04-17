@@ -1,0 +1,12 @@
+#id:NXQ_09012
+#title:Check there are no entries with binary interaction annotations with evidence NOT from ENYO, IntAct or neXtProt
+#tags:QC,provenance,interaction
+#acs:
+#count:0
+#time:4.054
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :binaryInteraction /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:ENYO,source:IntAct,source:NextProt))
+}

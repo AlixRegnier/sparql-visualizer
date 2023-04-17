@@ -1,0 +1,12 @@
+#id:NXQ_09309
+#title:Check there are no entries with antibody mapping annotations with evidence from HPA that is negative
+#tags:QC,evidence,negative,antibody
+#acs:
+#count:0
+#time:1.413
+
+select distinct ?entry where {
+  ?entry :isoform /:antibodyMapping /:evidence ?ev.
+  ?ev :assignedBy source:Human_protein_atlas.
+  ?ev :negative 1.
+}

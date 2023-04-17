@@ -1,0 +1,10 @@
+#id:NXQ_09481
+#title:Check there are no entries with the Swiss-Prot keyword Bacteriocin (KW-0078)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.795
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0078.
+}

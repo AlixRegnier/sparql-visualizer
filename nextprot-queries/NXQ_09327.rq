@@ -1,0 +1,12 @@
+#id:NXQ_09327
+#title:Check there are no entries with DNA binding region annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,region,interaction
+#acs:
+#count:0
+#time:0.669
+
+select distinct ?entry where {
+  ?entry :isoform /:dnaBindingRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

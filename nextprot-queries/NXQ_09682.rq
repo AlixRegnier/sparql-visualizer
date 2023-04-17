@@ -1,0 +1,13 @@
+#id:NXQ_09682
+#title:Check there are no entries with a variant annotation with an allele frequency of 0
+#tags:QC,variant
+#acs:
+#count:0
+#time:8.786
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :variant /:evidence ?ev.
+  ?ev :allele-frequency ?freq.
+  filter (?freq = 0)
+}

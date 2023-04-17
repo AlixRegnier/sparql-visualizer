@@ -1,0 +1,10 @@
+#id:NXQ_09565
+#title:Check there are no entries with the Swiss-Prot keyword Ethylene signaling pathway (KW-0936)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.877
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0936.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_00241
+#title:Interaction annotations from SwissProt 
+#tags:PPI,snorql-only,tutorial
+#acs:A2RUC4,A2RUS2,A2VDF0
+#count:11379
+#time:3.2
+
+select distinct ?entry (str(?txt) as ?itinfo) where {
+ select distinct ?entry ?txt where {
+ ?entry :isoform ?iso.
+ ?iso :interactionInfo / rdfs:comment ?txt.
+ } order by ?entry
+}

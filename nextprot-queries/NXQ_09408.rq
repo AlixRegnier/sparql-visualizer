@@ -1,0 +1,14 @@
+#id:NXQ_09408
+#title:Check there are no entries with a natural peptide from PeptideAtlas with an AC which does NOT start with "Pap"
+#tags:QC,mass spectrometry,peptide,proteomics
+#acs:
+#count:0
+#time:41.706
+
+select distinct ?entry where {
+  ?entry :isoform / :peptideMapping ?pm.
+  ?pm :evidence / :reference ?ref.
+  ?ref :provenance  db:PeptideAtlas.
+  ?ref :accession ?ac.
+  filter(!strStarts(?ac,"PAp"))
+}

@@ -1,0 +1,18 @@
+#id:NXQ_00082
+#title:Proteins whose genes are on chromosome 21 that have "gold" variants not associated with a disease
+#tags:disease,chromosomal location,quality,variant,tutorial
+#acs:P29508, P31152, P32926, ...
+#count:217
+#time: 0.7
+
+select distinct ?entry where {
+  ?entry :gene / :chromosome "21"^^xsd:string; :isoform / :variant ?variant.
+  ?variant :evidence / :quality :GOLD.
+  filter not exists { ?variant :disease ?disease. }
+  filter ( not exists { 
+	?entry :isoform / :proteoform ?pf.
+	?pf :difference ?variant.
+	?variant :evidence / :negative false.              # variant with positive evidence
+	?pf :diseaseRelatedVariant / :term cv:ME_0000013 . # variant is causing disease
+  } ) 
+}

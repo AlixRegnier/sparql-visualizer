@@ -1,0 +1,10 @@
+#id:NXQ_nnnnn
+#title:Check there are no entries with the Swiss-Prot keyword Extinct organism protein (KW-0952)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.859
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0952.
+}

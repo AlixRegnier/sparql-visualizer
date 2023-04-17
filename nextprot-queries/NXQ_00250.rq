@@ -1,0 +1,12 @@
+#id:NXQ_00250
+#title:Proteins that act as transporters and their TCDB numbers
+#tags:cross-reference,function,snorql-only,tutorial
+#acs:Q99250,Q14524,P35499
+#count:1733
+#time:7
+
+select distinct ?entry (str(?trcom) as ?trannot) (str(?acc) as ?trac) {
+  ?entry :isoform/ :transportActivity ?tr.
+  ?tr rdfs:comment ?trcom;  :evidence / :reference ?ref.
+  ?ref a :Xref; :accession ?acc .
+} order by ?acc

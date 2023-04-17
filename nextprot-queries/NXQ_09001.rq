@@ -1,0 +1,13 @@
+#id:NXQ_09001
+#title:Check there are no protein families with no entry associated
+#tags:QC,family,vocabulary,snorql-only
+#acs:
+#count:0
+#time:0.341
+
+select distinct ?famac where {
+  ?fam a :FamilyInfo .
+  ?fam :accession ?famac .
+  filter not exists {?member :family / :accession ?famac .}
+}
+order by ?famac

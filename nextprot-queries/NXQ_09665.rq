@@ -1,0 +1,12 @@
+#id:NXQ_09665
+#title:Check there are no entries with binary interaction annotations with evidence from ENYO that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.599
+
+select distinct ?entry where {
+  ?entry :isoform /:binaryInteraction /:evidence ?ev.
+  ?ev :assignedBy source:ENYO.
+  ?ev :negative 1.
+}

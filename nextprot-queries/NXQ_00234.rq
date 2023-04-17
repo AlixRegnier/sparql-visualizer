@@ -1,0 +1,18 @@
+#id:NXQ_00234
+#title:Proteins with at least two proteotypic synthetic peptides from SRMAtlas of at least 9 amino acids in length
+#tags:dataset,peptide,proteomics,tutorial
+#acs:Q8IWU6,Q96GC6,P56715
+#count:18455
+#time:2.5
+
+select distinct ?entry where {
+ ?entry :isoform ?iso.
+ ?iso :srmPeptideMapping ?srm .
+ ?srm :start ?ps; :end ?pe .
+ filter(?pe - ?ps + 1 >= 9)
+ ?srm :proteotypic true .
+ ?srm :peptideName ?pepid .
+} 
+group by ?entry having(count(distinct ?pepid) > 1)
+
+

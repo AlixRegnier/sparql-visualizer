@@ -1,0 +1,12 @@
+#id:NXQ_09098
+#title:Check there are no entries with catalytic activity annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,function,enzyme
+#acs:
+#count:0
+#time:0.706
+
+select distinct ?entry ?src where {
+  ?entry :isoform /:catalyticActivity /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

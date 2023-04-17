@@ -1,0 +1,12 @@
+#id:NXQ_09257
+#title:Check there are no entries with small molecule interaction annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,interaction
+#acs:
+#count:0
+#time:0.698
+
+select distinct ?entry where {
+  ?entry :isoform /:smallMoleculeInteraction /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

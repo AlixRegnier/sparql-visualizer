@@ -1,0 +1,13 @@
+#id:NXQ_09421
+#title:Check there are no entries that have a beginning position which is greater than the end position for the gene
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.655
+
+select distinct ?entry where {
+  ?entry :gene ?gene.
+  ?gene :begin ?begin.
+  ?gene :end ?end.
+  filter (?begin > ?end )
+}

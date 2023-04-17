@@ -1,0 +1,12 @@
+#id:NXQ_09420
+#title:Check there are no entries that have an end position which is less than 0
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.739
+
+select distinct ?entry where {
+  ?entry :gene ?gene.
+  ?gene :end ?end.
+  filter (?end< 0 )
+}

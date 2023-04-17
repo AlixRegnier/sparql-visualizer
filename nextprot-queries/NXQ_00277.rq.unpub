@@ -1,0 +1,21 @@
+#id:NXQ_00277
+#title:Drugs targeting FYN interactors
+#tags:drug,federated query,snorql-only,PPI
+#acs:P50406,P29074,P04626
+#count:23
+#time:15
+
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX drugbank: <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugbank/>
+
+select ?interactant (str(?itgen) AS ?itgene) (group_concat(distinct ?druglab; SEPARATOR = ",") AS ?fyndrug) where {
+    ?entry :gene / :name "FYN"^^xsd:string .
+    ?entry :isoform /:binaryInteraction ?interaction.
+    ?interaction :interactant ?interactant; :quality :GOLD. # GOLD quality interaction
+    ?interactant a :Entry ; :gene / :name ?itgen ; :swissprotPage ?unipage.
+    service <http://wifo5-03.informatik.uni-mannheim.de/drugbank/sparql> {
+        ?drug rdfs:label ?druglab; drugbank:target /drugbank:swissprotPage ?unipage.
+    }
+}
+group by ?interactant ?itgen
+

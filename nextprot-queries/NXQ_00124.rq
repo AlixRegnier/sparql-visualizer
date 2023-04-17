@@ -1,0 +1,12 @@
+#id:NXQ_00124
+#title:What are the 25 most frequent families with member count
+#tags:family,snorql-only,tutorial
+#acs:
+#count:25
+#time:0.5
+
+select (str(?famlab) as ?familylabel) (count(distinct(?member)) as ?membercnt) where{
+  ?member :familyName /:term /:childOf / rdfs:label ?famlab .
+} group by ?famlab
+order by desc(?membercnt)
+limit 25

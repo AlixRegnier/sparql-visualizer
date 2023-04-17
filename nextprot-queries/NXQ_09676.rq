@@ -1,0 +1,14 @@
+#id:NXQ_09676
+#title:Check there are no entries with expression profile annotations with evidence from EST with an expression level other than detected
+#tags:QC,expression,ECO
+#acs:
+#count:0
+#time:0.605
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :expressionProfile /:evidence ?ev.
+  ?ev :evidenceCode cv:ECO_0000009. # EST
+  ?ev :expressionLevel ?level
+  filter ( ?level not in (:Positive))
+}

@@ -1,0 +1,12 @@
+#id:NXQ_00037
+#title:Proteins that bind RNA but do not contain a RRM domain
+#tags:domain,region,nucleotide binding,tutorial
+#acs:P08621, P14678, Q96B26, ...
+#count:465
+#time:0.5
+
+select distinct ?entry where {
+  ?entry :isoform ?iso .
+  ?iso :uniprotKeyword /:term cv:KW-0694. #RNA-binding
+  filter not exists {?iso :region/:term cv:DO-00581} #RRM
+}

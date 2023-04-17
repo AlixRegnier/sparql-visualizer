@@ -1,0 +1,12 @@
+#id:NXQ_00105
+#title:Proteins with at least one cross-reference to SMR (Swiss Model Repository) but no cross-references to PDB
+#tags:3D structure,cross-reference,tutorial
+#acs:O75150,A0PJX8,A1L020
+#count:8145
+#time:24
+
+select distinct ?entry where {
+  ?entry a :Entry.
+  ?entry :reference / :provenance db:SMR.
+  filter not exists { ?entry :reference / :provenance db:PDB }
+}

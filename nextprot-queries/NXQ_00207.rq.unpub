@@ -1,0 +1,14 @@
+#id:NXQ_00207
+#title:Proteins with a variant excluding the ones supported by a single Cosmic evidence
+#tags:
+#acs:NX_A0A087X1C5,NX_A0A183,NX_A0A5B9
+#count:19031
+#time:22
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :variant ?var.
+  ?var :evidence / :assignedBy ?src.
+  FILTER(?src NOT IN (source:Cosmic))
+}
+order by ?entry

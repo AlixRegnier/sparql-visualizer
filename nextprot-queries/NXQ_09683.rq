@@ -1,0 +1,13 @@
+#id:NXQ_09683
+#title:Check there are no entries with a variant annotation with an allele number of 0
+#tags:QC,variant
+#acs:
+#count:0
+#time:2.359
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :variant /:evidence ?ev.
+  ?ev :allele-number ?allele.
+  filter (?allele = 0)
+}

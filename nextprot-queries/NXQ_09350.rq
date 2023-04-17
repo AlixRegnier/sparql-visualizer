@@ -1,0 +1,13 @@
+#id:NXQ_09350
+#title:Check there are no entries with mature protein annotations with evidence from UniProt that is negative
+#comment:mature chain
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.728
+
+select distinct ?entry where {
+  ?entry :isoform /:matureProtein /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

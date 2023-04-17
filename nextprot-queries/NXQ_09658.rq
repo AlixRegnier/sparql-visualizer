@@ -1,0 +1,13 @@
+#id:NXQ_09658
+#title:Check there are no entries with GO cellular component annotations with evidence having the evidence code IBA and quality GOLD
+#comment:ECO:0000318 Inferred from Biological aspect of Ancestor (IBA)
+#tags:QC,quality,evidence,cellular component
+#acs:
+#count:0
+#time:0.444
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0000318.
+  ?ev1 :quality :GOLD.
+}

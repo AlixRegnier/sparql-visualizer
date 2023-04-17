@@ -1,0 +1,21 @@
+#id:NXQ_00257
+#title:Frequent variants at a PTM site
+#tags:evidence,variant,sequence variation,snorql-only
+#acs:Q14264,O00255,O75478 
+#count:20
+#time:0.4
+
+select  distinct ?entry (str(?ptmlab) as ?ptmlabSTR) ?varpos (str(?varAA) as ?varAASTR) ?freq where {  
+?entry :isoform ?iso .  
+?iso :swissprotDisplayed true . 
+?iso :variant ?var .  
+?var :start ?varpos .  
+?var :variation ?varAA .
+?iso :ptm  ?ptm .
+?ptm :term / rdfs:label ?ptmlab.
+?ptm :start ?varpos .  
+?var :evidence ?ev . 
+?ev :allele-frequency ?freq . 
+filter (?freq > 0.5 )
+} 
+order by desc(?freq)

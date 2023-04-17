@@ -1,0 +1,12 @@
+#id:NXQ_09666
+#title:Check there are no entries with interaction mapping annotations with evidence from ENYO that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.41
+
+select distinct ?entry where {
+  ?entry :isoform /:interactionMapping /:evidence ?ev.
+  ?ev :assignedBy source:ENYO.
+  ?ev :negative 1.
+}

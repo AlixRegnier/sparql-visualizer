@@ -1,0 +1,12 @@
+#id:NXQ_09307
+#title:Check there are no entries with active site annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,active site
+#acs:
+#count:0
+#time:0.772
+
+select distinct ?entry where {
+  ?entry :isoform /:activeSite /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

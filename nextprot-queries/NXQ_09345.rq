@@ -1,0 +1,12 @@
+#id:NXQ_09345
+#title:Check there are no entries with intramembrane region annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,region,subcellular location
+#acs:
+#count:0
+#time:0.707
+
+select distinct ?entry where {
+  ?entry :isoform /:intramembraneRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

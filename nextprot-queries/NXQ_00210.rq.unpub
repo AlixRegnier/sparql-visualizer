@@ -1,0 +1,10 @@
+#id:NXQ_00210
+#title:Total count of isoforms
+#tags:isoforms,snorql-only
+#acs:
+#count:1
+
+select count (distinct ?iso) as ?isocnt where {
+  ?entry a :Entry.
+  ?entry :isoform ?iso .		   
+}

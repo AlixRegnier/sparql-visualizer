@@ -1,0 +1,13 @@
+#id:NXQ_09224
+#title:Check there are no entries with kinetic note annotations with evidence from UniProt of quality SILVER
+#comment:biophysicochemical property
+#tags:QC,quality,evidence,function,enzyme
+#acs:
+#count:0
+#time:0.695
+
+select distinct ?entry where {
+  ?entry :isoform /:kineticNote /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

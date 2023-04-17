@@ -1,0 +1,10 @@
+#id:NXQ_09599
+#title:Check there are no entries with the Swiss-Prot keyword Glycosome (KW-0327)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.763
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0327.
+}

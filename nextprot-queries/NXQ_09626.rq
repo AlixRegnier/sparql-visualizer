@@ -1,0 +1,12 @@
+#id:NXQ_09626
+#title:Check there are no entries with an SRM peptide mapping annotation with evidence from SRMAtlas but no xref to SRMAtlas
+#tags:QC,mass spectrometry,peptide,proteomics,cross-reference
+#acs:
+#count:0
+#time:9.921
+ 
+select distinct ?entry where {
+  ?entry a :Entry.
+  ?entry :isoform /:srmPeptideMapping /:evidence /:assignedBy source:SRMAtlas.
+  filter not exists {?entry :reference /:provenance db:SRMAtlas.}
+}

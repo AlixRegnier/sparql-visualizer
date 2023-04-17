@@ -1,0 +1,13 @@
+#id:NXQ_09079
+#title:Check there are no entries with SRM peptide mapping annotations with evidence NOT from SRMAtlas
+#comment:synthetic peptides
+#tags:QC,provenance,proteomics
+#acs:
+#count:0
+#time:0.723
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :srmPeptideMapping /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:SRMAtlas))
+}

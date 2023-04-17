@@ -1,0 +1,17 @@
+#id:NXQ_00291
+#title:UniPathway and related GO
+#tags:pathway
+#acs:NX_P11678,NX_P22079,NX_Q92626
+#count:99
+#time:8.21
+
+select distinct (str(?plab) as ?uniplab) (str(?golab) as ?GOlab) where 
+{ 
+?entry :isoform / :pathway ?p.
+?p :evidence / :assignedBy source:Uniprot . 
+?p rdfs:comment ?plab.
+?p :term / :related ?gorel . 
+filter(contains(str(?gorel),"GO_"))
+ ?gorel rdfs:label ?golab . 
+}
+order by ?plab

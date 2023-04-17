@@ -1,0 +1,10 @@
+#id:NXQ_09566
+#title:Check there are no entries with the Swiss-Prot keyword Eukaryotic host gene expression shutoff by virus (KW-1262)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.782
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1262.
+}

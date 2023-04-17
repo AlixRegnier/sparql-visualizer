@@ -1,0 +1,19 @@
+#id:NXQ_00297
+#title:PDB structures spanning the complete sequence of the mature protein
+#comment:Same query as NXQ_00061 but which returns PDB accessions
+#tags:3D structure,processing,sequence,snorql-only,tutorial
+#acs:entry:NX_Q9ULK4 -- (neXtProt link)	"6H02,7EMF,7ENA,7ENC,7ENJ,7lbm"
+#count:2805
+#time:16.254
+
+select distinct ?entry (group_concat(distinct str(?pdbac); SEPARATOR = ",") as ?pdbacs) where {  
+  ?entry :isoform ?iso.
+  ?iso :pdbMapping  ?pdbmap.
+  ?pdbmap :evidence /:reference ?ref.
+  ?ref :provenance db:PDB.
+  ?ref :accession ?pdbac.
+  ?pdbmap :start ?pdbstart ; :end ?pdbend.
+  ?iso :matureProtein [ :start ?mstart ; :end ?mend]
+  filter (?mend-?mstart > 0)	 
+  filter ((?pdbstart <= ?mstart) && (?pdbend >= ?mend))
+}

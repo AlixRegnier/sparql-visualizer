@@ -1,0 +1,10 @@
+#id:NXQ_09545
+#title:Check there are no entries with the Swiss-Prot keyword Cytoplasmic inwards viral transport (KW-1176)
+#tags:QC,keyword
+#acs:P63172
+#count:1
+#time:0.979
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1176.
+}

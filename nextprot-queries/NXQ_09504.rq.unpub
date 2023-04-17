@@ -1,0 +1,10 @@
+#id:NXQ_09504
+#title:Check there are no entries with the Swiss-Prot keyword Carbon dioxide fixation (KW-0120)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.756
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0120.
+}

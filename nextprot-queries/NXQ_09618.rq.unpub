@@ -1,0 +1,12 @@
+#id:NXQ_09618
+#title:Check there are no entries with glycosylation site annotations from GlyConnect that do not have the keyword Glycoprotein (KW-0325)
+#tags:QC,glycosylation,keyword
+#acs:
+#count:0
+#time:1.042
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :glycosylationSite /:evidence /:assignedBy source:GlyConnect.
+  filter not exists {?iso :keyword /:term cv:KW-0325.}
+}

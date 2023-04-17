@@ -1,0 +1,13 @@
+#id:NXQ_09330
+#title:Check there are no entries with electrophysiological parameter annotations with evidence from neXtProt that is negative
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.677
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :electrophysiologicalParameter /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

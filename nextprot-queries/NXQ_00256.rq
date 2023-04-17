@@ -1,0 +1,18 @@
+#id:NXQ_00256
+#title:Variants identified in exome datasets in a frequent homozygote state
+#tags:variant,snorql-only,tutorial
+#acs:Q8NH87,Q58DX5,Q9BV87 
+#count:763
+#time:0.5
+
+select distinct ?entry ?varpos where
+{
+ ?entry :isoform ?iso . 
+ ?iso :swissprotDisplayed true .
+ ?iso :variant ?var . 
+ ?var :start ?varpos . 
+ ?var :evidence ?ev .
+ ?var :evidence / :homozygoteCount ?hcnt .  
+ filter(?hcnt > 100000) 
+ } 
+ order by desc(?hcnt)

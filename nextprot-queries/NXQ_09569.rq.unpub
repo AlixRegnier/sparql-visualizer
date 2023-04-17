@@ -1,0 +1,10 @@
+#id:NXQ_09569
+#title:Check there are no entries with the Swiss-Prot keyword Evasion of bacteria-mediated translation shutoff by virus (KW-1259)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.761
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1259.
+}

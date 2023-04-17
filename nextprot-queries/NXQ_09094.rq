@@ -1,0 +1,12 @@
+#id:NXQ_09094
+#title:Check there are no entries with antibody mapping annotations with evidence from HPA of quality SILVER
+#tags:QC,quality,evidence,antibody
+#acs:
+#count:0
+#time:0.62
+
+select distinct ?entry where {
+  ?entry :isoform /:antibodyMapping /:evidence ?ev1.
+  ?ev1 :assignedBy source:Human_protein_atlas.
+  ?ev1 :quality :SILVER.
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09056
+#title:Check there are no entries with mitochondrial transit peptide annotations with evidence NOT from UniProt
+#tags:QC,provenance,sequence
+#acs:
+#count:0
+#time:0.731
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :mitochondrialTransitPeptide /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09221
+#title:Check there are no entries with interaction information annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,interaction
+#acs:
+#count:0
+#time:0.769
+
+select distinct ?entry where {
+  ?entry :isoform /:interactionInfo /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

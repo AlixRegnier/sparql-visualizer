@@ -1,0 +1,12 @@
+#id:NXQ_09331
+#title:Check there are no entries with enzyme classification annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.941
+
+select distinct ?entry where {
+  ?entry :isoform /:enzymeClassification /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

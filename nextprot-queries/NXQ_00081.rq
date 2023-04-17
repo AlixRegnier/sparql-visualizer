@@ -1,0 +1,17 @@
+#id:NXQ_00081
+#title:Proteins with at least one 3D structure and that are located in the mitochondrion and are linked with a disease
+#tags:3D structure,disease,subcellular location,tutorial
+#acs:P43897, Q6PI48, Q92890, ...
+#count:344
+#time: 0.8
+
+select distinct ?entry where {
+  values ?mitoloc {cv:SL-0173 cv:GO_0005739} # SL and GO values for mitochondrion
+
+  ?entry :isoform ?iso.
+  ?iso :pdbMapping ?map.
+  ?iso :medical/rdf:type :Disease.
+  ?iso :cellularComponent ?loc .
+  ?loc :term /:childOf ?mitoloc . # mitochondrial
+  filter not exists { ?loc :negativeEvidence ?negev. } # No negative localization evidence
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09110
+#title:Check there are no DNA binding region annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,region,interaction
+#acs:
+#count:0
+#time:0.718
+
+select distinct ?entry where {
+  ?entry :isoform /:dnaBindingRegion /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

@@ -1,0 +1,39 @@
+#id:NXQ_00249
+#title:GO_MF terms associated with proteins binding estradiol and/or similar molecules (substructure search with SMILES)
+#tags:GO,federated query,function,interaction,snorql-only
+#acs:...
+#count:97
+#time:8
+
+PREFIX sachem: <http://bioinfo.uochb.cas.cz/rdf/v1.0/sachem#>
+PREFIX idsm: <https://idsm.elixir-czech.cz/sparql/endpoint/>
+PREFIX chembl: <http://rdf.ebi.ac.uk/terms/chembl#>
+
+SELECT distinct ?gomf ?gomflab (count(distinct ?entry) as ?ecnt) WHERE
+{
+  {
+    SELECT ?compound ?UNIPROT WHERE {
+      SERVICE <https://www.ebi.ac.uk/rdf/services/sparql/> {
+        SERVICE idsm:chembl {
+          ?compound sachem:substructureSearch [
+              sachem:query "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O"] . # smiles chain for estradiol
+        }
+
+        ?ACTIVITY rdf:type chembl:Activity;
+          chembl:hasMolecule ?compound;
+          chembl:hasAssay ?ASSAY.
+        ?ASSAY chembl:hasTarget ?TARGET.
+        ?TARGET chembl:hasTargetComponent ?COMPONENT.
+        ?TARGET chembl:taxonomy <http://identifiers.org/taxonomy/9606> . # human protein target
+        ?COMPONENT chembl:targetCmptXref ?UNIPROT.
+        ?UNIPROT rdf:type chembl:UniprotRef.
+      }
+    }
+  }
+
+  ?entry skos:exactMatch ?UNIPROT.
+  ?entry :isoform ?iso.
+  ?iso :goMolecularFunction / :term ?gomf .
+  ?gomf rdfs:label ?gomflab .
+} group by ?gomf ?gomflab having(count (distinct ?entry) > 4)
+order by desc(?ecnt)

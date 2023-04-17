@@ -1,0 +1,22 @@
+#id:NXQ_00281
+#title:Protein pairs with at least 50 common interactors (excluding keratins)  
+#tags:PPI,snorql-only,tutorial
+#comment:WARNING This query may take a long time to return results
+#acs:P0DPK4,Q7Z3S9,Q15004
+#count:548
+#time:1300
+
+select distinct ?entry ?gene ?entry2 ?gene2 ?commonitcnt ?sampleit where {
+  {
+  select distinct ?entry (str(?gen) as ?gene) ?entry2 (str(?gen2) as ?gene2) (count (distinct ?commonpartner) as ?commonitcnt) (str(sample(?genit)) as ?sampleit) where {
+  ?entry :isoform / :interaction ?it1; :gene / :name / rdfs:label ?gen.
+  ?it1 :quality :GOLD; :interactant ?commonpartner .
+  ?entry2 :isoform / :interaction ?it2; :gene / :name / rdfs:label ?gen2.
+  ?it2 :quality :GOLD;:interactant ?commonpartner . 
+  ?commonpartner :gene / :name / rdfs:label ?genit .
+  filter(?entry != ?entry2)
+  filter(!contains(?gen,"KRT") && !contains(?gen2,"KRT") && !contains(?genit,"KRT")) # remove sticky keratins
+} group by ?entry ?gen ?entry2 ?gen2 having (count (distinct ?commonpartner) >= 50)  				}
+filter(substr(str(?entry),34)  < substr(str(?entry2),34)) # ensures only one row by it pair
+}
+order by desc(?commonitcnt)

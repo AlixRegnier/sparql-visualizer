@@ -1,0 +1,10 @@
+#id:NXQ_09548
+#title:Check there are no entries with the Swiss-Prot keyword Decay of host mRNAs by virus (KW-1132)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.751
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1132.
+}

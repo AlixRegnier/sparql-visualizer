@@ -1,0 +1,16 @@
+#id:NXQ_00261
+#title:Glycosylation sites from GlyConnect
+#tags:glycosylation,isoforms,PTM,snorql-only,tutorial
+#acs:A6NC57,A6NGU5,A6NMZ7 
+#count:2679
+#time:1.1
+
+select distinct ?entry ?iso ?pos ?comment where {
+?entry :isoform ?iso.
+?iso  :swissprotDisplayed true .
+?iso :glycosylationSite ?glyco.
+?glyco :evidence / :assignedBy source:GlyConnect.   
+?glyco rdfs:comment ?comment.
+?glyco :start ?pos.
+
+} order by ?entry

@@ -1,0 +1,29 @@
+#id:NXQ_00228
+#title:Proteins with at least 2 validating peptides >=9aa AND which are not overlapping found in blood plasma, urine or cerebrospinal fluid (criteria for biomarker).
+#comment:Same query as NXQ_00226 but with constraint that peptides are not overlapping (takes much longer)
+#tags:dataset,peptide,proteomics,tutorial
+#acs:entry:Q8WYA6,Q8N8Y2,P13746
+#count:9419
+#time:2028
+
+select distinct ?entry where {
+values ?pepsources { 
+        source:PeptideAtlas_human_Cerebrospinal_Fluid 
+        source:PeptideAtlas_human_Blood_Plasma 
+        source:PeptideAtlas_human_Urine 
+        source:MassIVE_human_Cerebrospinal_Fluid 
+        source:MassIVE_human_Blood_Plasma 
+        source:MassIVE_human_Urine 
+        } 
+  ?entry :isoform ?iso. 
+  ?iso :peptideMapping ?pm, ?pm2 . 
+  ?pm :proteotypic true . 
+  ?pm2 :proteotypic true . 
+  ?pm  :start ?p1 ; :end ?p2 . 
+  filter(?p2-?p1 >= 8) # peptide length >= 9 
+  ?pm :evidence / :assignedBy ?pepsources . 
+  ?pm2 :evidence / :assignedBy ?pepsources . 
+  ?pm2  :start ?p21 ; :end ?p22 .
+  filter(?p22 - ?p21 >= 8) # peptide length >= 9
+  filter(?p2 < ?p21) # non-overlapping
+} 

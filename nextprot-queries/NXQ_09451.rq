@@ -1,0 +1,13 @@
+#id:NXQ_09451
+#title:Check there are no entries with a keyword in the category "Domain" that does not apply to human proteins
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.732
+
+select distinct ?entry where {  # Include ?kw if result is not 0 to identify problem keyword
+  values ?kw {
+  cv:KW-0798 # TonB box 
+  }
+  ?entry :isoform /:keyword /:term ?kw.
+}

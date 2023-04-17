@@ -1,0 +1,12 @@
+#id:NXQ_09339
+#title:Check there are no entries with glycosylation site annotations with evidence from neXtProt that is negative
+#tags:QC,evidence,negative,glycosylation,sequence
+#acs:
+#count:0
+#time:0.68
+
+select distinct ?entry where {
+  ?entry :isoform /:glycosylationSite /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

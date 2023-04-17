@@ -1,0 +1,12 @@
+#id:NXQ_09352
+#title:Check there are no entries with miscellaneous annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,miscellaneous
+#acs:
+#count:0
+#time:0.606
+
+select distinct ?entry where {
+  ?entry :isoform /:miscellaneous /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

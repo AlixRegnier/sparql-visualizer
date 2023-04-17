@@ -1,0 +1,15 @@
+#id:NXQ_00240
+#title:Gold binary interactions with other human proteins 
+#tags:quality,PPI,snorql-only,tutorial
+#acs:Q9H205,O43889,O43474
+#count:51177
+#time:14.5
+
+select distinct ?entry ?interactant where {
+ ?entry :isoform ?iso.
+ ?entry :isoform/:binaryInteraction ?interaction.
+ ?interaction :interactant ?interactant; :quality :GOLD.
+ filter not exists { ?interactant a :Xref . }
+ filter(?interactant != ?entry) # remove self-interacting proteins
+}
+order by ?entry

@@ -1,0 +1,12 @@
+#id:NXQ_09085
+#title:Check there are no entries with transport activity annotations with evidence NOT from TCDB
+#tags:QC,provenance,function
+#acs:
+#count:0
+#time:0.763
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :transportActivity /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:TCDB))
+}

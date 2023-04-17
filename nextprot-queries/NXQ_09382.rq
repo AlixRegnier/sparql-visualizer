@@ -1,0 +1,12 @@
+#id:NXQ_09382
+#title:Check there are no entries with signal peptide annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.744
+
+select distinct ?entry where {
+  ?entry :isoform /:signalPeptide /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

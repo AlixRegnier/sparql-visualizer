@@ -1,0 +1,16 @@
+#id:NXQ_00288
+#title:Biological Process and Molecular Function GO terms related to UniPathway metabolic pathways
+#tags:pathway,snorql-only,tutorial
+#acs:
+#count:330
+#time:0.7
+
+select distinct (str(?pathwayname) as ?unipathway) ?related (str(?pathlabel) as ?GO_BP) (str(?pathlabel2) as ?GO_MF) where {
+  ?entry :isoform ?iso.
+  ?iso :pathway ?pathannot .
+  ?pathannot :term ?pathterm; rdfs:comment ?pathwayname.     
+  ?pathterm :related ?related .
+    {?related a :GoBiologicalProcessCv ; rdfs:label ?pathlabel .}
+   UNION
+    {?related a :GoMolecularFunctionCv ; rdfs:label ?pathlabel2 .}
+}

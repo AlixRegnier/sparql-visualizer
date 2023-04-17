@@ -1,0 +1,10 @@
+#id:NXQ_00215
+#title:Total count of proteins without function
+#tags:function,snorql-only
+#acs:
+#count:1
+
+select count (distinct ?entry) as ?no_function where {
+  ?entry :isoform ?iso.
+  filter not exists {?iso :function ?_ }
+}

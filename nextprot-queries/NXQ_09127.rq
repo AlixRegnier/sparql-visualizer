@@ -1,0 +1,12 @@
+#id:NXQ_09127
+#title:Check there are no entries with GO biological process annotations with evidence from PINC of quality GOLD
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.665
+
+select distinct ?entry where {
+  ?entry :isoform /:goBiologicalProcess /:evidence ?ev1.
+  ?ev1 :assignedBy source:PINC.
+  ?ev1 :quality :GOLD.
+}

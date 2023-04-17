@@ -1,0 +1,27 @@
+#id:NXQ_00139
+#title:Protein kinases which are high-confidence drug targets according to CHEMBL
+#tags:drug,enzyme,function,quality,federated query,tutorial
+#acs:P36888,P06493,P27361
+#count:84
+#time:27
+
+PREFIX cco: <http://rdf.ebi.ac.uk/terms/chembl#>
+
+select distinct ?entry (str(?gen) as ?gene) where {
+  SERVICE<https://idsm.elixir-czech.cz/sparql/endpoint/idsm>{
+        SELECT distinct ?protein WHERE {
+  		?target cco:hasTargetComponent ?tarComp . 
+  		?target cco:taxonomy <http://identifiers.org/taxonomy/9606> . # human protein target
+		?tarComp cco:targetCmptXref ?protein . 
+		#?protein a cco:UniprotRef .
+		filter(contains(str(?protein),"uniprot"))
+		?activity a cco:Activity ; cco:hasMolecule ?drug ; cco:hasAssay ?assay .
+		?drug cco:hasMechanism / cco:hasTarget ?target . # known drug action mechanism
+		?assay cco:hasTarget ?target; cco:targetConfScore ?score .
+		filter(?score > 8) # high-confidence assay
+        }
+  	 }
+  ?entry skos:exactMatch ?protein .	    
+  ?entry :isoform / :uniprotKeyword / :term cv:KW-0418. #kinase	
+  ?entry :gene / :recommendedName / rdfs:label ?gen.
+}

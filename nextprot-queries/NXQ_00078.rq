@@ -1,0 +1,19 @@
+#id:NXQ_00078
+#title:Proteins which have been identified in at least one proteomics set and that are secreted
+#comment: If you don't consider extracellular exosome location as 'secreted' then remove the commented paragraph
+#tags:dataset,proteomics,subcellular location,tutorial
+#acs:P40933, A1L453, A6NNL5, ...
+#count:2222
+#time: 108
+
+select distinct ?entry where {
+  values ?sloc {cv:GO_0005576 cv:SL-0243} # GO and SL values for secreted
+  ?entry :isoform ?iso.
+  ?iso :cellularComponent ?loc .
+  ?loc :term/:childOf ?sloc .
+  filter not exists {?sloc  :negativeEvidence ?negev} # No negative localization evidence
+  #filter not exists {?iso :cellularComponent /:term cv:GO_0070062 .
+  #					 filter not exists {?iso :cellularComponent /:term /:childOf  cv:SL-0243 .}
+  #					} # you can uncomment this to filters out extracellular exosome only location (2240 entries), most of them evidenced only by large-scale proteomic analysis
+  ?iso :peptideMapping ?map.
+}

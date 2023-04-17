@@ -1,0 +1,13 @@
+#id:NXQ_09046
+#title:Check there are no entries with UniProt keyword annotations with evidence NOT from UniProt
+#comment:There should be UniProt keyword annotations from neXtProt so count should NOT be 0
+#tags:QC,provenance,keyword
+#acs:
+#count:0
+#time:0.602
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :keyword /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

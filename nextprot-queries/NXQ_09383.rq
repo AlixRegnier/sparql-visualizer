@@ -1,0 +1,12 @@
+#id:NXQ_09383
+#title:Check there are no entries with small molecule interaction annotations with evidence from DrugBank that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.611
+
+select distinct ?entry where {
+  ?entry :isoform /:smallMoleculeInteraction /:evidence ?ev.
+  ?ev :assignedBy source:DrugBank.
+  ?ev :negative 1.
+}

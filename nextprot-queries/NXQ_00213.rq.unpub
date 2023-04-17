@@ -1,0 +1,16 @@
+#id:NXQ_00213
+#title:Total count of 'missing' proteins
+#tags:protein existence,PE,snorql-only
+#acs:
+#count:2682
+#time:0.352
+
+select count (distinct ?entry) as ?missing where {
+  values ?level {
+        :Evidence_at_transcript_level # PE=2
+        :Inferred_from_homology       # PE=3
+        :Predicted                    # PE=4
+    }
+  ?entry a :Entry .
+  ?entry :existence ?level .
+}

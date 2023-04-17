@@ -1,0 +1,10 @@
+#id:NXQ_09582
+#title:Check there are no entries with the Swiss-Prot keyword Formylation (KW-0291)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.754
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0291.
+}

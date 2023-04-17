@@ -1,0 +1,10 @@
+#id:NXQ_09550
+#title:Check there are no entries with the Swiss-Prot keyword Degradation of host cell envelope components during virus entry (KW-1235)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:1.248
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1235.
+}

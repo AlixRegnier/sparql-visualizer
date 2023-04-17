@@ -1,0 +1,11 @@
+#id:NXQ_00238
+#title:Proteins that are lipoproteins
+#tags:PTM,keyword,tutorial
+#acs:P30411,O00408,O60884
+#count:825
+#time:0.5
+
+select distinct ?entry where {
+ ?entry :isoform ?iso.
+ ?iso :uniprotKeyword / :term cv:KW-0449.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09391
+#title:Check there are no entries with temperature dependence annotations with evidence from UniProt that is negative
+#comment:biophysicochemical property
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.784
+
+select distinct ?entry where {
+  ?entry :isoform /:temperatureDependence /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

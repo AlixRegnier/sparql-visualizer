@@ -1,0 +1,10 @@
+#id:NXQ_09506
+#title:Check there are no entries with the Swiss-Prot keyword Carotenoid biosynthesis (KW-0125)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.785
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0125.
+}

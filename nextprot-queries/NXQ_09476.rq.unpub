@@ -1,0 +1,10 @@
+#id:NXQ_09476
+#title:Check there are no entries with the Swiss-Prot keyword Bacterial flagellum protein export (KW-1006)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.953
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1006.
+}

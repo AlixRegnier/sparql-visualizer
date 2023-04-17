@@ -1,0 +1,10 @@
+#id:NXQ_09487
+#title:Check there are no entries with the Swiss-Prot keyword Blood coagulation cascade activating toxin (KW-1204)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.835
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1204.
+}

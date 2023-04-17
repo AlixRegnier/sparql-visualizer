@@ -1,0 +1,12 @@
+#id:NXQ_09236
+#title:Check there are no entries with nonconsecutive residue annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence
+#acs:
+#count:0
+#time:0.625
+
+select distinct ?entry where {
+  ?entry :isoform /:nonConsecutiveResidue /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

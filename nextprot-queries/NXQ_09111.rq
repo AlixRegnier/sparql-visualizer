@@ -1,0 +1,12 @@
+#id:NXQ_09111
+#title:Check there are no entries with domain annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,domain
+#acs:
+#count:0
+#time:0.704
+
+select distinct ?entry where {
+  ?entry :isoform /:domain /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

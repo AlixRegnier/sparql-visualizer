@@ -1,0 +1,10 @@
+#id:NXQ_09478
+#title:Check there are no entries with the Swiss-Prot keyword Bacterial host transcription shutoff by virus (KW-1263)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:3.717
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1263.
+}

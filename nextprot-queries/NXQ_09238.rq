@@ -1,0 +1,12 @@
+#id:NXQ_09238
+#title:Check there are no entries with nucleotide phosphate binding region annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,region,interaction
+#acs:
+#count:0
+#time:0.703
+
+select distinct ?entry where {
+  ?entry :isoform /:nucleotidePhosphateBindingRegion /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

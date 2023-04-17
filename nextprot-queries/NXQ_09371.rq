@@ -1,0 +1,13 @@
+#id:NXQ_09371
+#title:Check there are no entries with pH dependence annotations with evidence from UniProt that is negative
+#comment:biophysicochemical property
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.617
+
+select distinct ?entry where {
+  ?entry :isoform /:phDependence /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

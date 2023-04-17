@@ -1,0 +1,10 @@
+#id:NXQ_09567
+#title:Check there are no entries with the Swiss-Prot keyword Eukaryotic host transcription shutoff by virus (KW-1191)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.744
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1191.
+}

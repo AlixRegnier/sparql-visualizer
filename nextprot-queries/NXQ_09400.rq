@@ -1,0 +1,12 @@
+#id:NXQ_09400
+#title:Check there are no entries with variant annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,variant
+#acs:
+#count:0
+#time:0.747
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

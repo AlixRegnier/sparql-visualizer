@@ -1,0 +1,12 @@
+#id:NXQ_09377
+#title:Check there are no entries with repeat annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,repeats
+#acs:
+#count:0
+#time:0.718
+
+select distinct ?entry where {
+  ?entry :isoform /:repeat /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

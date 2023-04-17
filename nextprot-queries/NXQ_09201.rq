@@ -1,0 +1,14 @@
+#id:NXQ_09201
+#title:Check there are no entries with GO molecular function annotations with evidence from GDB of quality SILVER and evidence code not IBA, IEP, HMP, HDA or HEP
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.402
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev.
+  ?ev :assignedBy source:GDB.
+  ?ev :quality :SILVER.
+  ?ev :evidenceCode ?eco.
+  filter ( ?eco not in ( cv:ECO_0000318,cv:ECO_0000270,cv:ECO_0007001,cv:ECO_0007005,cv:ECO_0007007 ))
+}

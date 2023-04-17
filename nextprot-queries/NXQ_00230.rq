@@ -1,0 +1,16 @@
+#id:NXQ_00230
+#title:Proteins with experimentally determined lengthy alpha-helices (> 75 aa)
+#tags:3D structure,method,sequence,snorql-only,tutorial
+#acs:entry:Q13464,Q8IZU3,Q8NCM8
+#count:26
+#time:30
+
+select distinct ?entry (str(?gen) as ?gene) ?hlen where {
+  ?entry :isoform ?iso.
+  ?entry :gene / :recommendedName / rdfs:label ?gen.
+  ?iso :helix ?hel .
+  ?hel :start ?s; :end ?e .
+  bind((?e - ?s + 1) as ?hlen )
+  filter(?hlen > 75)
+} 
+order by desc(?hlen)

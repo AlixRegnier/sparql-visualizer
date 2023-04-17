@@ -1,0 +1,15 @@
+#id:NXQ_00237
+#title:Transmembrane proteins with the number of transmembrane domains in the canonical isoform by decreasing order
+#tags:domain,isoforms,topology,transmembrane,region,snorql-only,tutorial
+#acs:Q9H5I5,Q92508,Q00975
+#count:5207
+#time:0.5
+
+select ?entry (count(distinct(?statement)) as ?tmcnt) where {
+ ?entry :isoform ?iso.
+ ?iso :swissprotDisplayed true .
+ ?iso :topology ?statement.
+ ?statement a :TransmembraneRegion.
+} 
+group by ?entry
+order by desc(?tmcnt)

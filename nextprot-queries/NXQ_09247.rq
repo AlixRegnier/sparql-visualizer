@@ -1,0 +1,12 @@
+#id:NXQ_09247
+#title:Check there are no entries with pharmaceutical annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,pharmaceutical
+#acs:
+#count:0
+#time:0.583
+
+select distinct ?entry where {
+  ?entry :isoform /:pharmaceutical /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

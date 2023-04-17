@@ -1,0 +1,19 @@
+#id:NXQ_00283
+#title:Proteins with no reported mitochondrial localization but interacting with 20 or more mitochondrial proteins ('gold' quality) 
+#tags:PPI,snorql-only,subcellular location,tutorial
+#acs:O14880,P19320,Q9NX40 
+#count:30
+#time:645
+
+select distinct ?entry (str(?gen) as ?gene) (count(distinct ?mitopartner) as ?mitcnt) (count(distinct ?partner) as ?itcnt) (xsd:float(?mitcnt) / xsd:float(?itcnt) as ?ratio) where {
+values ?mitloc {cv:GO_0005739 cv:SL-0173} # GO and SL values for mitochondrion
+ ?entry :isoform ?iso; :gene / :name / rdfs:label ?gen.
+ filter not exists { ?iso :cellularComponent /:term / :childOf ?mitloc }
+  ?iso :binaryInteraction ?it, ?it2 .
+  ?it :interactant ?mitopartner .
+  ?mitopartner :isoform? / :cellularComponent ?loc .
+  ?loc :quality :GOLD; :term / :childOf ?mitloc .
+  ?it2 :interactant ?partner .
+} group by ?entry ?gen ?itcnt ?mitcnt having (count(distinct ?mitopartner) >= 20)
+order by desc(?ratio) 
+limit 30

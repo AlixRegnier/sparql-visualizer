@@ -1,0 +1,26 @@
+#id:NXQ_00209
+#title:Glycosylation sites and cross links positions on SwissProt canonical isoforms
+#tags:glycosylation,PTM,isoforms,sequence,tutorial,snorql-only
+#acs:NX_A0A5B9,...
+#count:34971
+
+select distinct ?entry ?iso ?ptmtype ?pos ?modres where {
+?entry :isoform ?iso.
+?iso  :swissprotDisplayed true .
+?iso :sequence / :chain ?seq .
+?iso :ptm ?ptm.
+?ptm :term ?modterm.
+?ptm :start ?pos.
+bind (substr(?seq,?pos,1) as ?modres)	.
+{
+?ptm a :GlycosylationSite .
+bind("glyco" as ?ptmtype)
+}
+union
+{
+?ptm a :CrossLink .
+bind("cross-link" as ?ptmtype)
+}
+}
+order by ?iso
+#limit 100

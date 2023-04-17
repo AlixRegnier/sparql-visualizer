@@ -1,0 +1,12 @@
+#id:NXQ_09344
+#title:Check there are no entries with interaction information annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.758
+
+select distinct ?entry where {
+  ?entry :isoform /:interactionInfo /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

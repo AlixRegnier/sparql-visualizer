@@ -1,0 +1,22 @@
+#id:NXQ_00099
+#title:Secreted proteins that have at least one PTM in a position of a variant
+#tags:PTM,subcellular location,variant,tutorial
+#acs:Q9UPT9,Q9UPN4,Q9Y272
+#count:1832 
+#time:142
+
+select distinct ?entry where {
+  values ?sloc {cv:GO_0005576 cv:SL-0243} # GO and SL values for secreted
+  ?entry :isoform ?iso .
+  ?iso :swissprotDisplayed true . # restricted to main isoform due to computing time (> 98% of sites)
+  ?iso :cellularComponent ?anno .
+  ?anno :quality :GOLD; :term /:childOf ?sloc. # secreted
+  filter not exists { ?anno :negativeEvidence ?_ }
+  # excludes "extracellular exosome"-only location, most of them evidenced only by large-scale proteomic analysis
+  filter not exists { 
+	 ?iso :cellularComponent /:term cv:GO_0070062 . # extracellular exosome
+  	 filter not exists { ?iso :cellularComponent /:term /:childOf  cv:SL-0243 .}
+  	} 
+  ?iso :variant /:start ?varpos.
+  ?iso :ptm /:start ?varpos.
+}

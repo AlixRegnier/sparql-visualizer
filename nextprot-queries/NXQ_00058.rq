@@ -1,0 +1,32 @@
+#id:NXQ_00058
+#title:Proteins which are located on the genome next to a protein which is involved in spermatogenesis
+#comment:In the future we will add / pre-calculate interesting predicates like :neighbor , :overlaps, ...
+#tags:chromosomal location,function,tutorial
+#acs:P50993,Q2M3M2,Q9NP85
+#count:1087
+#time:9
+
+select distinct (?neighbour as ?entry) (str(?gen) as ?spergen) where {
+  {
+  select distinct ?chr ?gen ?sperstart (MAX(?ldist) as ?lmin) (MIN(?rdist)  as ?rmin) where {
+     ?entryx :isoform / :function ?func .
+	 ?func :term / :childOf cv:GO_0007283 . # Involvment in spermatogenesis
+	 filter not exists {?func  :negativeEvidence ?negev}
+     ?entryx :gene ?gene.
+     ?gene :begin ?sperstart; :end ?e; :chromosome ?chr; :recommendedName / rdfs:label ?gen.
+     ?ngen :chromosome ?chr. 
+     ?ngen :begin ?n_begin; :end ?n_end .
+     filter ( ?n_end > (?sperstart - 1000000) && ?n_begin <= (?sperstart + 1000000)  && ?ngen != ?gene)
+     bind(?sperstart - ?n_begin as ?dist)
+     bind(if(?dist<0,?dist,-1000000) as ?ldist)
+     bind(if(?dist>0,?dist,1000000) as ?rdist)
+     } group by ?chr ?gen ?sperstart
+  }
+  bind(?sperstart - ?lmin as ?lchrpos)
+  ?lgene :begin ?lchrpos; :chromosome ?chr.
+  bind(?sperstart - ?rmin as ?rchrpos)
+  ?rgene :begin ?rchrpos; :chromosome ?chr.
+  { ?neighbour :gene ?lgene. } # left gene
+	   union
+  { ?neighbour :gene ?rgene. } # right gene
+} order by ?gen

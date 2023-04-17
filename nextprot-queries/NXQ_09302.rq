@@ -1,0 +1,15 @@
+#id:NXQ_09302
+#title:Check there are no entries with variant annotations with evidence from dbSNP and quality silver for which the evidence code is NOT nucleotide sequencing assay evidence
+#comment:Need to distinguish the dbSNPs that we obtain via UniProt which are gold and those we obtain via Ensembl
+#tags:QC,evidence,ECO,variant
+#acs:
+#count:0
+#time:1.845
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev1.
+  ?ev1 :assignedBy source:dbSNP.
+  ?ev1 :quality :SILVER.  
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000219))
+}

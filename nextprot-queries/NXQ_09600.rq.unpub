@@ -1,0 +1,10 @@
+#id:NXQ_09600
+#title:Check there are no entries with the Swiss-Prot keyword Glyoxylate bypass (KW-0329)
+#tags:QC,keyword
+#acs:P48735, O75874 
+#count:2
+#time:0.737
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0329.
+}

@@ -1,0 +1,12 @@
+#id:NXQ_00289
+#title:KEGG and Reactome pathway names
+#tags:pathway,snorql-only,tutorial
+#acs:
+#count:2115
+#time:1.3
+
+select distinct ?src (str(?pathwayname) as ?pw) where {
+  ?entry :isoform / :pathway ?pathannot .
+  ?pathannot rdfs:comment ?pathwayname; :evidence / :assignedBy ?src.
+  filter(?src = source:Reactome || ?src = source:KEGG_PTW)
+} order by ?pathwayname

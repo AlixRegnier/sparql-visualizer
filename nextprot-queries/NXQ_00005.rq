@@ -1,0 +1,20 @@
+#id:NXQ_00005
+#title:Proteins located in mitochondrion and that lack a transit peptide
+#comment:Select entries with an isoform that does not have the keyword "Transit peptide".
+#comment:The isoform must also be located in the mitochondrion.
+#tags:subcellular location,tutorial
+#acs:NX_P04818,NX_Q86XF0,NX_Q96C03,NX_P45880,NX_Q15149
+#count:1454
+#time:0.5
+
+select distinct ?entry where {
+  values ?mitoloc {cv:SL-0173 cv:GO_0005739 } # SL and GO values for mitochondrion
+  ?entry :isoform ?iso.
+  filter not exists { ?iso :uniprotKeyword /:term cv:KW-0809 } # Transit peptide
+  ?iso :cellularComponent ?loc .
+  ?loc :term /:childOf ?mitoloc.
+  filter not exists {?loc :negativeEvidence ?negev} # No negative localization evidence
+}
+
+# Variables start with ? and can be given any name.
+# Variables such as ?entry and ?mitoloc (location in the mitochondrion) are easily understood by humans.

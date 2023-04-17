@@ -1,0 +1,15 @@
+#id:NXQ_00292
+#title:Pathway names
+#tags:pathway
+#acs:NX_P11678,NX_P22079,NX_Q92626
+#count:99
+#time:8.21
+
+select distinct (str(?plab) as ?pathlab) ?src where
+{
+?entry :isoform / :pathway ?p.
+?p :evidence / :assignedBy ?src .
+filter(?src != source:Uniprot )
+?p rdfs:comment ?plab.
+}
+order by ?plab

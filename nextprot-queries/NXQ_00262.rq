@@ -1,0 +1,39 @@
+#id:NXQ_00262
+#title:Variants that delete a N-glycosylation site (and their frequencies)
+#tags:glycosylation,PTM,variant,snorql-only
+#acs:A6NHA9,P24855,P24394
+#count:11643
+#time:600
+
+select distinct ?entry ?varpos where {
+  ?entry :isoform ?iso.
+  ?iso :glycosylationSite ?glycosite .
+  ?glycosite :start ?glypos; rdfs:comment ?desc .
+  filter(contains(?desc,"N-linked"))
+  bind(?glypos + 1 as ?glypos2)
+  bind(?glypos + 2 as ?glypos3)
+  ?iso  :swissprotDisplayed true . 
+  { # Variants at N's position
+  ?iso :variant ?var .
+  ?var :evidence / :allele-frequency ?freq . 
+  ?var :start ?glypos .
+  bind(?glypos as ?varpos)
+  }
+  union
+  { # Variants at N + 2 position not S->T nor T->S
+  ?iso :variant ?var2 .
+  ?var2 :evidence / :allele-frequency ?freq . 
+  ?var2 :variation ?varAA .
+  filter(?varAA != "S"^^xsd:string && ?varAA != "T"^^xsd:string)
+  ?var2 :start ?glypos3; :end ?glypos3.
+  bind(?glypos3 as ?varpos)
+  }
+  union
+  { # Variants at N + 1 position (disrupting Proline)
+  ?iso :variant ?var3 .
+  ?var3 :evidence / :allele-frequency ?freq . 
+  ?var3 :variation "P"^^xsd:string .
+  ?var3 :start ?glypos2; :end ?glypos2.
+  bind(?glypos2 as ?varpos)
+  }
+} order by ?entry ?varpos

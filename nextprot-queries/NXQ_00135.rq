@@ -1,0 +1,18 @@
+#id:NXQ_00135
+#title:Proteins involved in both Wnt and Hippo signaling pathways
+#tags:function,pathway,tutorial
+#acs:Q9NRM7,Q13188,Q13043
+#count:8
+#time:0.4
+
+select distinct ?entry where {
+  ?entry :isoform  ?iso .
+  # cv:GO:0016055 wnt pathway
+  ?iso :goBiologicalProcess ?func1 .
+  ?func1 :term / :childOf cv:GO_0016055.
+  filter not exists { ?func1 :negativeEvidence ?negev. } # No negative function evidence
+  # cv:GO:0035329 Hippo pathway
+  ?iso :goBiologicalProcess ?func2 .
+  ?func2  :term / :childOf cv:GO_0035329.
+  filter not exists { ?func2 :negativeEvidence ?negev. } # No negative function evidence
+}

@@ -1,0 +1,10 @@
+#id:NXQ_09526
+#title:Check there are no entries with the Swiss-Prot keyword Clathrin-mediated endocytosis of virus by host (KW-1165)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.906
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1165.
+}

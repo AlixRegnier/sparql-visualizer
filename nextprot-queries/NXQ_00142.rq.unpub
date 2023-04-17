@@ -1,0 +1,19 @@
+#id:NXQ_00142
+#title:Proteins that are annotated (in free text) as lacking activity
+#tags:function,inactive
+#acs:Q9UEF7,A4FU01,P54315
+#count:122
+#time:0.5
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  {
+  ?iso :functionInfo / rdfs:comment ?functiontext .
+  filter (regex(?functiontext,"lacks.*[^\\.]activ","i") || regex(?functiontext,"inactive as","i"))
+  }
+  UNION
+  {
+  ?iso :caution / rdfs:comment ?cautiontext .
+  filter (regex(?cautiontext,"lacks.*[^\\.]activ","i") || regex(?cautiontext,"inactive","i"))
+  }
+}

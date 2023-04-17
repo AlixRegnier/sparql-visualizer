@@ -1,0 +1,5 @@
+#id:NXQ_DEREF_001
+#title:Generic query template for a class
+#tags:deref_class_
+
+describe <CLASS>

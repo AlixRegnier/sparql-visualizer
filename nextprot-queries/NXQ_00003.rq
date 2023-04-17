@@ -1,0 +1,21 @@
+#id:NXQ_00003
+#title:Proteins with 7 transmembrane regions
+#comment:Select entries with an isoform that contains a transmembrane region.
+#comment:Group the results by entries having isoforms with 7 transmembrane regions.
+#tags:domain,region,transmembrane,topology,tutorial
+#acs:NX_Q9HCN3,NX_P35372,NX_Q8NG75,NX_Q8NGB2,NX_Q8NGC2
+#count:991
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :topology ?statement.
+  ?statement a :TransmembraneRegion.
+} group by ?entry ?iso having(count( ?statement)=7)
+
+# 'a' can also be used instead of 'rdf:type' 
+# 'a' is a synonym of 'rdf:type'
+# 
+# Apply the grouping criterion (group by) for the results.
+# This groups entries with isoforms having 7 transmembrane regions.
+# Apply the aggregate function (count) to the variable ?statement.
+# This counts the number of transmembrane region statements for each isoform.

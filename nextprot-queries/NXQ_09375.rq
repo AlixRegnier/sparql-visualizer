@@ -1,0 +1,12 @@
+#id:NXQ_09375
+#title:Check there are no entries with PTM information annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,PTM
+#acs:
+#count:0
+#time:15.314
+
+select distinct ?entry where {
+  ?entry :isoform /:ptmInfo /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_00046
+#title:Proteins with a gene alternative name starting with IL27
+#tags:gene,name,snorql-only,tutorial
+#acs:Q8NEV9,Q14213
+#count:2
+
+select distinct ?entry ?recname ?altname where {
+  ?entry :gene ?gn.
+  ?gn :recommendedName / rdfs:label ?recname.
+  ?gn :alternativeName / rdfs:label ?altname.
+    filter (regex(?altname, "^IL27"))
+}
+

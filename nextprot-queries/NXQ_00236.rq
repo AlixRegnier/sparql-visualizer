@@ -1,0 +1,17 @@
+#id:NXQ_00236
+#title:Proteins with subcellular location gold and list of all these locations
+#tags:subcellular location,quality,snorql-only,tutorial
+#acs:Q8IWU6,Q96GC6,P56715
+#count:17882
+#time:3.2
+
+select distinct ?entry (group_concat(distinct str(?loclab); SEPARATOR = ",") as ?locs) where {
+ ?entry :isoform ?iso.
+ ?iso :cellularComponent ?locannot .
+ ?locannot :term ?locterm .
+ ?locterm rdfs:label ?loclab .
+ ?locannot :evidence ?locev .
+ ?locev :quality :GOLD .
+ filter not exists {?locannot :negativeEvidence ?locev .}
+}
+GROUP BY ?entry

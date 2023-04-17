@@ -1,0 +1,13 @@
+#id:NXQ_09087
+#title:Check there are no entries with variant annotations with evidence NOT from Cellosaurus, Cosmic, dbSNP, gnomAD, neXtProt or UniProt
+#comment:neXtProt BioEditor data
+#tags:QC,provenance,variant
+#acs:
+#count:0
+#time:9.761
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :variant /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Cellosaurus,source:Cosmic,source:dbSNP,source:gnomAD,source:NextProt,source:Uniprot))
+}

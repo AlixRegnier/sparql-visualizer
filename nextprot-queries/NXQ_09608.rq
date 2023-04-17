@@ -1,0 +1,13 @@
+#id:NXQ_09608
+#title:Check there are no entries with GO molecular function annotations with evidence having the evidence code HDA and quality GOLD
+#comment: ECO:0007005 inferred from high throughput direct assay (HDA)
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.958
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0007005.
+  ?ev1 :quality :GOLD.
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09266
+#title:Check there are no entries with transport activity annotations with evidence from TCDB of quality SILVER
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.744
+
+select distinct ?entry where {
+  ?entry :isoform /:transportActivity /:evidence ?ev1.
+  ?ev1 :assignedBy source:TCDB.
+  ?ev1 :quality :SILVER.
+}

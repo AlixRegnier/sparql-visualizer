@@ -1,0 +1,12 @@
+#id:NXQ_09104
+#title:Check there are no compositionally biased region annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,region
+#acs:
+#count:0
+#time:0.598
+
+select distinct ?entry where {
+  ?entry :isoform /:compositionallyBiasedRegion /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

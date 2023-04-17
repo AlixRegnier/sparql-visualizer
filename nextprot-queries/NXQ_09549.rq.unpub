@@ -1,0 +1,10 @@
+#id:NXQ_09549
+#title:Check there are no entries with the Swiss-Prot keyword Degradation of host capsule during virus entry (KW-1238)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.821
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1238.
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09360
+#title:Check there are no entries with mutagenesis annotations with evidence from neXtProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.62
+
+select distinct ?entry where {
+  ?entry :isoform /:mutagenesis /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

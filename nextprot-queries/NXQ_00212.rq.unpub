@@ -1,0 +1,12 @@
+#id:NXQ_00212
+#title:Total count of PTMs
+#tags:PTM,snorql-only
+#acs:
+#count:1
+
+select count (distinct ?id) as ?ptmcnt where {
+  ?entry :isoform ?iso .
+  ?iso :ptm ?ptm.
+  ?ptm :entryAnnotationId ?id.
+  filter not exists {?ptm a :PtmInfo}
+}

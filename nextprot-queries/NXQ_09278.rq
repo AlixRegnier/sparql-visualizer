@@ -1,0 +1,13 @@
+#id:NXQ_09278
+#title:Check there are no entries with disease annotations from ORPHANET for which the evidence code is NOT curator inference used in manual assertion
+#tags:QC,evidence,ECO,disease
+#acs:
+#count:0
+#time:0.778
+
+select distinct ?entry where {
+  ?entry :isoform /:disease /:evidence ?ev1.
+  ?ev1 :assignedBy source:Orphanet.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000305))
+}

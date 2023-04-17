@@ -1,0 +1,21 @@
+#id:NXQ_00217
+#title:Proteins associated with an incomplete EC number, no function annotated and high expression in liver
+#tags:enzyme,expression,function,tutorial
+#acs:NX_P49768,...
+#count:19
+#time:0.7
+
+select distinct ?entry where {
+  ?entry :isoform ?isox.
+  ?isox :enzymeClassification / :term / rdfs:label ?eclabel.
+  filter regex(?eclabel, '-'^^xsd:string) # incomplete EC number
+  ?isox :highExpression /:term /:childOf cv:TS-0564. # highly expressed in liver
+   { 
+   ?isox :functionInfo / rdfs:comment ?functext .
+   filter(strstarts(?functext,"Probable") || strstarts(?functext,"Putative")) 
+   }
+  UNION
+   { 
+   filter not exists {?isox :functionInfo ?_ }  # entries with no function at all
+   }
+} 

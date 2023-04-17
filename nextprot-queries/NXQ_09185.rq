@@ -1,0 +1,12 @@
+#id:NXQ_09185
+#title:Check there are no entries with GO molecular function annotations with evidence from CACAO of quality GOLD
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.78
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :assignedBy source:CACAO.
+  ?ev1 :quality :GOLD.
+}

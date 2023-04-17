@@ -1,0 +1,16 @@
+#id:NXQ_09457
+#title:Check there are no entries with a modified residue annotation specifying an ADP-ribosylation site that do not have the keyword ADP-ribosylation (KW-0013)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.914
+
+select distinct ?entry where {  # Include ?ribosyl if result is not 0 to identify problem site 
+  ?ribosyl a :UniprotPtmCv.
+  cv:KW-0013 :related  ?ribosyl.
+  ?entry :isoform ?iso.
+  ?iso :modifiedResidue ?mod.
+  ?mod :term ?ribosyl.  
+  filter not exists {?mod :negativeEvidence ?negev} # No negative evidence  
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0013.}
+}

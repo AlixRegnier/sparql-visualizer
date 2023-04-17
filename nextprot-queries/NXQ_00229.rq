@@ -1,0 +1,21 @@
+#id:NXQ_00229
+#title:Proteins with 2 peptides from only one PeptideAtlas/MassIVE data set
+#tags:dataset,peptide,proteomics,tutorial,snorql-only
+#acs:entry:Q96DZ7,P19099,P15538
+#count:492
+#time:1392
+
+select distinct ?entry (str(?gen) as ?gene) (group_concat(distinct ?organset; separator = ' ') as ?uniq_source) where {
+  ?entry :isoform ?iso.
+  ?entry :gene / :name / rdfs:label ?gen.
+  ?iso :peptideMapping ?pm .
+  ?pm :proteotypic true .
+  ?pm :peptideName ?pepid .
+  ?pm  :start ?p1 ; :end ?p2 .
+  ?pm :evidence / :assignedBy  ?src.
+  bind(strafter(str(?src),"human_") as ?organset)
+  filter(contains(str(?src),"human"))
+  filter(?p2-?p1 >= 8) #peplen >= 9
+}
+group by ?entry ?gen having(count (distinct ?organset) = 1  && count (distinct ?pepid) > 1) 
+order by ?uniq_source

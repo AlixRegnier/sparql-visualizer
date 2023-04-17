@@ -1,0 +1,14 @@
+#id:NXQ_00054
+#title:Proteins which are "Receptor binding" according to GO and have the Swiss-Prot keyword "Immunity"
+#tags:function,keyword,tutorial
+#acs:P05771, O60602, Q13114, ...
+#count:160
+#time: 0.25
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :function ?statement.
+  ?statement :term / :childOf cv:GO_0005102.
+  filter not exists { ?statement :negativeEvidence ?negev. } # No negative function evidence
+  ?iso :uniprotKeyword/:term cv:KW-0391.
+}

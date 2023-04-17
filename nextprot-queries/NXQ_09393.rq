@@ -1,0 +1,12 @@
+#id:NXQ_09393
+#title:Check there are no entries with transmembrane region annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,region,subcellular location
+#acs:
+#count:0
+#time:0.729
+
+select distinct ?entry where {
+  ?entry :isoform /:transmembraneRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

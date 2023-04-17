@@ -1,0 +1,12 @@
+#id:NXQ_09108
+#title:Check there are no entries with disease annotations with evidence from Orphanet of quality SILVER
+#tags:QC,quality,evidence,disease
+#acs:
+#count:0
+#time:0.6
+
+select distinct ?entry where {
+  ?entry :isoform / :disease /:evidence ?ev1.
+  ?ev1 :assignedBy source:Orphanet.
+  ?ev1 :quality :SILVER.
+}

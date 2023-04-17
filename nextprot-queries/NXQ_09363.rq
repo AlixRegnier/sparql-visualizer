@@ -1,0 +1,12 @@
+#id:NXQ_09363
+#title:Check there are no entries with nucleotide phosphate binding region annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,region,interaction
+#acs:
+#count:0
+#time:0.909
+
+select distinct ?entry where {
+  ?entry :isoform /:nucleotidePhosphateBindingRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

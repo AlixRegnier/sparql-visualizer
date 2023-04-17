@@ -1,0 +1,12 @@
+#id:NXQ_09358
+#title:Check there are no entries with modified residue annotations with evidence from PeptideAtlas Phosphoproteome that is negative
+#tags:QC,evidence,negative,PTM
+#acs:
+#count:0
+#time:0.752
+
+select distinct ?entry where {
+  ?entry :isoform /:modifiedResidue /:evidence ?ev.
+  ?ev :assignedBy source:PeptideAtlas_human_phosphoproteome.
+  ?ev :negative 1.
+}

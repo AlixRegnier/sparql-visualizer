@@ -1,0 +1,15 @@
+#id:NXQ_00147
+#title:Proteins with a variant having an impact on the nucleus localization at level GOLD
+#tags:phenotype,quality,subcellular location,variant,tutorial
+#acs:P40692
+#count:1
+#time:10
+
+select distinct ?entry 
+where {
+  values ?ioTerm {cv:GO_0005634} . # nucleus
+  ?entry :isoform / :proteoform / :phenotypicVariation ?phvar .
+  ?phvar :term / :childOf cv:ME_0000002 . # children of impact
+  ?phvar :evidence / :quality :GOLD .
+  ?phvar :impactedObject / :term ?ioTerm .
+}

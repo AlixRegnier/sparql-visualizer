@@ -1,0 +1,9 @@
+#id:NXQ_00209
+#title:Total count of entries
+#tags:snorql-only
+#acs:
+#count:1
+
+select count (distinct ?entry) as ?entrycnt where {
+  ?entry a :Entry.
+}

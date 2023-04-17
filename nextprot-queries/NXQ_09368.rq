@@ -1,0 +1,32 @@
+#id:NXQ_09368
+#title:Check there are no entries with peptide mapping annotations with evidence from neXtProt that is negative
+#comment:neXtProt MDATA. Natural peptides detected by MS
+#tags:QC,evidence,negative,proteomics,peptide
+#acs:
+#count:0
+#time:4.214
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :peptideMapping /:evidence ?ev.
+  ?ev :assignedBy ?src.
+  filter ( ?src not in (source:PeptideAtlas_human_adrenal_gland,
+source:PeptideAtlas_human_brain,						
+source:PeptideAtlas_human_breast,
+source:PeptideAtlas_human_digestive_system,
+source:PeptideAtlas_human_eye,						
+source:PeptideAtlas_human_female_reproductive_system,					
+source:PeptideAtlas_human_heart,
+source:PeptideAtlas_human_kidney, 
+source:PeptideAtlas_human_liver,
+source:PeptideAtlas_human_lung,
+source:PeptideAtlas_human_male_reproductive_system,					
+source:PeptideAtlas_human_others,
+source:PeptideAtlas_human_pancreas,
+source:PeptideAtlas_human_plasma,
+source:PeptideAtlas_human_spleen,
+source:PeptideAtlas_human_urinary_bladder,
+source:PeptideAtlas_human_urine,
+source:PeptideAtlas_human_phosphoproteome)) 
+  ?ev :negative 1.  
+}

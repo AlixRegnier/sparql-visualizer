@@ -1,0 +1,52 @@
+#id:NXQ_00273
+#title:Proteins involved in coronaviruses/SARS-CoV-2 pathways that are expressed in lung according to RNA-seq analysis and detected at high levels by IHC in at least one lung cell type
+#comment:Federated query with WikiPathways
+#tags:expression,federated query,pathway,snorql-only,tutorial
+#acs:O15264,O75460,P05198 
+#count:11
+#time:17
+
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+select ?entry (str(?gen) AS ?gene) ?pathwayname  (group_concat(distinct str(?rnatissname); SEPARATOR = ',') as ?RNAseq_positive) (group_concat(distinct str(?ihctissname); SEPARATOR = ',') as ?IHC_high)   where {
+    service <http://sparql.wikipathways.org/sparql> {
+
+        {?geneProduct a wp:Protein}
+            union
+        {?geneProduct a wp:GeneProduct}
+ 
+        ?geneProduct rdfs:label ?gen .
+        filter(!regex(?gen,"[ a-z-]")). # ensures official gene names for subsequent neXtprot matching
+
+        ?geneProduct rdfs:label ?genraw .
+        bind (concat( ""^^xsd:string, ?genraw) as ?gen).
+
+        ?pathway a wp:Pathway .
+        ?pathway wp:organism ?organism .
+        filter(contains(str(?organism),"9606"))
+        ?pathway dc:title ?pathwayname .
+        filter(regex(?pathwayname,"sars-cov-2","i")|| regex(?pathwayname,"corona","i") ).
+    }
+
+    ?entry a :Entry .
+    ?entry :gene / :name / rdfs:label ?gen .
+    ?entry :isoform ?iso.
+    ?iso :expression ?exprna, ?expihc.
+    ?exprna :term ?rnatiss .
+    ?exprna :evidence ?evirna.
+    ?exprna :quality :GOLD .
+    ?evirna :observedExpression :Positive.
+    ?evirna :evidenceCode cv:ECO_0000295. # RNA-seq
+    ?rnatiss :childOf cv:TS-0568. #lung
+    ?rnatiss rdfs:label ?rnatissname.
+    ?expihc :quality :GOLD .
+    ?expihc :term ?ihctiss .
+    ?expihc :evidence ?eviihc.
+    ?eviihc :evidenceCode cv:ECO_0001055. # Immunohistochemistry (IHC)
+    ?eviihc :observedExpression :High.
+    ?ihctiss :childOf ?rnatiss .
+    ?ihctiss rdfs:label ?ihctissname.
+}
+group by ?entry ?gen ?pathwayname
+order by ?entry

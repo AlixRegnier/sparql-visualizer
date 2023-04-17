@@ -1,0 +1,13 @@
+#id:NXQ_09663
+#title:Check there are no entries with binary interaction annotations with evidence from ENYO for which the evidence code is NOT physical interaction evidence used in manual assertion (ECO:0000353)
+#tags:QC,evidence,ECO,interaction
+#acs:
+#count:0
+#time:0.683
+
+select distinct ?entry where {
+  ?entry :isoform /:binaryInteraction /:evidence ?ev1.
+  ?ev1 :assignedBy source:ENYO.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000353))
+}

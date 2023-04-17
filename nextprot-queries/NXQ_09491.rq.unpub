@@ -1,0 +1,10 @@
+#id:NXQ_09491
+#title:Check there are no entries with the Swiss-Prot keyword Brassinosteroid signaling pathway (KW-1070)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.831
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1070.
+}

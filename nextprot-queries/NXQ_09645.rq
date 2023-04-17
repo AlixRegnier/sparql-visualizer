@@ -1,0 +1,11 @@
+#id:NXQ_09645
+#title:Check there are no entries with a variant, responsible for a disease, that do not have the keyword KW-0225 (Disease mutation)
+#tags:QC,variant,disease,keyword
+#acs:NX_Q9Y463,NX_O95947,NX_O95995 
+#count:106
+#time:8.469
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:disease ?dis.
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0225.}
+}

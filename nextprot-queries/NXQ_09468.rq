@@ -1,0 +1,16 @@
+#id:NXQ_09468
+#title:Check there are no entries with a subcellular location annotation that do not have the corresponding keyword
+#tags:QC,keyword,subcellular location
+#acs:
+#count:0
+#time:3.326
+
+select distinct ?entry ?subcell ?kw where {
+  ?entry :isoform ?iso.
+  ?iso :subcellularLocation ?loc.
+  filter not exists {?loc :negativeEvidence ?negev} # No negative evidence
+  ?loc :term ?subcell.  
+  ?kw a :UniprotKeywordCv.
+  ?subcell :related  ?kw.  
+  filter not exists {?entry :isoform /:keyword /:term ?kw} # No keyword
+}

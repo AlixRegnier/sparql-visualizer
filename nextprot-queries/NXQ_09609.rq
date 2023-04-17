@@ -1,0 +1,13 @@
+#id:NXQ_09609
+#title:Check there are no entries with GO molecular function annotations with evidence having the evidence code HEP and quality GOLD
+#comment: ECO:0007007 inferred from high throughput expression pattern (HEP)
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.74
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0007007.
+  ?ev1 :quality :GOLD.
+}

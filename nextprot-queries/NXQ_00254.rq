@@ -1,0 +1,32 @@
+#id:NXQ_00254
+#title:Proteins with associated pathways in WikiPathways
+#tags:federated query,pathway,snorql-only,tutorial
+#acs:O60674,P23458,P84022
+#count:47571 (10995 entries in 1034 pathways)
+#time:400
+
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+select distinct ?entry ?gen ?pathwayname where {
+    service <http://sparql.wikipathways.org/sparql> {
+
+        {?geneProduct a wp:Protein}
+            union
+        {?geneProduct a wp:GeneProduct}
+  
+        ?geneProduct rdfs:label ?genraw .
+	    bind (concat( ""^^xsd:string, ?genraw) as ?gen).
+        filter(!regex(?gen,"[ a-z-]")). # ensures official gene names for subsequent neXtprot matching
+
+        ?geneProduct dcterms:isPartOf ?pathway .
+        ?pathway a wp:Pathway .
+        ?pathway wp:organism ?organism .
+        filter(contains(str(?organism),"9606")) # Human proteins
+        ?pathway dc:title ?pathwayname .
+    }
+    ?entry a :Entry .
+    ?entry :gene / :recommendedName / rdfs:label ?gen .
+}
+order by ?pathwayname

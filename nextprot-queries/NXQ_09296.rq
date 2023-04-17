@@ -1,0 +1,13 @@
+#id:NXQ_09296
+#title:Check there are no entries with small molecule interaction annotations from DrugBank for which the evidence code is NOT curator inference used in manual assertion
+#tags:QC,evidence,ECO,pharmaceutical
+#acs:
+#count:0
+#time:0.731
+
+select distinct ?entry where {
+  ?entry :isoform /:smallMoleculeInteraction /:evidence ?ev1.
+  ?ev1 :assignedBy source:DrugBank.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000305))
+}

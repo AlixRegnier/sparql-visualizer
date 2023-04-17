@@ -1,0 +1,10 @@
+#id:NXQ_09503
+#title:Check there are no entries with the Swiss-Prot keyword Capsule biogenesis/degradation (KW-0972)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.844
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0972.
+}

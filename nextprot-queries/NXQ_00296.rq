@@ -1,0 +1,15 @@
+#id:NXQ_00296
+#title:Pathways in which SCN1A GOLD interactants are involved
+#tags:pathway,PPI,snorql-only,tutorial
+#acs:"Advanced glycosylation endproduct receptor signaling"^^xsd:string,"Alzheimer&apos;s disease"^^xsd:string,"Amyloid fiber formation"^^xsd:string
+#count:23
+#time:0.117
+
+
+select distinct ?pathway where {
+  entry:NX_P35498 :isoform /:binaryInteraction ?interaction.
+  ?interaction :interactant ?entry; :quality :GOLD.
+  ?entry a :Entry.
+  ?entry :isoform /:pathway /rdfs:comment ?pathway.
+}
+order by asc(?pathway)

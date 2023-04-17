@@ -1,0 +1,11 @@
+#id:NXQ_09405
+#title:Check there are no entries with GO biological process annotations with the evidence code is ND (ECO:0000035)
+#tags:QC,filtering,evidence
+#acs:
+#count:0
+#time:0.741
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :goBiologicalProcess /:evidence /:evidenceCode cv:ECO_0000035.
+}

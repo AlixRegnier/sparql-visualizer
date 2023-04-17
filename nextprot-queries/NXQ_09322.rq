@@ -1,0 +1,12 @@
+#id:NXQ_09322
+#title:Check there are no entries with cross-link annotations with evidence from neXtProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.724
+
+select distinct ?entry where {
+  ?entry :isoform /:crossLink /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

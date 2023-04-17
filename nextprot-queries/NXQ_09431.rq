@@ -1,0 +1,12 @@
+#id:NXQ_09431
+#title:Check there are no entries with a gene name which does not contain a capital letter or is not "unknown"
+#tags:QC,gene name
+#acs:
+#count:0
+#time:1.119
+
+select distinct ?entry ?name where {
+  ?entry :gene / :name / rdfs:label ?name .
+   filter (!regex (?name,'[A-Z]'))
+   filter (!regex (?name,'unknown'))
+}

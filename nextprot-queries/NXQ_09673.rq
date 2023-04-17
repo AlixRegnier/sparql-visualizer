@@ -1,0 +1,13 @@
+#id:NXQ_09673
+#title:Check there are no entries with expression profile annotations with evidence from IHC which are NOT from HPA
+#tags:QC,provenance,ECO
+#acs:
+#count:0
+#time:0.879
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :expressionProfile /:evidence ?ev.
+  ?ev :evidenceCode cv:ECO_0001055. # IHC
+  filter not exists { ?ev :assignedBy source:Human_protein_atlas }
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09436
+#title:Check there are no entries with antibody mapping annotations for which the antibody AC does NOT start with "HPA"
+#tags:QC,antibody
+#acs:
+#count:0
+#time:0.594
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :antibodyMapping /:evidence /:reference /:accession ?ac.
+  filter (!regex (?ac,"^HPA"))
+}

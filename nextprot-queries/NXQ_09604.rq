@@ -1,0 +1,13 @@
+#id:NXQ_09604
+#title:Check there are no entries with GO biological process annotations with evidence having the evidence code HMP and the quality GOLD
+#comment: ECO:0007001 inferred from high throughput mutant phenotype (HMP)
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.818
+
+select distinct ?entry where {
+  ?entry :isoform /:goBiologicalProcess /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0007001.
+  ?ev1 :quality :GOLD.
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09336
+#title:Check there are no entries with family annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,family
+#acs:
+#count:0
+#time:1.469
+
+select distinct ?entry where {
+  ?entry :isoform /:family /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

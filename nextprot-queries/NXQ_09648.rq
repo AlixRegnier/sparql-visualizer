@@ -1,0 +1,16 @@
+#id:NXQ_09648
+#title:Check there are no entries with the keyword KW-0621 (Polymorphism) that do not have a variant annotation with evidence from UniProt or dbSNP and having a xref starting with "rs" 
+#tags:QC,variant,keyword
+#acs:
+#count:0
+#time:404.754
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword /:term cv:KW-0621.
+  ?entry :isoform /:variant /:evidence ?ev.
+  {?ev :assignedBy source:dbSNP.}
+  union
+  {?ev :assignedBy source:UniProt.}
+  ?ev :reference /:accession ?xref.
+  filter (!regex(?xref, "^rs"))
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09047
+#title:Check there are no entries with kinetic KM annotations with evidence NOT from UniProt
+#comment:biophysicochemical property
+#tags:QC,provenance,function,enzyme
+#acs:
+#count:0
+#time:0.316
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :kineticKM /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

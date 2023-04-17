@@ -1,0 +1,10 @@
+#id:NXQ_09570
+#title:Check there are no entries with the Swiss-Prot keyword Evasion of host immunity by viral interleukin-like protein (KW-1125)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.784
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1125.
+}

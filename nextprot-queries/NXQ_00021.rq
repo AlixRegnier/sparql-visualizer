@@ -1,0 +1,16 @@
+#id:NXQ_00021
+#title:Proteins with at least one HPA antibody that are located in the peroxisome
+#tags:antibody,subcellular location,tutorial
+#acs:O14678,O60420,O75381
+#count:114
+#time:0.57
+
+select distinct ?entry where {
+  values ?peroxiloc {cv:GO_0005777  cv:SL-0204} # GO and SL values for peroxisome
+  
+  ?entry :isoform ?iso. 
+  ?iso :antibodyMapping ?map. 
+  ?iso :cellularComponent ?loc .
+  ?loc :term /:childOf ?peroxiloc. # peroxisomal
+  filter not exists { ?loc :negativeEvidence ?negev. } # No negative localization evidence
+}

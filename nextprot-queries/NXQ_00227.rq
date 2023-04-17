@@ -1,0 +1,24 @@
+#id:NXQ_00227
+#title:Proteins with at least 2 peptides >=9aa found in testis, but with no peptide identified in sperm [lost during sperm maturation]
+#tags:dataset,peptide,proteomics,tutorial
+#acs:Q96BJ3,O43715,P61927
+#count:3399
+#time:787
+
+select distinct ?entry where {
+values ?pepsources { 
+        source:PeptideAtlas_human_Testis 
+        source:MassIVE_human_Testis 
+       }
+
+  ?entry :isoform ?iso.
+  ?iso :peptideMapping ?pm .
+  ?pm :proteotypic true .
+  ?pm :peptideName ?pepid . 
+  ?pm :evidence / :assignedBy  ?pepsources.
+  ?pm  :start ?p1 ; :end ?p2 .
+  filter(?p2-?p1 >= 8) #peplen >= 9
+  filter not exists { ?iso :peptideMapping / :evidence / :assignedBy  source:PeptideAtlas_human_Sperm . }
+  filter not exists { ?iso :peptideMapping / :evidence / :assignedBy  source:MassIVE_human_Sperm . }
+}
+group by ?entry having(count (distinct ?pepid) > 1) # at least two such peptides

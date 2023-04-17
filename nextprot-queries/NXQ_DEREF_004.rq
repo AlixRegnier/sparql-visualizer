@@ -1,0 +1,16 @@
+#id:NXQ_DEREF_004
+#title:Query for an Isoform Instance e.g isoform:NX_Q8WZ42-1
+#tags:deref_instance_Isoform
+
+CONSTRUCT {
+     <INSTANCE> :functionInfo ?object .
+     ?object rdfs:comment ?comment.
+     <INSTANCE> :swissprotDisplayed ?swissprotDisplayed.
+} WHERE {
+     <INSTANCE> :functionInfo ?object .
+     ?object rdfs:comment ?comment.
+     optional {
+          <INSTANCE> :swissprotDisplayed ?swissprotDisplayed.
+     }
+     FILTER(!isBlank(?object))
+}

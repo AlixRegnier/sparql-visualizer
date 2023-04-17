@@ -1,0 +1,13 @@
+#id:NXQ_09290
+#title:Check there are no entries with mutagenesis annotations from neXtProt for which the evidence code is NOT experimental evidence used in manual assertion
+#tags:QC,evidence,ECO,sequence
+#acs:
+#count:0
+#time:0.787
+
+select distinct ?entry where {
+  ?entry :isoform /:mutagenesis /:evidence ?ev1.
+  ?ev1 :assignedBy source:NextProt.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000269))
+}

@@ -1,0 +1,22 @@
+#id:NXQ_00233
+#title:Proteins that are PE>1 with at least one proteotypic peptide of at least 9 amino-acids identified in a human sample 
+#tags:dataset,peptide,proteomics,protein existence,tutorial
+#acs:Q9H255,O14921,O94778
+#count:478
+#time:0.5
+
+select distinct ?entry where {
+ values ?level {
+  	:Evidence_at_transcript_level # PE=2
+  	:Inferred_from_homology  	# PE=3
+  	:Predicted        	# PE=4
+	:Uncertain        	# PE=5
+	}
+ ?entry a :Entry .
+ ?entry :existence ?level .
+ ?entry :isoform / :peptideMapping ?pm.
+ ?pm :proteotypic true .
+ ?pm :start ?pos1 ; :end ?pos2 .
+ filter((?pos2 - ?pos1 + 1) >= 9)
+ }
+

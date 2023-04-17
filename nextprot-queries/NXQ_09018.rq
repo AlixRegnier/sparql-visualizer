@@ -1,0 +1,12 @@
+#id:NXQ_09018
+#title:Check there are no entries with cleavage site annotations with evidence NOT from UniProt
+#tags:QC,provenance,sequence
+#acs:
+#count:0
+#time:0.507
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :cleavageSite /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

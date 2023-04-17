@@ -1,0 +1,10 @@
+#id:NXQ_09596
+#title:Check there are no entries with the Swiss-Prot keyword Gibberellin signaling pathway (KW-0939)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.851
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0939.
+}

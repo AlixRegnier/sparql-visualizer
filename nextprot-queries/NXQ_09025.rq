@@ -1,0 +1,13 @@
+#id:NXQ_09025
+#title:Check there are no entries with disease annotations with evidence NOT from neXtProt, Orphanet or UniProt
+#comment:Diseases associated with COSMIC variants are not annotations
+#tags:QC,provenance,disease
+#acs:
+#count:0
+#time:0.166
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :disease /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:NextProt,source:Orphanet,source:Uniprot))
+}

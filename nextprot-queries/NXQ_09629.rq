@@ -1,0 +1,16 @@
+#id:NXQ_09629
+#title:Check there are no entries in the Ion channels variants portal that do not have a variant phenotype annotation
+#tags:QC,portal
+#acs:
+#count:0
+#time:1.959
+ 
+select distinct ?entry where {
+  values ?gene
+  {"SCN1A" "SCN2A" "SCN3A" "SCN4A" "SCN5A" "SCN8A" "SCN9A" "SCN10A" "SCN11A"} # space-separated
+   
+  ?entry :gene / :name / rdfs:label ?genename .
+  bind (str(?genename) as ?gn) # here we convert "xxx"^^xsd:string to "xxx" to match the values
+  filter(?gn = ?gene)
+  filter not exists {?entry :isoform /:proteoform /:phenotypicVariation ?phenotype} # No phenotype annotation
+}

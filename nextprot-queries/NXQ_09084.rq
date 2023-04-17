@@ -1,0 +1,12 @@
+#id:NXQ_09084
+#title:Check there are no entries with transmembrane region annotations with evidence NOT from UniProt
+#tags:QC,provenance,region,subcellular location
+#acs:
+#count:0
+#time:0.621
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :transmembraneRegion /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

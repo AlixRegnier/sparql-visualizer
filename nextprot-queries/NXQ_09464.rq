@@ -1,0 +1,16 @@
+#id:NXQ_09464
+#title:Check there are no entries with modified residue phosphorylation site annotations that do not have the keyword Phosphoprotein (KW-0597)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:3.954
+
+select distinct ?entry where {  # Include ?phospho if result is not 0 to identify problem site 
+  ?phospho a :UniprotPtmCv.
+  cv:KW-0597 :related  ?phospho.
+  ?entry :isoform ?iso.
+  ?iso :modifiedResidue ?mod.
+  ?mod :term ?phospho.  
+  filter not exists {?mod :negativeEvidence ?negev} # No negative evidence  
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0597.}
+}

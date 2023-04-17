@@ -1,0 +1,19 @@
+#id:NXQ_00221
+#title:Proteins with RNA-seq observed expression "not detected" and IHC observed expression : "high" (same tissue or children)
+#tags:expression,method,tutorial,
+#acs:NX_A5X5Y0,NX_Q8NFP9,NX_Q2KHR2
+#count:284
+#time:21
+
+ select distinct ?entry where {
+  ?entry :isoform ?iso .
+  ?iso :expression ?exp, ?exp2.
+  ?exp :term ?tiss .
+  ?exp :negativeEvidence / :evidenceCode cv:ECO_0000295. # RNA-seq
+  ?exp2 :quality :GOLD .
+  ?exp2 :term ?tiss2 .
+  ?exp2 :evidence ?evi2.
+  ?evi2 :evidenceCode cv:ECO_0001055. # IHC
+  ?evi2 :observedExpression :High.
+  ?tiss2 :childOf ?tiss . # same tissue or children
+} 				  

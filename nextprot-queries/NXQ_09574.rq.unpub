@@ -1,0 +1,10 @@
+#id:NXQ_09574
+#title:Check there are no entries with the Swiss-Prot keyword Fibrinolytic toxin (KW-1205)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.852
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1205.
+}

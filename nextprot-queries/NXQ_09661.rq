@@ -1,0 +1,12 @@
+#id:NXQ_09661
+#title:Check there are no entries with binary interaction annotations with evidence from ENYO of quality SILVER
+#tags:QC,quality,evidence,interaction
+#acs:
+#count:0
+#time:0.578
+
+select distinct ?entry where {
+  ?entry :isoform /:binaryInteraction /:evidence ?ev1.
+  ?ev1 :assignedBy source:ENYO.
+  ?ev1 :quality :SILVER.
+}

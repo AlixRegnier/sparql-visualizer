@@ -1,0 +1,13 @@
+#id:NXQ_09037
+#title:Check there are no entries with glycosylation site annotations with evidence NOT from UniProt, neXtProt or GlyConnect
+#comment:neXtProt MDATA
+#tags:QC,provenance,glycosylation,sequence
+#acs:
+#count:0
+#time:0.421
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :glycosylationSite /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot, source:NextProt, source:GlyConnect))
+}

@@ -1,0 +1,13 @@
+#id:NXQ_00299
+#title:Proteins interacting with small molecules according to DrugBank
+#comment:
+#tags:small molecule interaction,snorql-only,tutorial
+#acs:P0DM35,Q13873,Q96S37
+#count:3137
+
+select distinct ?entry (group_concat(distinct str(?lbl); SEPARATOR = ";") as ?mol) where {
+  ?entry :isoform / :smallMoleculeInteraction / :interactant ?ref . 
+  ?ref :provenance db:DrugBank. 
+  ?ref rdfs:label ?lbl. 
+}
+group by ?entry

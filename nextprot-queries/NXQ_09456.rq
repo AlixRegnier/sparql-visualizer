@@ -1,0 +1,15 @@
+#id:NXQ_09456
+#title:Check there are no entries with a ptm info annotation referring to acetylation that do not have the keyword Acetylation (KW-0007)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.892
+
+select distinct ?entry where {  # Include ?text if result is not 0 to identify problem site
+  ?entry :isoform ?iso.
+  ?iso :ptmInfo /rdfs:comment ?text.
+  filter(contains(?text,"acetylat")). # Finds acetylated and acetylation
+  filter not exists {?iso :ptmInfo /:negativeEvidence ?negev} # No negative annotations from neXtProt
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0007.}  
+  filter (?entry not in (entry:NX_P05067, entry:NX_P19419 )) # Exceptions to rule (not acetylated)
+}

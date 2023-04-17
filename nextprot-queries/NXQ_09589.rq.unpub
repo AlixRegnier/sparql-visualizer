@@ -1,0 +1,10 @@
+#id:NXQ_09589
+#title:Check there are no entries with the Swiss-Prot keyword G0/G1 host cell cycle checkpoint dysregulation by virus (KW-1077)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.762
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1077.
+}

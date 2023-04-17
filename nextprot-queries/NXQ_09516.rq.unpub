@@ -1,0 +1,10 @@
+#id:NXQ_09516
+#title:Check there are no entries with the Swiss-Prot keyword Chloride channel impairing toxin (KW-1265)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.786
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1265.
+}

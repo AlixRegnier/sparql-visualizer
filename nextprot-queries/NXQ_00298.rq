@@ -1,0 +1,12 @@
+#id:NXQ_00298
+#title:Recommended isoform names for MSH6
+#tags:isoforms,snorql-only,tutorial
+#count:4
+#time:
+
+select distinct ?iso ?name where {
+  entry:NX_P52701 :isoform ?iso. # MSH6 entry
+  ?iso :recommendedName ?name_entity .
+  ?name_entity a :IsoformName; rdfs:label ?name.
+}
+order by asc(?iso)

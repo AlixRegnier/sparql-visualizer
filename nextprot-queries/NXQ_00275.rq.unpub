@@ -1,0 +1,27 @@
+#id:NXQ_00275
+#title:Proteins targeted by chloroquine and their GOLD binary interactions with other human proteins
+#comment:Federated query with DrugBank
+#tags:drug,federated query,PPI,quality,snorql-only
+#acs:P01375,P69905,P09210 
+#count:23 
+#time:1
+
+PREFIX drugbank: <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugbank/>
+
+select distinct ?entry ?gn1 ?interactant ?gn2 where {
+    service <http://wifo5-03.informatik.uni-mannheim.de/drugbank/sparql>{
+        ?drug_uri a drugbank:drugs .
+        ?drug_uri rdfs:label ?label .
+        filter regex(?label, "Chloroquine", "i"). # targeted by chloroquine
+        ?drug_uri drugbank:target ?target.
+        ?target drugbank:swissprotPage ?unipage.
+    }
+    ?entry :gene /:name ?gn1.
+    ?entry :swissprotPage ?unipage.
+    ?entry :isoform ?iso.
+    ?entry :isoform/:binaryInteraction ?interaction.
+    ?interaction :interactant ?interactant; :quality :GOLD. # GOLD quality interaction
+    ?interactant :gene /:name ?gn2.
+    filter not exists { ?interactant a :Xref . }
+    filter(?interactant != ?entry) # remove self-interacting proteins
+}

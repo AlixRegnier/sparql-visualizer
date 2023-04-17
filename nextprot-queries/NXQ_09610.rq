@@ -1,0 +1,13 @@
+#id:NXQ_09610
+#title:Check there are no entries with GO molecular function annotations with evidence having the evidence code HMP and quality GOLD
+#comment: ECO:0007001 inferred from high throughput mutant phenotype (HMP)
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.778
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0007001.
+  ?ev1 :quality :GOLD.
+}

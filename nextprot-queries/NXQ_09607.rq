@@ -1,0 +1,13 @@
+#id:NXQ_09607
+#title:Check there are no entries with GO cellular component annotations with evidence having the evidence code HMP and the quality GOLD
+#comment: ECO:0007001 inferred from high throughput mutant phenotype (HMP)
+#tags:QC,quality,evidence,cellular component
+#acs:
+#count:0
+#time:0.824
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0007001.
+  ?ev1 :quality :GOLD.
+}

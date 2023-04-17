@@ -1,0 +1,14 @@
+#id:NXQ_09671
+#title:Check there are no entries with expression profile annotations with evidence from RNA-seq which are NOT from HPA or Bgee
+#tags:QC,provenance,ECO
+#acs:
+#count:0
+#time:30.638
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :expressionProfile /:evidence ?ev.
+  ?ev :evidenceCode cv:ECO_0000295. # RNA-seq
+  ?ev :assignedBy ?src.
+  filter ( ?src not in (source:Human_protein_atlas,source:Bgee))
+}

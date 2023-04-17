@@ -1,0 +1,12 @@
+#id:NXQ_09356
+#title:Check there are no entries with modified residue annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,PTM
+#acs:
+#count:0
+#time:0.717
+
+select distinct ?entry where {
+  ?entry :isoform /:modifiedResidue /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

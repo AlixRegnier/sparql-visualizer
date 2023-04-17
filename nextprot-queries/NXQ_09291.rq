@@ -1,0 +1,13 @@
+#id:NXQ_09291
+#title:Check there are no entries with pathway annotations from KEGG Pathway for which the evidence code is NOT curator inference used in manual assertion
+#tags:QC,evidence,ECO,pathway
+#acs:
+#count:0
+#time:0.718
+
+select distinct ?entry  where {
+  ?entry :isoform /:pathway /:evidence ?ev1.
+  ?ev1 :assignedBy source:KEGG_PTW.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000305))
+}

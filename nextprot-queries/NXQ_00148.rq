@@ -1,0 +1,22 @@
+#id:NXQ_00148
+#title:Variants with normal "ubiquitin-protein transferase activity" and decreased or increased binding to UBE2D1 (example: BRCA1-p.Ile89Thr)
+#tags:enzyme,function,phenotype,PPI,variant,snorql-only,tutorial
+#acs:NX_P38398
+#count:47
+#time:10
+
+SELECT distinct ?pfname ?impact_on_ubi_trsfrt_activity ?impact_on_binding_UBE2D1 WHERE {
+  values (?ubi_trsfrt_activity ?no_impact ?UBE2D1 ?impact) 
+  { (cv:GO_0004842 cv:ME_0000003 entry:NX_P51668 cv:ME_0000002) }
+  ?pf a :Proteoform .
+  ?pf rdfs:label ?pfname .
+  ?pf :phenotypicVariation ?pv1 .
+  ?pv1 :impactedObject / :term  ?ubi_trsfrt_activity  .
+  ?pv1 :term  ?no_impact .
+  ?no_impact rdfs:label ?impact_on_ubi_trsfrt_activity .
+  ?pf :phenotypicVariation ?pv2 .
+  ?pv2 :impactedObject / :interactant ?UBE2D1 .
+  ?pv2 :term ?sub_impact .
+  ?sub_impact :childOf ?impact .
+  ?sub_impact rdfs:label ?impact_on_binding_UBE2D1 .
+}

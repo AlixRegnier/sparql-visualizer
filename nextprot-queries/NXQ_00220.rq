@@ -1,0 +1,11 @@
+#id:NXQ_00220
+#title:Proteins located on chromosome MT (mitochondrial) coded by a gene located on the plus strand
+#tags:chromosomal location,tutorial
+#acs:NX_P00403,...
+#count:14
+#time:0.3
+
+select distinct ?entry where {
+  ?entry :gene ?gene .
+  ?gene :chromosome "MT"^^xsd:string; :strand "1"^^xsd:string .
+ }

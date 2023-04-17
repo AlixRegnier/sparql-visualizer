@@ -1,0 +1,10 @@
+#id:NXQ_09543
+#title:Check there are no entries with the Swiss-Prot keyword Cytokinin biosynthesis (KW-0203)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.936
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0203.
+}

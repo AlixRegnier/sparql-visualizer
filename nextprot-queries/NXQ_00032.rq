@@ -1,0 +1,15 @@
+#id:NXQ_00032
+#title:Proteins with a coiled coil region and that are involved in transcription but do not contain a bZIP domain
+#tags:domain,function,region,tutorial
+#acs:Q7Z5H3, Q96KG9, Q6NZI2, ...
+#count:328
+#time:0.3
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :function ?func .
+  ?func :term / :childOf  cv:GO_0006351. # Transcription
+  filter not exists {?func :negativeEvidence ?negev. } # no negative evidence
+  ?iso :region/rdf:type :CoiledCoilRegion.
+  filter not exists { ?iso :region/:term cv:DO-00078 }  # Bzip domain
+}

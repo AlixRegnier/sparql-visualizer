@@ -1,0 +1,12 @@
+#id:NXQ_09613
+#title:Check there are no entries with subcellular location note annotations from HPA for which there is no subcellular location annotation from HPA
+#tags:QC,HPA
+#acs:
+#count:0
+#time:1.453
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :subcellularLocationNote /:evidence /:assignedBy source:Human_protein_atlas.
+  filter not exists {?iso :subcellularLocation /:evidence /:assignedBy source:Human_protein_atlas}
+}
