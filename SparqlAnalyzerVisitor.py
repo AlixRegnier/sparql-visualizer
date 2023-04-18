@@ -169,9 +169,9 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
         return super().visitPrefixDecl(ctx)
 
     def visitSelectClause(self, ctx:SparqlParser.SelectClauseContext):
-        print("Oh, a SELECT clause! {}".format(ctx) )
+        #print("Oh, a SELECT clause! {}".format(ctx) )
         for currentVar in ctx.var():
-            print("Projection variable: {}".format(currentVar.getText()))
+            #print("Projection variable: {}".format(currentVar.getText()))
             self.projectionVariables.append(currentVar.getText())
         return super().visitSelectClause(ctx)
 
@@ -241,25 +241,25 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
                     self._processTriplesSameSubject(currentSubjectIdent, currentProperty.pathElt().pathPrimary().path(), objectContext, edgeStyle)
 
     def visitTriplesSameSubjectPath(self, ctx:SparqlParser.TriplesSameSubjectPathContext):
-        print("Oh, a triplesSameSubjectPath! {}".format(ctx) )
+        #print("Oh, a triplesSameSubjectPath! {}".format(ctx) )
         #print("    {}".format(dir(ctx)))
-        print("    Text: {}".format(ctx.getText()))
+        #print("    Text: {}".format(ctx.getText()))
         #print("    getChildCount(): {}".format(ctx.getChildCount()))
-        print("    subject (VarOrTerm): {}".format(ctx.varOrTerm().getText()))
+        #print("    subject (VarOrTerm): {}".format(ctx.varOrTerm().getText()))
         subjectIdent = self._getGraphNodeIdent(ctx.varOrTerm().getText())
         currentChildIndex = 0
         while currentChildIndex < ctx.propertyListPathNotEmpty().getChildCount():
             currentChild = ctx.propertyListPathNotEmpty().getChild(currentChildIndex)
-            print("    child {}: {}".format(currentChildIndex, type(currentChild)))
+            #print("    child {}: {}".format(currentChildIndex, type(currentChild)))
             if isinstance(currentChild, SparqlParser.VerbPathContext):
                 nbAlternatives = len(currentChild.path().pathAlternative().pathSequence())
-                print("      property: {} ({} alternatives)".format(currentChild.getText(), nbAlternatives))
+                #print("      property: {} ({} alternatives)".format(currentChild.getText(), nbAlternatives))
                 if nbAlternatives > 1:
                     self._processTriplesSameSubject(subjectIdent, currentChild.path(), ctx.propertyListPathNotEmpty().getChild(currentChildIndex+1), edgeStyle="dashed")
                 else:
                     self._processTriplesSameSubject(subjectIdent, currentChild.path(), ctx.propertyListPathNotEmpty().getChild(currentChildIndex+1), edgeStyle="solid")
             if isinstance(currentChild, SparqlParser.VerbSimpleContext):
-                print("      property: {}".format(currentChild.getText()))
+                #print("      property: {}".format(currentChild.getText()))
                 propertyIdent = currentChild.getText()
                 # FIXME: create edge to next child
                 currentObjectIndex = 0
@@ -274,17 +274,17 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
                             self._currentGraph.edge(subjectIdent, objectIdent, label=propertyIdent)
                     currentObjectIndex += 1
             currentChildIndex += 1
-        print()
+        #print()
         return super().visitTriplesSameSubjectPath(ctx)
 
     def _processNumericExpression(self, numericExpressionContext, graph=None, fontcolor="black"):
         for currentMultiplicativeExpression in numericExpressionContext.additiveExpression().multiplicativeExpression():
             for currentUnaryExpression in currentMultiplicativeExpression.unaryExpression():
                 currentPrimaryExpressionChild = currentUnaryExpression.primaryExpression().getChild(0)
-                print("          {}".format(type(currentPrimaryExpressionChild)))
+                #print("          {}".format(type(currentPrimaryExpressionChild)))
                 # grammar primaryExpression:  brackettedExpression | builtInCall | iriOrFunction | rdfLiteral | numericLiteral | booleanLiteral | var
                 if isinstance(currentPrimaryExpressionChild, SparqlParser.BrackettedExpressionContext):
-                    print("          TODO BrackettedExpressionContext")
+                    pass#print("          TODO BrackettedExpressionContext")
                     # TODO: re-engineer as recursive function?
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.VarContext):
                     origNodeName = currentPrimaryExpressionChild.getChild(0).getText()
@@ -300,23 +300,23 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
                     functionArgumentNodeIdent = self._getGraphNodeIdent(currentPrimaryExpressionChild.getChild(2).getText())
                     if functionArgumentNodeIdent != None:
                         if graph is None:
-                            self._g.edge(functionNodeIdent, functionArgumentNodeIdent, arrowhead="none", color="grey", style="dotted") 
-                        else:
-                            graph.edge(functionNodeIdent, functionArgumentNodeIdent, arrowhead="none", color="grey", style="dotted") 
+                            graph = self._g
+                        graph.edge(functionNodeIdent, functionArgumentNodeIdent, arrowhead="none", color="grey", style="dotted") 
+                        
                     return functionNodeIdent
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.IriOrFunctionContext):
-                    print("          TODO IriOrFunctionContext")
+                    pass#print("          TODO IriOrFunctionContext")
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.RdfLiteralContext):
-                    print("          TODO RdfLiteralContext")
+                    pass#print("          TODO RdfLiteralContext")
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.NumericLiteralContext):
-                    print("          TODO NumericLiteralContext")
+                    pass#print("          TODO NumericLiteralContext")
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.BooleanLiteralContext):
-                    print("          TODO BooleanLiteralContext")
+                    pass#print("          TODO BooleanLiteralContext")
                 elif isinstance(currentPrimaryExpressionChild, SparqlParser.VarContext):
-                    print("          TODO VarContext")
+                    pass#print("          TODO VarContext")
 
     def visitFilterClause(self, ctx:SparqlParser.FilterClauseContext):
-        print("Oh, a filterClause! {}".format(ctx) )
+        pass#print("Oh, a filterClause! {}".format(ctx) )
         with self._currentGraph.subgraph(name=self._getNewClusterIdent()) as subcluster:
             #subcluster.attr(label='FILTER')
             subcluster.attr(style='dashed')
@@ -339,9 +339,9 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
                             subcluster.edge(operand1NodeIdent, operatorNodeIdent, style="solid", color="grey")
                             subcluster.edge(operatorNodeIdent, operand2NodeIdent, style="solid", color="grey")
                         else:
-                            print("      TODO: handle numericExpression IN expressionList and numericExpression NOT IN expressionList")
+                            pass#print("      TODO: handle numericExpression IN expressionList and numericExpression NOT IN expressionList")
             elif isinstance(currentConstraint, SparqlParser.BuiltInCallContext):
-                print("  TODO BuiltInCallContext")
+                #print("  TODO BuiltInCallContext")
                 constraintChild = currentConstraint.getChild(0)
                 if isinstance(constraintChild, SparqlParser.NotExistsFuncContext):
                     #print("///// DEBUG ///// {}".format(dir(constraintChild)))
@@ -351,14 +351,14 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
                     self._previousGraph = self._currentGraph
                     self._currentGraph = subcluster
                     for currentGroupGraphPatternSubChild in constraintChild.groupGraphPattern().groupGraphPatternSub().getChildren():
-                        print("    {}".format(type(currentGroupGraphPatternSubChild)))
+                        #print("    {}".format(type(currentGroupGraphPatternSubChild)))
                         self.visitTriplesBlock(currentGroupGraphPatternSubChild)
                     self._currentGraph = backupCurrentGraph
                     self._previousGraph = backupPreviousGraph
             elif isinstance(currentConstraint, SparqlParser.FunctionCallContext):
-                print("  TODO FunctionCallContext")
+                pass#print("  TODO FunctionCallContext")
         #print("///// DEBUG ///// {}".format(type(super().visitFilterClause(ctx))))
-        print()
+        #print()
         #return super().visitFilterClause(ctx)
         return
 
@@ -399,12 +399,11 @@ class SparqlAnalyzerVisitor(SparqlVisitor):
  
 def main(argv):
     input_stream = FileStream(argv[1])
-    #TODO: Add intermediate FileStream to change keyword case
     lexer = SparqlLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = SparqlParser(stream)
     tree = parser.statement()
-
+    
     visitor = SparqlAnalyzerVisitor()
     output = visitor.visit(tree)
     print(output)
