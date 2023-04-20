@@ -7,27 +7,236 @@ from SparqlParser import SparqlParser
 from SparqlListener import SparqlListener
 
 from collections import deque
+from graphviz import *
+
+class Color:
+    DEFAULT = "blue"
+    PROJECTION = "red"
+    BLANK = "black"
+    VALUE = "green3"
+
+class Shape:
+    DEFAULT = "ellipse"
+    PROJECTION = "ellipse"
+    BLANK = "ellipse"
+    VALUE = "box"
+
+class Node:
+    counter = 0
+    def __init__(self, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT):
+        if name is None:
+            Node.counter += 1
+            name = f"node{Node.counter}"
+
+        self.attributes = {"name" : name, "label" : label, "shape" : shape, "color" : color, "fontcolor" : fontcolor}
+        self.edges = set()
+
+    def addEdge(self, node):
+        self.edges.add(node)
+
+    def getAttribute(self, attr):
+        if attr in self.attributes:
+            return self.attributes[attr]
+        raise ValueError(f"Invalid attribute: {attr}")
+        
+    def setAttribute(self, attr, value):
+        if attr in self.attributes:
+            self.attributes[attr] = value
+        else:
+            raise ValueError(f"Invalid attribute: {attr}")
+
+class DotGenerator:
+    def __init__(self, directed = False):
+        self.graph = Digraph() if directed else Graph()
+        self.directed = directed
+        self.nodes = dict()
+        self.blanknodes = []
+        self.counter = 0
+
+    def nextCount(self):
+        self.counter += 1
+        return self.counter
+    
+    def addNode(self, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT):
+        if name is None:
+            self.blanknodes.append(Node(label = label, shape = Shape.BLANK, color = Color.BLANK, fontcolor = Color.BLANK))
+            return self.blanknodes[-1].getAttribute("name")
+        
+        self.nodes[name] = Node(name=hex(hash(name)), label = label, shape = shape, color = color, fontcolor = fontcolor)
+        return hex(hash(name))
+
+    def setEdgesFromTSSes(self, tsses):
+        for tss in tsses:
+            sNode = self.addNode(tss.subject, tss.subject)
+            for path in tss.paths:
+                bNode = sNode
+                for i in range(len(path)-1):
+                    if i == len(path) - 2:
+                        if path[i+1].startswith('?'):
+                            self.graph.edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
+                        else:
+                            self.graph.edge(bNode, self.addNode(path[i+1], path[i+1], shape = Shape.VALUE, color = Color.VALUE, fontcolor = Color.VALUE), label=path[i])
+                    else:
+                        tmp, bNode = bNode, self.addNode()
+                        self.graph.edge(tmp, bNode, label=path[i])
+
+    def setNodesColor(self, labels, color):
+        for name in labels:
+            if name not in self.nodes:
+                print(f"WARNING: '{name}' was given as key but is invalid")
+            else:
+                self.nodes[name].setAttribute("color", color)
+                self.nodes[name].setAttribute("fontcolor", color)
+
+    def save(self, filename):
+        for n in self.nodes:
+            self.graph.node(**self.nodes[n].attributes)
+
+        for n in self.blanknodes:
+            self.graph.node(**n.attributes)
+
+        self.graph.save(filename)
+
+    def addSubgraph(self):
+        pass
+    
+class Select:
+    def __init__(self):
+        self.projections = set()
+        self.vars = set()
+        self.subselects = []
+        self.tss = []
+        self.filters = []
+        self.aliases = dict()
+        #self.modifiers = [] #maybe class if taken into account later
+
+    def addSubSelect(self, s):
+        self.subselects.append(s)
+
+    def addFilter(self, f):
+        self.filters.append(f)
+
+    def addVar(self, v):
+        if v != "":
+            self.vars.add(v)
+
+    def addVars(self, vs):
+        self.vars |= set(vs) - {""}
+
+    def addTSS(self, tss):
+        self.tss.append(tss)
+
+    def getProjections(self):
+        if len(self.projections) == 0:
+            return self.vars
+        else:
+            a = set()
+            for p in self.projections:
+                if p in self.aliases:
+                    a.add(self.aliases[p])
+        return self.projections | a
+    
+    def setAlias(self, a1, a2):
+        self.aliases[a1] = a2
+        self.aliases[a2] = a1
+
+    def setProjections(self, ps):
+        self.projections = set(ps)
+        self.addVars(ps)
+
+    def __setEdges(self, d):
+        d.setEdgesFromTSSes(self.tss) 
+        for s in self.subselects:
+            s.__setEdges(d)
+
+    def draw(self, filename):
+        d = DotGenerator(True)
+        self.__setEdges(d)
+        d.setNodesColor(self.getProjections(), Color.PROJECTION)
+        d.save(filename)
+
+class Filter:
+    def __init__(self):
+        self.negate = False
+        self.tss = []
+
+    def setNegate(self, n):
+        self.negate = n
+
+    def addTSS(self, tss):
+        self.tss.append(tss)
+
+class TSS:
+    def __init__(self):
+        self.subject = None
+        self.__neednewpath = True
+        self.paths = [] #List of paths. A path is a list of verbPaths with a value as its end. Between each relation, there is a virtual blank node
+
+    def addToPath(self, value, isVerbPath):
+        if self.subject is None:
+            self.subject = value
+        else:
+            #Handle 'a' alias for 'rdf:type'
+            if value == "a":
+                value = "rdf:type"
+
+            if self.__neednewpath:
+                self.paths.append([])
+                self.__neednewpath = False
+
+            self.paths[-1].append(value)
+            if not isVerbPath:            
+                self.__neednewpath = True
+
+    def __str__(self):
+        return f"{self.subject}\n{self.paths}"
+
+
 # This class defines a complete listener for a parse tree produced by SparqlParser.
 class SAL(SparqlListener):
-    def __init__(self):
-        self.pile = deque()
+    
+    def __init__(self, verbose = False):
+        #Flags
+        self.isVerbPath = False
+        self.alias = False
+        self.verbose = verbose
+
+        #Dicts
+        self.prefixNamespace = dict()
+        self.prefixCurie = dict()
+
+        #Logic
+        self.mainselects = []
+        self.selects = deque()
+        self.tsser = deque()
+        self.currentTSS = None
+        self.currentFilter = None
+        self.currentAlias = None
+        self.__ctx = None
         self.indent = 0
-
-        self.projections = set()
-
+    
     def enter(self, ctx):
-        print(" "*self.indent, ctx.__class__, sep="")
-        if ctx.__class__ is SparqlParser.SelectClauseContext:
-            print(ctx.getText())
-        self.pile.append(ctx)
-        self.indent += 1
+        if self.verbose:
+            print(" "*self.indent, ">", ctx.__class__.__name__[:-7], sep="")
+            self.indent += 1
+
+        self.__ctx = ctx
         pass
 
-    def exit(self):
-        print(" "*self.indent, self.pile.pop().__class__, sep="")
-        self.indent -= 1
+    def exit(self, ctx):
+        if self.verbose: #Convert 'a' to 'rdf:type'
+            if self.__ctx == ctx:
+                print(ctx.getText())
+            print(" "*(self.indent-1), "<", ctx.__class__.__name__[:-7], sep="")
+            self.indent -= 1
+
+        if self.currentTSS and self.__ctx == ctx:
+            self.currentTSS.addToPath(ctx.getText(), self.isVerbPath)
         pass
 
+    def getMainSelects(self):
+        return self.mainselects[:]
+    
     # Enter a parse tree produced by SparqlParser#statement.
     def enterStatement(self, ctx:SparqlParser.StatementContext):
         self.enter(ctx)
@@ -35,18 +244,17 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#statement.
     def exitStatement(self, ctx:SparqlParser.StatementContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#query.
     def enterQuery(self, ctx:SparqlParser.QueryContext):
-        
         self.enter(ctx)
         pass
 
     # Exit a parse tree produced by SparqlParser#query.
     def exitQuery(self, ctx:SparqlParser.QueryContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#prologue.
@@ -56,7 +264,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#prologue.
     def exitPrologue(self, ctx:SparqlParser.PrologueContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#baseDecl.
@@ -66,49 +274,74 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#baseDecl.
     def exitBaseDecl(self, ctx:SparqlParser.BaseDeclContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#prefixDecl.
     def enterPrefixDecl(self, ctx:SparqlParser.PrefixDeclContext):
+        """
+        Store in dictionary prefix couples (value-key, key-value)
+        """
         self.enter(ctx)
+        self.prefixNamespace[ctx.PNAME_NS()] = ctx.IRIREF()
+        self.prefixCurie[ctx.IRIREF()] = ctx.PNAME_NS()
         pass
 
     # Exit a parse tree produced by SparqlParser#prefixDecl.
     def exitPrefixDecl(self, ctx:SparqlParser.PrefixDeclContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#selectQuery.
     def enterSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
-        
         self.enter(ctx)
+       
+        s = Select()
+        if self.selects:
+            self.selects[-1].addSubSelect(s)
+        else:
+            self.mainselects.append(s)
+
+        self.selects.append(s)
+        self.tsser.append(s)
         pass
 
     # Exit a parse tree produced by SparqlParser#selectQuery.
     def exitSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
-        self.exit()
+        self.exit(ctx)
+        self.selects.pop()
+        self.tsser.pop()
         pass
 
     # Enter a parse tree produced by SparqlParser#subSelect.
     def enterSubSelect(self, ctx:SparqlParser.SubSelectContext):
         self.enter(ctx)
+        s = Select()
+        if self.selects:
+            self.selects[-1].addSubSelect(s)
+        else:
+            self.mainselects.append(s)
+
+        self.selects.append(s)
+        self.tsser.append(s)
         pass
 
     # Exit a parse tree produced by SparqlParser#subSelect.
     def exitSubSelect(self, ctx:SparqlParser.SubSelectContext):
-        self.exit()
+        self.exit(ctx)
+        self.selects.pop()
+        self.tsser.pop()
         pass
 
     # Enter a parse tree produced by SparqlParser#selectClause.
     def enterSelectClause(self, ctx:SparqlParser.SelectClauseContext):
         self.enter(ctx)
-        self.projections |= set([v.getText() for v in ctx.var()])
         pass
 
     # Exit a parse tree produced by SparqlParser#selectClause.
     def exitSelectClause(self, ctx:SparqlParser.SelectClauseContext):
-        self.exit()
+        self.selects[-1].setProjections([v.getText() for v in ctx.var()])
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#constructQuery.
@@ -118,7 +351,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#constructQuery.
     def exitConstructQuery(self, ctx:SparqlParser.ConstructQueryContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#describeQuery.
@@ -128,7 +361,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#describeQuery.
     def exitDescribeQuery(self, ctx:SparqlParser.DescribeQueryContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#askQuery.
@@ -138,7 +371,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#askQuery.
     def exitAskQuery(self, ctx:SparqlParser.AskQueryContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#datasetClause.
@@ -148,7 +381,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#datasetClause.
     def exitDatasetClause(self, ctx:SparqlParser.DatasetClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#defaultGraphClause.
@@ -158,7 +391,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#defaultGraphClause.
     def exitDefaultGraphClause(self, ctx:SparqlParser.DefaultGraphClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#namedGraphClause.
@@ -168,7 +401,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#namedGraphClause.
     def exitNamedGraphClause(self, ctx:SparqlParser.NamedGraphClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#sourceSelector.
@@ -178,18 +411,17 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#sourceSelector.
     def exitSourceSelector(self, ctx:SparqlParser.SourceSelectorContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#whereClause.
     def enterWhereClause(self, ctx:SparqlParser.WhereClauseContext):
-        
         self.enter(ctx)
         pass
 
     # Exit a parse tree produced by SparqlParser#whereClause.
     def exitWhereClause(self, ctx:SparqlParser.WhereClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#solutionModifier.
@@ -199,7 +431,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#solutionModifier.
     def exitSolutionModifier(self, ctx:SparqlParser.SolutionModifierContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#groupClause.
@@ -209,7 +441,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#groupClause.
     def exitGroupClause(self, ctx:SparqlParser.GroupClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#groupCondition.
@@ -219,7 +451,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#groupCondition.
     def exitGroupCondition(self, ctx:SparqlParser.GroupConditionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#havingClause.
@@ -229,7 +461,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#havingClause.
     def exitHavingClause(self, ctx:SparqlParser.HavingClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#havingCondition.
@@ -239,7 +471,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#havingCondition.
     def exitHavingCondition(self, ctx:SparqlParser.HavingConditionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#orderClause.
@@ -249,7 +481,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#orderClause.
     def exitOrderClause(self, ctx:SparqlParser.OrderClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#orderCondition.
@@ -259,7 +491,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#orderCondition.
     def exitOrderCondition(self, ctx:SparqlParser.OrderConditionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#limitOffsetClauses.
@@ -269,7 +501,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#limitOffsetClauses.
     def exitLimitOffsetClauses(self, ctx:SparqlParser.LimitOffsetClausesContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#limitClause.
@@ -279,7 +511,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#limitClause.
     def exitLimitClause(self, ctx:SparqlParser.LimitClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#offsetClause.
@@ -289,7 +521,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#offsetClause.
     def exitOffsetClause(self, ctx:SparqlParser.OffsetClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#valuesClause.
@@ -299,7 +531,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#valuesClause.
     def exitValuesClause(self, ctx:SparqlParser.ValuesClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#update.
@@ -309,7 +541,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#update.
     def exitUpdate(self, ctx:SparqlParser.UpdateContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#update1.
@@ -319,7 +551,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#update1.
     def exitUpdate1(self, ctx:SparqlParser.Update1Context):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#load.
@@ -329,7 +561,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#load.
     def exitLoad(self, ctx:SparqlParser.LoadContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#clear.
@@ -339,7 +571,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#clear.
     def exitClear(self, ctx:SparqlParser.ClearContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#drop.
@@ -349,7 +581,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#drop.
     def exitDrop(self, ctx:SparqlParser.DropContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#create.
@@ -359,7 +591,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#create.
     def exitCreate(self, ctx:SparqlParser.CreateContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#add.
@@ -369,7 +601,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#add.
     def exitAdd(self, ctx:SparqlParser.AddContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#move.
@@ -379,7 +611,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#move.
     def exitMove(self, ctx:SparqlParser.MoveContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#copy.
@@ -389,7 +621,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#copy.
     def exitCopy(self, ctx:SparqlParser.CopyContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#insertData.
@@ -399,7 +631,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#insertData.
     def exitInsertData(self, ctx:SparqlParser.InsertDataContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#deleteData.
@@ -409,7 +641,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#deleteData.
     def exitDeleteData(self, ctx:SparqlParser.DeleteDataContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#deleteWhere.
@@ -419,7 +651,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#deleteWhere.
     def exitDeleteWhere(self, ctx:SparqlParser.DeleteWhereContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#modify.
@@ -429,7 +661,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#modify.
     def exitModify(self, ctx:SparqlParser.ModifyContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#deleteClause.
@@ -439,7 +671,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#deleteClause.
     def exitDeleteClause(self, ctx:SparqlParser.DeleteClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#insertClause.
@@ -449,7 +681,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#insertClause.
     def exitInsertClause(self, ctx:SparqlParser.InsertClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#usingClause.
@@ -459,7 +691,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#usingClause.
     def exitUsingClause(self, ctx:SparqlParser.UsingClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphOrDefault.
@@ -469,7 +701,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphOrDefault.
     def exitGraphOrDefault(self, ctx:SparqlParser.GraphOrDefaultContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphRef.
@@ -479,7 +711,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphRef.
     def exitGraphRef(self, ctx:SparqlParser.GraphRefContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphRefAll.
@@ -489,7 +721,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphRefAll.
     def exitGraphRefAll(self, ctx:SparqlParser.GraphRefAllContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#quadPattern.
@@ -499,7 +731,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#quadPattern.
     def exitQuadPattern(self, ctx:SparqlParser.QuadPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#quadData.
@@ -509,7 +741,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#quadData.
     def exitQuadData(self, ctx:SparqlParser.QuadDataContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#quads.
@@ -519,7 +751,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#quads.
     def exitQuads(self, ctx:SparqlParser.QuadsContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#quadsNotTriples.
@@ -529,7 +761,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#quadsNotTriples.
     def exitQuadsNotTriples(self, ctx:SparqlParser.QuadsNotTriplesContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesTemplate.
@@ -539,7 +771,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesTemplate.
     def exitTriplesTemplate(self, ctx:SparqlParser.TriplesTemplateContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#groupGraphPattern.
@@ -549,7 +781,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#groupGraphPattern.
     def exitGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#groupGraphPatternSub.
@@ -559,7 +791,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#groupGraphPatternSub.
     def exitGroupGraphPatternSub(self, ctx:SparqlParser.GroupGraphPatternSubContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesBlock.
@@ -569,7 +801,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesBlock.
     def exitTriplesBlock(self, ctx:SparqlParser.TriplesBlockContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphPatternNotTriples.
@@ -579,7 +811,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphPatternNotTriples.
     def exitGraphPatternNotTriples(self, ctx:SparqlParser.GraphPatternNotTriplesContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#optionalGraphPattern.
@@ -589,7 +821,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
     def exitOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphGraphPattern.
@@ -599,7 +831,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphGraphPattern.
     def exitGraphGraphPattern(self, ctx:SparqlParser.GraphGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#serviceGraphPattern.
@@ -609,7 +841,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#serviceGraphPattern.
     def exitServiceGraphPattern(self, ctx:SparqlParser.ServiceGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#bind.
@@ -619,7 +851,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#bind.
     def exitBind(self, ctx:SparqlParser.BindContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#inlineData.
@@ -629,7 +861,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#inlineData.
     def exitInlineData(self, ctx:SparqlParser.InlineDataContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#dataBlock.
@@ -639,7 +871,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#dataBlock.
     def exitDataBlock(self, ctx:SparqlParser.DataBlockContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#inlineDataOneVar.
@@ -649,7 +881,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#inlineDataOneVar.
     def exitInlineDataOneVar(self, ctx:SparqlParser.InlineDataOneVarContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#inlineDataFull.
@@ -659,7 +891,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#inlineDataFull.
     def exitInlineDataFull(self, ctx:SparqlParser.InlineDataFullContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#dataBlockValue.
@@ -669,7 +901,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#dataBlockValue.
     def exitDataBlockValue(self, ctx:SparqlParser.DataBlockValueContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#minusGraphPattern.
@@ -679,7 +911,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#minusGraphPattern.
     def exitMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
@@ -689,17 +921,22 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
     def exitGroupOrUnionGraphPattern(self, ctx:SparqlParser.GroupOrUnionGraphPatternContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#filterClause.
     def enterFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.enter(ctx)
+        self.currentFilter = Filter()
+        self.selects[-1].addFilter(self.currentFilter)
+        self.tsser.append(self.currentFilter)
         pass
 
     # Exit a parse tree produced by SparqlParser#filterClause.
     def exitFilterClause(self, ctx:SparqlParser.FilterClauseContext):
-        self.exit()
+        self.exit(ctx)
+        self.tsser.pop()
+        self.currentFilter = None #Maybe to remove
         pass
 
     # Enter a parse tree produced by SparqlParser#constraint.
@@ -709,7 +946,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#constraint.
     def exitConstraint(self, ctx:SparqlParser.ConstraintContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#functionCall.
@@ -719,7 +956,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#functionCall.
     def exitFunctionCall(self, ctx:SparqlParser.FunctionCallContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#argList.
@@ -729,7 +966,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#argList.
     def exitArgList(self, ctx:SparqlParser.ArgListContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#expressionList.
@@ -739,7 +976,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#expressionList.
     def exitExpressionList(self, ctx:SparqlParser.ExpressionListContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#constructTemplate.
@@ -749,7 +986,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#constructTemplate.
     def exitConstructTemplate(self, ctx:SparqlParser.ConstructTemplateContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#constructTriples.
@@ -759,7 +996,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#constructTriples.
     def exitConstructTriples(self, ctx:SparqlParser.ConstructTriplesContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesSameSubject.
@@ -769,7 +1006,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesSameSubject.
     def exitTriplesSameSubject(self, ctx:SparqlParser.TriplesSameSubjectContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#propertyList.
@@ -779,7 +1016,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#propertyList.
     def exitPropertyList(self, ctx:SparqlParser.PropertyListContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#propertyListNotEmpty.
@@ -789,7 +1026,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#propertyListNotEmpty.
     def exitPropertyListNotEmpty(self, ctx:SparqlParser.PropertyListNotEmptyContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#verb.
@@ -799,7 +1036,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#verb.
     def exitVerb(self, ctx:SparqlParser.VerbContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#objectList.
@@ -809,7 +1046,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#objectList.
     def exitObjectList(self, ctx:SparqlParser.ObjectListContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#objectClause.
@@ -819,17 +1056,20 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#objectClause.
     def exitObjectClause(self, ctx:SparqlParser.ObjectClauseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesSameSubjectPath.
     def enterTriplesSameSubjectPath(self, ctx:SparqlParser.TriplesSameSubjectPathContext):
         self.enter(ctx)
+        self.currentTSS = TSS()
+        self.tsser[-1].addTSS(self.currentTSS)
         pass
 
     # Exit a parse tree produced by SparqlParser#triplesSameSubjectPath.
     def exitTriplesSameSubjectPath(self, ctx:SparqlParser.TriplesSameSubjectPathContext):
-        self.exit()
+        self.exit(ctx)
+        self.currentTSS = None #May remove
         pass
 
     # Enter a parse tree produced by SparqlParser#propertyListPath.
@@ -839,7 +1079,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#propertyListPath.
     def exitPropertyListPath(self, ctx:SparqlParser.PropertyListPathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#propertyListPathNotEmpty.
@@ -849,17 +1089,19 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#propertyListPathNotEmpty.
     def exitPropertyListPathNotEmpty(self, ctx:SparqlParser.PropertyListPathNotEmptyContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#verbPath.
     def enterVerbPath(self, ctx:SparqlParser.VerbPathContext):
         self.enter(ctx)
+        self.isVerbPath = True
         pass
 
     # Exit a parse tree produced by SparqlParser#verbPath.
     def exitVerbPath(self, ctx:SparqlParser.VerbPathContext):
-        self.exit()
+        self.exit(ctx)
+        self.isVerbPath = False
         pass
 
     # Enter a parse tree produced by SparqlParser#verbSimple.
@@ -869,7 +1111,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#verbSimple.
     def exitVerbSimple(self, ctx:SparqlParser.VerbSimpleContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#objectListPath.
@@ -879,7 +1121,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#objectListPath.
     def exitObjectListPath(self, ctx:SparqlParser.ObjectListPathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#objectPath.
@@ -889,7 +1131,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#objectPath.
     def exitObjectPath(self, ctx:SparqlParser.ObjectPathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#path.
@@ -899,17 +1141,17 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#path.
     def exitPath(self, ctx:SparqlParser.PathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathAlternative.
     def enterPathAlternative(self, ctx:SparqlParser.PathAlternativeContext):
         self.enter(ctx)
-        pass
+        pass    
 
     # Exit a parse tree produced by SparqlParser#pathAlternative.
     def exitPathAlternative(self, ctx:SparqlParser.PathAlternativeContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathSequence.
@@ -919,7 +1161,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathSequence.
     def exitPathSequence(self, ctx:SparqlParser.PathSequenceContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathElt.
@@ -929,7 +1171,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathElt.
     def exitPathElt(self, ctx:SparqlParser.PathEltContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathEltOrInverse.
@@ -939,7 +1181,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathEltOrInverse.
     def exitPathEltOrInverse(self, ctx:SparqlParser.PathEltOrInverseContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathMod.
@@ -949,7 +1191,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathMod.
     def exitPathMod(self, ctx:SparqlParser.PathModContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathPrimary.
@@ -959,7 +1201,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathPrimary.
     def exitPathPrimary(self, ctx:SparqlParser.PathPrimaryContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathNegatedPropertySet.
@@ -969,7 +1211,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathNegatedPropertySet.
     def exitPathNegatedPropertySet(self, ctx:SparqlParser.PathNegatedPropertySetContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#pathOneInPropertySet.
@@ -979,7 +1221,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathOneInPropertySet.
     def exitPathOneInPropertySet(self, ctx:SparqlParser.PathOneInPropertySetContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesNode.
@@ -989,7 +1231,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesNode.
     def exitTriplesNode(self, ctx:SparqlParser.TriplesNodeContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#blankNodePropertyList.
@@ -1000,7 +1242,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#blankNodePropertyList.
     def exitBlankNodePropertyList(self, ctx:SparqlParser.BlankNodePropertyListContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesNodePath.
@@ -1010,18 +1252,17 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesNodePath.
     def exitTriplesNodePath(self, ctx:SparqlParser.TriplesNodePathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#blankNodePropertyListPath.
     def enterBlankNodePropertyListPath(self, ctx:SparqlParser.BlankNodePropertyListPathContext):
-        
         self.enter(ctx)
         pass
 
     # Exit a parse tree produced by SparqlParser#blankNodePropertyListPath.
     def exitBlankNodePropertyListPath(self, ctx:SparqlParser.BlankNodePropertyListPathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#collection.
@@ -1031,7 +1272,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#collection.
     def exitCollection(self, ctx:SparqlParser.CollectionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#collectionPath.
@@ -1041,7 +1282,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#collectionPath.
     def exitCollectionPath(self, ctx:SparqlParser.CollectionPathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphNode.
@@ -1051,7 +1292,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphNode.
     def exitGraphNode(self, ctx:SparqlParser.GraphNodeContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#graphNodePath.
@@ -1061,7 +1302,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphNodePath.
     def exitGraphNodePath(self, ctx:SparqlParser.GraphNodePathContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#varOrTerm.
@@ -1071,7 +1312,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#varOrTerm.
     def exitVarOrTerm(self, ctx:SparqlParser.VarOrTermContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#varOrIri.
@@ -1081,7 +1322,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#varOrIri.
     def exitVarOrIri(self, ctx:SparqlParser.VarOrIriContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#var.
@@ -1091,7 +1332,15 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#var.
     def exitVar(self, ctx:SparqlParser.VarContext):
-        self.exit()
+        self.exit(ctx)
+        self.selects[-1].addVar(ctx.getText())
+        if self.alias:
+            if self.currentAlias is None:
+                self.currentAlias = ctx.getText()
+            else:
+                self.selects[-1].setAlias(ctx.getText(), self.currentAlias)
+                self.currentAlias = None
+                self.alias = False
         pass
 
     # Enter a parse tree produced by SparqlParser#graphTerm.
@@ -1101,7 +1350,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#graphTerm.
     def exitGraphTerm(self, ctx:SparqlParser.GraphTermContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#expression.
@@ -1111,7 +1360,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#expression.
     def exitExpression(self, ctx:SparqlParser.ExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#conditionalOrExpression.
@@ -1121,7 +1370,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#conditionalOrExpression.
     def exitConditionalOrExpression(self, ctx:SparqlParser.ConditionalOrExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#conditionalAndExpression.
@@ -1131,17 +1380,18 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#conditionalAndExpression.
     def exitConditionalAndExpression(self, ctx:SparqlParser.ConditionalAndExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#valueLogical.
     def enterValueLogical(self, ctx:SparqlParser.ValueLogicalContext):
         self.enter(ctx)
+        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#valueLogical.
     def exitValueLogical(self, ctx:SparqlParser.ValueLogicalContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#relationalExpression.
@@ -1151,7 +1401,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#relationalExpression.
     def exitRelationalExpression(self, ctx:SparqlParser.RelationalExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#numericExpression.
@@ -1161,7 +1411,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#numericExpression.
     def exitNumericExpression(self, ctx:SparqlParser.NumericExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#additiveExpression.
@@ -1171,7 +1421,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#additiveExpression.
     def exitAdditiveExpression(self, ctx:SparqlParser.AdditiveExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#multiplicativeExpression.
@@ -1181,7 +1431,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#multiplicativeExpression.
     def exitMultiplicativeExpression(self, ctx:SparqlParser.MultiplicativeExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#unaryExpression.
@@ -1191,7 +1441,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#unaryExpression.
     def exitUnaryExpression(self, ctx:SparqlParser.UnaryExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#primaryExpression.
@@ -1201,7 +1451,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#primaryExpression.
     def exitPrimaryExpression(self, ctx:SparqlParser.PrimaryExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#brackettedExpression.
@@ -1211,7 +1461,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#brackettedExpression.
     def exitBrackettedExpression(self, ctx:SparqlParser.BrackettedExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#builtInCall.
@@ -1221,7 +1471,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#builtInCall.
     def exitBuiltInCall(self, ctx:SparqlParser.BuiltInCallContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#regexExpression.
@@ -1231,7 +1481,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#regexExpression.
     def exitRegexExpression(self, ctx:SparqlParser.RegexExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#substringExpression.
@@ -1241,7 +1491,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#substringExpression.
     def exitSubstringExpression(self, ctx:SparqlParser.SubstringExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#strReplaceExpression.
@@ -1251,7 +1501,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#strReplaceExpression.
     def exitStrReplaceExpression(self, ctx:SparqlParser.StrReplaceExpressionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#existsFunc.
@@ -1261,17 +1511,18 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#existsFunc.
     def exitExistsFunc(self, ctx:SparqlParser.ExistsFuncContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#notExistsFunc.
     def enterNotExistsFunc(self, ctx:SparqlParser.NotExistsFuncContext):
         self.enter(ctx)
+        self.currentFilter.setNegate(True)
         pass
 
     # Exit a parse tree produced by SparqlParser#notExistsFunc.
     def exitNotExistsFunc(self, ctx:SparqlParser.NotExistsFuncContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#aggregate.
@@ -1281,7 +1532,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#aggregate.
     def exitAggregate(self, ctx:SparqlParser.AggregateContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#iriOrFunction.
@@ -1291,7 +1542,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#iriOrFunction.
     def exitIriOrFunction(self, ctx:SparqlParser.IriOrFunctionContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#rdfLiteral.
@@ -1301,7 +1552,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#rdfLiteral.
     def exitRdfLiteral(self, ctx:SparqlParser.RdfLiteralContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#numericLiteral.
@@ -1311,7 +1562,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#numericLiteral.
     def exitNumericLiteral(self, ctx:SparqlParser.NumericLiteralContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#numericLiteralUnsigned.
@@ -1321,7 +1572,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#numericLiteralUnsigned.
     def exitNumericLiteralUnsigned(self, ctx:SparqlParser.NumericLiteralUnsignedContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#numericLiteralPositive.
@@ -1331,7 +1582,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#numericLiteralPositive.
     def exitNumericLiteralPositive(self, ctx:SparqlParser.NumericLiteralPositiveContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#numericLiteralNegative.
@@ -1341,7 +1592,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#numericLiteralNegative.
     def exitNumericLiteralNegative(self, ctx:SparqlParser.NumericLiteralNegativeContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#booleanLiteral.
@@ -1351,7 +1602,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#booleanLiteral.
     def exitBooleanLiteral(self, ctx:SparqlParser.BooleanLiteralContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#string.
@@ -1361,7 +1612,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#string.
     def exitString(self, ctx:SparqlParser.StringContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#iri.
@@ -1371,7 +1622,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#iri.
     def exitIri(self, ctx:SparqlParser.IriContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#prefixedName.
@@ -1381,7 +1632,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#prefixedName.
     def exitPrefixedName(self, ctx:SparqlParser.PrefixedNameContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#blankNode.
@@ -1391,21 +1642,26 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#blankNode.
     def exitBlankNode(self, ctx:SparqlParser.BlankNodeContext):
-        self.exit()
+        self.exit(ctx)
         pass
 
 
  
 def main(argv):
+    verbose = False
+    if len(argv) > 2 and argv[2] == "-v":
+        verbose = True
     input_stream = FileStream(argv[1])
     lexer = SparqlLexer(input_stream)
     stream = CommonTokenStream(lexer)
-    listener = SAL()
+    listener = SAL(verbose)
     parser = SparqlParser(stream)
     parser.addParseListener(listener)
-    tree = parser.statement()
-    
-    ParseTreeWalker.DEFAULT.walk(listener, tree)
-    print(listener.projections)
+
+    parser.statement() #=tree
+    #ParseTreeWalker.DEFAULT.walk(listener, tree)
+
+
+    listener.getMainSelects()[0].draw(sys.argv[1].replace(".rq", ".dot"))
 if __name__ == '__main__':
     main(sys.argv)
