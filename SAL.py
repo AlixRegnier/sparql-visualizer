@@ -8,64 +8,75 @@ from SparqlListener import SparqlListener
 
 from collections import deque
 from graphviz import *
+import networkx as nx
+import matplotlib.pyplot as plt
 
 class Color:
+    BLANK = "black"
     DEFAULT = "blue"
     PROJECTION = "red"
-    BLANK = "black"
     VALUE = "green3"
 
 class Shape:
+    BLANK = "ellipse"
     DEFAULT = "ellipse"
     PROJECTION = "ellipse"
-    BLANK = "ellipse"
     VALUE = "box"
 
-class Node:
-    counter = 0
-    def __init__(self, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT):
-        if name is None:
-            Node.counter += 1
-            name = f"node{Node.counter}"
+BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
+DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
+PROJECTION = (Shape.PROJECTION, Color.PROJECTION, Color.PROJECTION)
+VALUE = (Shape.VALUE, Color.VALUE, Color.VALUE)
 
-        self.attributes = {"name" : name, "label" : label, "shape" : shape, "color" : color, "fontcolor" : fontcolor}
-        self.edges = set()
+class DigraphGenerator:
+    def __init__(self, name):
+        self.graph = nx.DiGraph(name=name)
 
-    def addEdge(self, node):
-        self.edges.add(node)
-
-    def getAttribute(self, attr):
-        if attr in self.attributes:
-            return self.attributes[attr]
-        raise ValueError(f"Invalid attribute: {attr}")
+        self.namesCount = dict()
+    
+    def set_name(self, name):
+        self.graph.name = name
+    
+    def renderDOT(self, format = "png", view = False):
+        g = Digraph(self.graph.name)
+        for node in self.graph.nodes:
+            g.node(hex(hash(node)), **self.graph.nodes[node])
         
-    def setAttribute(self, attr, value):
-        if attr in self.attributes:
-            self.attributes[attr] = value
+        edge_labels = nx.get_edge_attributes(self.graph, "label")
+        for edge in self.graph.edges:
+            g.edge(hex(hash(edge[0])), hex(hash(edge[1])), edge_labels[edge])
+
+        g.format = format
+
+        if view:
+            g.view(cleanup=True)
         else:
-            raise ValueError(f"Invalid attribute: {attr}")
+            g.render(cleanup=True)
 
-class DotGenerator:
-    def __init__(self, directed = False):
-        self.graph = Digraph() if directed else Graph()
-        self.directed = directed
-        self.nodes = dict()
-        self.blanknodes = []
-        self.counter = 0
+    def getName(self, name : str):
+        if name is None:
+            if None in self.namesCount:
+                self.namesCount[None] += 1
+            else:
+                self.namesCount[None] = 1
+            return f"blank{self.namesCount[None]}"
+        return name
 
-    def nextCount(self):
-        self.counter += 1
-        return self.counter
+    def quote(s):
+        return f"\"{s}\""
+    
+    def isDirected(self):
+        return self.graph.is_directed()
     
     def addNode(self, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT):
         if name is None:
-            self.blanknodes.append(Node(label = label, shape = Shape.BLANK, color = Color.BLANK, fontcolor = Color.BLANK))
-            return self.blanknodes[-1].getAttribute("name")
-        
-        self.nodes[name] = Node(name=hex(hash(name)), label = label, shape = shape, color = color, fontcolor = fontcolor)
-        return hex(hash(name))
+            shape, color, fontcolor = BLANK
 
-    def setEdgesFromTSSes(self, tsses):
+        name = self.getName(name)   
+        self.graph.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor)
+        return name
+
+    def addTSSes(self, tsses):
         for tss in tsses:
             sNode = self.addNode(tss.subject, tss.subject)
             for path in tss.paths:
@@ -73,29 +84,25 @@ class DotGenerator:
                 for i in range(len(path)-1):
                     if i == len(path) - 2:
                         if path[i+1].startswith('?'):
-                            self.graph.edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
+                            self.graph.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
                         else:
-                            self.graph.edge(bNode, self.addNode(path[i+1], path[i+1], shape = Shape.VALUE, color = Color.VALUE, fontcolor = Color.VALUE), label=path[i])
+                            self.graph.add_edge(bNode, self.addNode(path[i+1], path[i+1], *VALUE), label=path[i])
                     else:
                         tmp, bNode = bNode, self.addNode()
-                        self.graph.edge(tmp, bNode, label=path[i])
+                        self.graph.add_edge(tmp, bNode, label=path[i])
 
     def setNodesColor(self, labels, color):
         for name in labels:
-            if name not in self.nodes:
-                print(f"WARNING: '{name}' was given as key but is invalid")
+            if self.graph.has_node(name):
+                self.graph.nodes[name]["color"] = color
+                self.graph.nodes[name]["fontcolor"] = color
             else:
-                self.nodes[name].setAttribute("color", color)
-                self.nodes[name].setAttribute("fontcolor", color)
+                print(f"WARNING: '{name}' was given as key but is invalid")
 
-    def save(self, filename):
-        for n in self.nodes:
-            self.graph.node(**self.nodes[n].attributes)
-
-        for n in self.blanknodes:
-            self.graph.node(**n.attributes)
-
-        self.graph.save(filename)
+    def draw(self):
+        #nx.draw_networkx_nodes(self.graph, pos=nx.spring_layout(self.graph))#, node_color="red")
+        #nx.draw_networkx_edges(self.graph)
+        nx.write(self.graph, "test.dot")
 
     def addSubgraph(self):
         pass
@@ -119,6 +126,8 @@ class Select:
     def addVar(self, v):
         if v != "":
             self.vars.add(v)
+        else:
+            print("WARNING: Attempted to add empty string in var !")
 
     def addVars(self, vs):
         self.vars |= set(vs) - {""}
@@ -145,15 +154,15 @@ class Select:
         self.addVars(ps)
 
     def __setEdges(self, d):
-        d.setEdgesFromTSSes(self.tss) 
+        d.addTSSes(self.tss) 
         for s in self.subselects:
             s.__setEdges(d)
 
-    def draw(self, filename):
-        d = DotGenerator(True)
+    def getGraph(self, name):
+        d = DigraphGenerator(name)
         self.__setEdges(d)
         d.setNodesColor(self.getProjections(), Color.PROJECTION)
-        d.save(filename)
+        return d
 
 class Filter:
     def __init__(self):
@@ -1661,7 +1670,7 @@ def main(argv):
     parser.statement() #=tree
     #ParseTreeWalker.DEFAULT.walk(listener, tree)
 
-
-    listener.getMainSelects()[0].draw(sys.argv[1].replace(".rq", ".dot"))
+    graph = listener.getMainSelects()[0].getGraph(argv[1]).renderDOT()
+    #nx.write_gexf(graph, sys.argv[1].replace(".rq", ".gexf"))
 if __name__ == '__main__':
     main(sys.argv)
