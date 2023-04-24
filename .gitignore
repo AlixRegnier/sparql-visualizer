@@ -1,5 +1,6 @@
 #Custom
 __pycache__
+tmp*
 *.pyc
 *.dot
 *.png
