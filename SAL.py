@@ -16,12 +16,8 @@ TODO:
     - Subgraph for subselects
         - Duplicate projection nodes when used in supergraph
 
-    - filter / filter not exists
-
     - String :: "[any]"  => 'xsd:string', should be modified
-
-    - PathMod ( + * ? ) [minor]
-    
+  
     - UNION [tosee]
 """
 
@@ -127,16 +123,57 @@ class Select:
             d = nx.compose(d, g)
         return d
     
-#class Optional:
-
-class Filter:
+class Optional:
+    instances = 0
     def __init__(self, select):
-        self.negate = False
+        self.name = f"cluster_optional{Optional.instances}"
         self.tss = []
-        self.select = select
+        self.filters = []
+        self.subselects = []
+        self.superselect = select
+        Optional.instances += 1
+
+    def getLabel(self):
+        return "OPTIONAL"
+    
+    def addFilter(self, filter):
+        self.filters.append(filter)
+
+    def addSubSelect(self, s):
+        self.subselects.append(s)
+        s.superselect = self
+    
+    def addTSS(self, tss):
+        self.tss.append(tss)
+
+
+    def addVar(self, v):
+        self.superselect.addVar(v)
+
+    def addVarValues(self, v, values):
+        self.superselect.addVarValues(v, values)
+
+    def addVars(self, vs):
+        self.superselect.addVars(vs)
 
     def getSelectName(self, name):
-        return self.select.getSelectName(name)
+        return self.superselect.getSelectName(name)
+
+    def setAlias(self, a1, a2):
+        self.superselect.setAlias(a1, a2)
+
+class Filter:
+    instances = 0
+    def __init__(self, select):
+        self.name = f"cluster_filter{Filter.instances}"
+        self.negate = False
+        self.tss = []
+        self.filters = []
+        self.superselect = select
+        Filter.instances += 1
+
+    def getSelectName(self, name):
+        return self.superselect.getSelectName(name)
 
     def getLabel(self):
         return "FILTER NOT EXISTS" if self.negate else "FILTER"
@@ -146,6 +183,9 @@ class Filter:
 
     def addTSS(self, tss):
         self.tss.append(tss)
+    
+    def addFilter(self, filter):
+        self.filters.append(filter)
 
 class TSS:
     def __init__(self):
@@ -221,13 +261,24 @@ class SubDigraph(nx.DiGraph):
 
     blankCount = 0
     subgraphes = []
-    def __init__(self, select : Filter | Select, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
+    def __init__(self, select : Filter | Select | Optional, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
         super().__init__(None, **attr)
-        for s in select.subselects:
-            SubDigraph(s)
         self.select = select
-        self.addTSSes()
-        self.addValues()
+        if isinstance(select, Select):
+            for s in select.subselects:
+                SubDigraph(s)
+            
+            self.addTSSes()
+            self.addValues()
+        elif isinstance(select, Filter):
+            self.addTSSes()
+        elif isinstance(select, Optional):
+            for s in select.subselects:
+                SubDigraph(s)
+            self.addTSSes()
+
+        for f in select.filters:
+            SubDigraph(f)
         SubDigraph.subgraphes.append(self)
 
     @staticmethod
@@ -280,6 +331,7 @@ class SubDigraph(nx.DiGraph):
             n = f"{g}_{value}"
             
             #Path values
+
             if n not in self.nodes:
                 n = self.addNode(None, '\n' + value, shape="primersite", color="black", fontcolor="black")
             for v in self.select.values[value]:
@@ -344,7 +396,7 @@ def subdigraphsToDot(name, format = "png", view = False):
         sg[g.name] = g
 
     #Linking
-    for i in range(0, len(SubDigraph.subgraphes) - 1):
+    for i in range(len(SubDigraph.subgraphes) - 1):
         sg[SubDigraph.subgraphes[i].select.superselect.name].subgraph(sg[SubDigraph.subgraphes[i].select.name])
     
     graph.subgraph(sg["main"])
@@ -369,7 +421,6 @@ class SAL(SparqlListener):
         self.filter = False
         self.verbose = verbose
         self.blank = False
-        self.optional = False
 
         #Dicts
         self.prefixNamespace = dict()
@@ -379,8 +430,8 @@ class SAL(SparqlListener):
         self.mainselects = []
         self.selects = deque()
         self.tsser = deque()
+        self.filters = deque()
         self.currentTSS = None
-        self.currentFilter = None
         self.currentAlias = None
         self.datavars = None
         self.datavalues = None
@@ -403,7 +454,7 @@ class SAL(SparqlListener):
             self.indent -= 1
 
         #TODO: remove explicit xsd:string 
-        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string" and not self.filter: #REMOVE SELF.FILTER
+        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string":
             if self.blank:
                 self.currentTSS.addToBlank(ctx.getText())
             else:
@@ -994,13 +1045,22 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#optionalGraphPattern.
     def enterOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.enter(ctx)
-        self.optional = True
+
+        s = Optional(self.selects[-1])
+        if self.selects:
+            self.selects[-1].addSubSelect(s)
+        else:
+            self.mainselects.append(s)
+
+        self.selects.append(s)
+        self.tsser.append(s)
         pass
 
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
     def exitOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.exit(ctx)
-        self.optional = False
+        self.selects.pop()
+        self.tsser.pop()
         pass
 
     # Enter a parse tree produced by SparqlParser#graphGraphPattern.
@@ -1115,18 +1175,16 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#filterClause.
     def enterFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.enter(ctx)
-        self.currentFilter = Filter(self.selects[-1])
-        self.selects[-1].addFilter(self.currentFilter)
-        self.tsser.append(self.currentFilter)
-        self.filter = True
+        self.filters.append(Filter(self.tsser[-1]))
+        self.tsser[-1].addFilter(self.filters[-1])
+        self.tsser.append(self.filters[-1])
         pass
 
     # Exit a parse tree produced by SparqlParser#filterClause.
     def exitFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.exit(ctx)
         self.tsser.pop()
-        self.currentFilter = None #Maybe to remove
-        self.filter = False
+        self.filters.pop() #Maybe to remove
         pass
 
     # Enter a parse tree produced by SparqlParser#constraint.
@@ -1529,7 +1587,7 @@ class SAL(SparqlListener):
     def exitVar(self, ctx:SparqlParser.VarContext):
         self.exit(ctx)
         self.selects[-1].addVar(ctx.getText())
-        if self.alias and not self.modifier and not self.currentFilter and not self.optional:
+        if self.alias and not self.modifier and not self.filters and not isinstance(self.selects[-1], Optional):
             if self.currentAlias is None:
                 self.currentAlias = ctx.getText()
             else:
@@ -1714,7 +1772,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#notExistsFunc.
     def enterNotExistsFunc(self, ctx:SparqlParser.NotExistsFuncContext):
         self.enter(ctx)
-        self.currentFilter.setNegate(True)
+        self.filters[-1].setNegate(True)
         pass
 
     # Exit a parse tree produced by SparqlParser#notExistsFunc.
