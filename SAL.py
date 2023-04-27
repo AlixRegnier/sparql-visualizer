@@ -5,7 +5,6 @@ from antlr4 import *
 from SparqlLexer import SparqlLexer
 from SparqlParser import SparqlParser
 from SparqlListener import SparqlListener
-from typing import Any
 from collections import deque
 from graphviz import *
 import networkx as nx
@@ -13,14 +12,19 @@ import networkx as nx
 """
 TODO:
     - Alias [handle function aliased]
+
     - Subgraph for subselects
         - Duplicate projection nodes when used in supergraph
+
     - filter / filter not exists
+
     - String :: "[any]"  => 'xsd:string', should be modified
-    - PathMod ( + * ? ) [tosee]
-    - BracketExpression [tosee]
+
+    - PathMod ( + * ? ) [minor]
+    
     - UNION [tosee]
 """
+
 #Constants enums
 class Color:
     BLANK = "black"
@@ -62,6 +66,9 @@ class Select:
 
     def addFilter(self, f):
         self.filters.append(f)
+
+    def getLabel(self):
+        return "SELECT"
     
     def getSelectName(self, v): 
         r = None
@@ -103,7 +110,6 @@ class Select:
         """
         Set alias to a variable with 2 names
         """
-
         self.aliases[a1] = a2
         self.aliases[a2] = a1
 
@@ -111,194 +117,51 @@ class Select:
         self.projections = set(ps)
         self.addVars(ps)
 
-    def __setValues(self, d):
-        d.addValues(self, self.values)
-        for s in self.subselects:
-            s.__setValues(d)
-
-    def __setEdges(self, d):
-        d.addTSSes(self, self.tss)
-        for s in self.subselects:
-            s.__setEdges(d)
-
-    def getGraph(self, name):
-        d = DigraphGenerator(name)
-        self.__setEdges(d)
-        self.__setValues(d)
-        d.setNodesColor(self, self.getProjections(), Color.PROJECTION)
+    def drawGraph(self):
+        d = SubDigraph(self)
         return d
     
-class DigraphGenerator:
-    """
-    Layer class to handle Networkx and allow DOT rendering
-    """
-
-    #Tuples for shaping and coloring from constants
-    BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
-    DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
-    PROJECTION = (Shape.PROJECTION, Color.PROJECTION, Color.PROJECTION)
-    VALUE = (Shape.VALUE, Color.VALUE, Color.VALUE)
-    VALUES = (Shape.VALUES, Color.VALUES, Color.VALUES)
-    TYPE = (Shape.TYPE, Color.TYPE, Color.TYPE)
-
-    def __init__(self, name):
-        self.graph = nx.DiGraph(name=name)
-        self.subgraphs = { "main" : self.graph }
-        self.blankCount = 0
+    def getNetworkxGraph(self):
+        d = SubDigraph(self)
+        for g in SubDigraph.subgraphes[:-1]:
+            d = nx.compose(d, g)
+        return d
     
-    def renderDOT(self, format = "png", view = False):
-        """
-        Render networkx graph using DOT
-        """
-
-        g = Digraph(self.graph.name)
-        g.graph_attr["rankdir"] = "LR"
-
-        sg = {"main" : g}
-        for node in self.graph.nodes:
-            gname = node[:node.find('_')]
-
-            #Create subgraph
-            if gname not in sg:
-                sg[gname] = Digraph(gname)
-                sg[gname].graph_attr["style"] = "dashed"
-                sg[gname].graph_attr["label"] = "SELECT"
-            
-            #Create node in its graph
-            sg[gname].node(hex(hash(node)), **self.graph.nodes[node])
-
-        #Link subgraphs
-        for s in sg:
-            if s != "main":
-                g.subgraph(sg[s])
-
-        #Put all edges
-        for edge in self.graph.edges:
-            g.edge(hex(hash(edge[0])), hex(hash(edge[1])), **self.graph.edges[edge])
-
-        #Render
-        g.format = format
-        if view:
-            g.view(cleanup=True)
-        else:
-            g.render(cleanup=True)
-
-    def getNextBlankIdentifier(self, name : str = None):
-        """
-        If name is None, return a unique blank node identifier
-        else name
-        """
-
-        self.blankCount += 1
-        return f"blank_{self.blankCount}"
-    
-    @staticmethod
-    def prefixVar(select, name):
-        """
-        Prefix a node name by its owner select name
-        If no select owner were found, use current select as owner
-        """
-        n = select.getSelectName(name)
-        if n is None:
-            n = select.name
-        return f"{n}_{name}"
-    
-    def addNode(self, select = None, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT, **kargs):
-        """
-        Add a node to Networkx graph by resolving its identifier and setting its attributes
-        Return resolved name 
-        """
-
-        #Blank node
-        if name is None:
-            if label == "[]":
-                shape, color, fontcolor = DigraphGenerator.BLANK
-            name = f"{select.name}_{self.getNextBlankIdentifier()}"
-        #Node
-        else:
-            name = self.prefixVar(select, name)
-
-        self.graph.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor, **kargs)
-        return name
-
-    def addValues(self, select, values):
-        for value in values:
-            n = f"{select.getSelectName(value)}_{value}"
-            
-            #Path values
-            if n not in self.graph.nodes:
-                n = self.addNode(select, None, '\n' + value, shape="primersite", color="black", fontcolor="black")
-            for v in values[value]:
-                self.graph.add_edge(n, self.addNode(select, None, v, *DigraphGenerator.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES)
-
-
-    def addTSSes(self, select, tsses):
-        """
-        Create all nodes and edges from a list of TSS
-
-        tsses : List[TSS]
-            List of TSS instances that defines all TripleSameSubjectPaths of the query
-        """
-
-        for tss in tsses:
-            sNode = self.addNode(select, tss.subject, tss.subject)
-            for path in tss.paths:
-                bNode = sNode
-                for i in range(len(path)-1):
-                    #Check end of TSS
-                    if i == len(path) - 2:
-                        #Variable at end
-                        if path[i+1].startswith('?'):
-                            self.graph.add_edge(bNode, self.addNode(select, path[i+1], path[i+1]), label=path[i])
-                        #String at end
-                        elif path[i+1].startswith('"') and path[i+1].endswith('"'):
-                            xsdstring = path[i+1] not in self.graph.nodes
-                            n = self.addNode(select, path[i+1], path[i+1], *DigraphGenerator.VALUE)
-                            if xsdstring:
-                                self.graph.add_edge(n, self.addNode(select, None, "xsd:string", *DigraphGenerator.TYPE), label="TYPE", color=Color.TYPE, fontcolor=Color.TYPE)
-                            self.graph.add_edge(bNode, n, label=path[i])
-                        #Link blank node to end
-                        else:
-                            self.graph.add_edge(bNode, self.addNode(select, path[i+1], path[i+1], *DigraphGenerator.VALUE), label=path[i])
-                    #Link blank nodes together
-                    else:
-                        tmp, bNode = bNode, self.addNode(select)
-                        self.graph.add_edge(tmp, bNode, label=path[i])
-
-    def setNodesColor(self, select, labels, color):
-        for name in labels:
-            n = self.prefixVar(select, name)
-            if self.graph.has_node(n):
-                self.graph.nodes[n]["color"] = color
-                self.graph.nodes[n]["fontcolor"] = color
-            else:
-                print(f"WARNING: '{name}' was given as key but is invalid")
-
-    def addSubgraph(self):
-        pass
- 
+#class Optional:
 
 class Filter:
-    def __init__(self):
+    def __init__(self, select):
         self.negate = False
         self.tss = []
+        self.select = select
 
+    def getSelectName(self, name):
+        return self.select.getSelectName(name)
+
+    def getLabel(self):
+        return "FILTER NOT EXISTS" if self.negate else "FILTER"
+    
     def setNegate(self, n):
         self.negate = n
 
     def addTSS(self, tss):
         self.tss.append(tss)
 
-class Path:
-    def __init__(self):
-        self.path = []
-        self.blanknode
-
 class TSS:
     def __init__(self):
         self.subject = None
         self.__neednewpath = True
         self.paths = [] #List of paths. A path is a list of verbPaths with a value as its end. Between each relation, there is a virtual blank node
+        self.blankpath = None
+        self.blen = 0
+
+    def openBlankPath(self):
+        self.blankpath = (len(self.paths)-1, self.paths[-1][:])
+
+    def closeBlankPath(self):
+        for i in range(self.blankpath[0]+1, len(self.paths)):
+            self.paths[i] = self.blankpath[1][:] + self.paths[i]
+        self.blankpath = None
 
     def close(self):
         j = 0
@@ -310,7 +173,7 @@ class TSS:
                 alone = False
                 j = i
         
-        if alone:
+        if alone and len(self.paths):
             for i in range(1, len(self.paths)):
                 self.paths[0] += self.paths[i]
             self.paths = [self.paths[0]]
@@ -331,21 +194,182 @@ class TSS:
             if not isVerbPath:            
                 self.__neednewpath = True
 
+    def addToBlank(self, value):
+        self.blen += 1
+
+        #Handle 'a' alias for 'rdf:type'
+        if value == "a":
+            value = "rdf:type"
+
+        if self.blen == 3:
+            self.blen = 0
+            self.paths.append([value])
+        else:
+            self.paths[-1].append(value)
+
     def __str__(self):
         return f"{self.subject}\n{self.paths}"
 
+class SubDigraph(nx.DiGraph):
+    #Tuples for shaping and coloring from constants
+    BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
+    DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
+    PROJECTION = (Shape.PROJECTION, Color.PROJECTION, Color.PROJECTION)
+    VALUE = (Shape.VALUE, Color.VALUE, Color.VALUE)
+    VALUES = (Shape.VALUES, Color.VALUES, Color.VALUES)
+    TYPE = (Shape.TYPE, Color.TYPE, Color.TYPE)
 
+    blankCount = 0
+    subgraphes = []
+    def __init__(self, select : Filter | Select, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
+        super().__init__(None, **attr)
+        for s in select.subselects:
+            SubDigraph(s)
+        self.select = select
+        self.addTSSes()
+        self.addValues()
+        SubDigraph.subgraphes.append(self)
+
+    @staticmethod
+    def getNextBlankIdentifier():
+        """
+        If name is None, return a unique blank node identifier
+        else name
+        """
+
+        SubDigraph.blankCount += 1
+        return f"blank_{SubDigraph.blankCount}"
+    
+    def prefixVar(self, name):
+        """
+        Prefix a node name by its owner select name
+        If no select owner were found, use current select as owner
+        """
+        n = self.select.getSelectName(name)
+        if n is None:
+            n = self.select.name
+        return f"{n}_{name}"
+    
+    def getBlankNodeFrom(self, origin, by):
+        for e in self.edges:
+            if e[0] == origin and self.edges[e]["label"] == by:
+                return e[1]
+            
+    def addNode(self, name = None, label = "[]", shape = Shape.DEFAULT, color = Color.DEFAULT, fontcolor = Color.DEFAULT):
+        """
+        Add a node to Networkx graph by resolving its identifier and setting its attributes
+        Return resolved name 
+        """
+
+        #Blank node
+        if name is None:
+            if label == "[]":
+                shape, color, fontcolor = SubDigraph.BLANK
+
+            name = f"{self.select.name}_{self.getNextBlankIdentifier()}"
+        #Node
+        else:
+            name = self.prefixVar(name)
+
+        self.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor)
+        return name
+
+    def addValues(self):
+        for value in self.select.values:
+            g = self.select.getSelectName(value)
+            n = f"{g}_{value}"
+            
+            #Path values
+            if n not in self.nodes:
+                n = self.addNode(None, '\n' + value, shape="primersite", color="black", fontcolor="black")
+            for v in self.select.values[value]:
+                self.add_edge(n, self.addNode(None, v.replace("^^xsd:string", ""), *SubDigraph.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES)
+    
+    def addTSSes(self):
+        """
+        Create all nodes and edges from a list of TSS
+
+        tsses : List[TSS]
+            List of TSS instances that defines all TripleSameSubjectPaths of the query
+        """
+
+        for tss in self.select.tss:
+            sNode = self.addNode(tss.subject, tss.subject)
+            for path in tss.paths:
+                bNode = sNode
+                for i in range(len(path)-1):
+                    #Check end of TSS
+                    if i == len(path) - 2:
+                        #Variable at end
+                        if path[i+1].startswith('?'):
+                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
+                        #String at end
+                        elif path[i+1].startswith('"') and path[i+1].endswith('"'):
+                            xsdstring = self.prefixVar(path[i+1]) not in self.nodes
+                            n = self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE)
+                            if xsdstring:
+                                self.add_edge(n, self.addNode(None, "xsd:string", *SubDigraph.TYPE), label="TYPE", color=Color.TYPE, fontcolor=Color.TYPE)
+                            self.add_edge(bNode, n, label=path[i])
+                        #Link blank node to end
+                        else:
+                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE), label=path[i])
+                    #Link blank nodes together
+                    else:
+                        n = self.getBlankNodeFrom(bNode, path[i])
+                        if n is None:
+                            tmp, bNode = bNode, self.addNode()
+                            self.add_edge(tmp, bNode, label=path[i])
+                        else:
+                            tmp, bNode = bNode, n
+    
+def subdigraphsToDot(name, format = "png", view = False):
+    graph = Digraph(name)
+    graph.graph_attr["rankdir"] = "LR"
+    projections = { "main_" + p for p in SubDigraph.subgraphes[-1].select.getProjections() }
+
+    sg = { "main" : graph }
+    for i in range(len(SubDigraph.subgraphes)):
+        g = Digraph(SubDigraph.subgraphes[i].select.name)
+        g.graph_attr["style"] = "dashed"
+        g.graph_attr["label"] = SubDigraph.subgraphes[i].select.getLabel()
+        for node in SubDigraph.subgraphes[i].nodes:
+            if node in projections:
+                g.node(hex(hash(node)), label=SubDigraph.subgraphes[i].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+            else:
+                g.node(hex(hash(node)), **SubDigraph.subgraphes[i].nodes[node])
+
+        for edge in SubDigraph.subgraphes[i].edges:
+            g.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[i].edges[edge])
+        
+        sg[g.name] = g
+
+    #Linking
+    for i in range(0, len(SubDigraph.subgraphes) - 1):
+        sg[SubDigraph.subgraphes[i].select.superselect.name].subgraph(sg[SubDigraph.subgraphes[i].select.name])
+    
+    graph.subgraph(sg["main"])
+    #Render 
+    graph.format = format
+    if view:
+        graph.view(cleanup=True)
+    else:
+        graph.render(cleanup=True)
+
+        
+        
 # This class defines a complete listener for a parse tree produced by SparqlParser.
 class SAL(SparqlListener):
     
     def __init__(self, verbose = False):
         #Flags
         self.alias = False
-        self.blanknode = False
         self.datablock = False
         self.isVerbPath = False
         self.modifier = False
+        self.filter = False
         self.verbose = verbose
+        self.blank = False
+        self.optional = False
 
         #Dicts
         self.prefixNamespace = dict()
@@ -379,8 +403,11 @@ class SAL(SparqlListener):
             self.indent -= 1
 
         #TODO: remove explicit xsd:string 
-        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string":
-            self.currentTSS.addToPath(ctx.getText(), self.isVerbPath)
+        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string" and not self.filter: #REMOVE SELF.FILTER
+            if self.blank:
+                self.currentTSS.addToBlank(ctx.getText())
+            else:
+                self.currentTSS.addToPath(ctx.getText(), self.isVerbPath)
         pass
 
     def getMainSelects(self):
@@ -967,11 +994,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#optionalGraphPattern.
     def enterOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.enter(ctx)
+        self.optional = True
         pass
 
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
     def exitOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.exit(ctx)
+        self.optional = False
         pass
 
     # Enter a parse tree produced by SparqlParser#graphGraphPattern.
@@ -1086,9 +1115,10 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#filterClause.
     def enterFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.enter(ctx)
-        self.currentFilter = Filter()
+        self.currentFilter = Filter(self.selects[-1])
         self.selects[-1].addFilter(self.currentFilter)
         self.tsser.append(self.currentFilter)
+        self.filter = True
         pass
 
     # Exit a parse tree produced by SparqlParser#filterClause.
@@ -1096,6 +1126,7 @@ class SAL(SparqlListener):
         self.exit(ctx)
         self.tsser.pop()
         self.currentFilter = None #Maybe to remove
+        self.filter = False
         pass
 
     # Enter a parse tree produced by SparqlParser#constraint.
@@ -1395,13 +1426,16 @@ class SAL(SparqlListener):
 
     # Enter a parse tree produced by SparqlParser#blankNodePropertyList.
     def enterBlankNodePropertyList(self, ctx:SparqlParser.BlankNodePropertyListContext):
-        
         self.enter(ctx)
+        self.currentTSS.openBlankPath()
+        self.blank = True
         pass
 
     # Exit a parse tree produced by SparqlParser#blankNodePropertyList.
     def exitBlankNodePropertyList(self, ctx:SparqlParser.BlankNodePropertyListContext):
         self.exit(ctx)
+        self.currentTSS.closeBlankPath()
+        self.blank = False
         pass
 
     # Enter a parse tree produced by SparqlParser#triplesNodePath.
@@ -1417,13 +1451,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#blankNodePropertyListPath.
     def enterBlankNodePropertyListPath(self, ctx:SparqlParser.BlankNodePropertyListPathContext):
         self.enter(ctx)
-        self.blanknode = True
+        self.currentTSS.openBlankPath()
         pass
 
     # Exit a parse tree produced by SparqlParser#blankNodePropertyListPath.
     def exitBlankNodePropertyListPath(self, ctx:SparqlParser.BlankNodePropertyListPathContext):
         self.exit(ctx)
-        self.blanknode = False
+        self.currentTSS.closeBlankPath()
         pass
 
     # Enter a parse tree produced by SparqlParser#collection.
@@ -1495,7 +1529,7 @@ class SAL(SparqlListener):
     def exitVar(self, ctx:SparqlParser.VarContext):
         self.exit(ctx)
         self.selects[-1].addVar(ctx.getText())
-        if self.alias and not self.modifier:
+        if self.alias and not self.modifier and not self.currentFilter and not self.optional:
             if self.currentAlias is None:
                 self.currentAlias = ctx.getText()
             else:
@@ -1824,7 +1858,8 @@ def main(argv):
     #ParseTreeWalker.DEFAULT.walk(listener, tree)
     #for t in listener.getMainSelects()[0].tss:
     #    print(t)
-    graph = listener.getMainSelects()[0].getGraph(argv[1]).renderDOT()
+    graph = listener.getMainSelects()[0].drawGraph()
+    subdigraphsToDot(argv[1])
     #nx.write_gexf(graph, sys.argv[1].replace(".rq", ".gexf"))
 if __name__ == '__main__':
     main(sys.argv)
