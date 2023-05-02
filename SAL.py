@@ -228,7 +228,7 @@ class SubDigraph(nx.DiGraph):
             n = self.addNode(f"duplicate_{cluster.tss[0].subject}", cluster.tss[0].subject, *SubDigraph.DEFAULT)
             #WARNING: May handle case when x is None
             x = cluster.getClusterName(cluster.tss[0].subject)
-            self.add_edge(SubDigraph.subgraphes[x].addNode(cluster.tss[0].subject, cluster.tss[0].subject), n, label="")
+            self.add_edge(SubDigraph.subgraphes[x].addNode(cluster.tss[0].subject, cluster.tss[0].subject), n, label="", color="grey")
 
             for i in range(1, len(cluster.tss)):
                 if cluster.tss[i].subject == cluster.tss[0].subject:
