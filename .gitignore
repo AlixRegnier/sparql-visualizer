@@ -5,5 +5,4 @@ tmp*
 *.gv
 *.dot
 *.png
-*.sh
 *.log

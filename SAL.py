@@ -18,7 +18,6 @@ TODO:
     - UNION [tosee] rq63
 
     - NESTED:
-        rq33 :/ maybe due to filter syntax
         rq58 :( filter boolean parsing issue
         rq91 :( SERVICE
         rq95 :( SERVICE
@@ -120,6 +119,9 @@ class Cluster:
         return d
     
     def getNetworkxGraph(self):
+        """
+        A TESTER
+        """
         d = SubDigraph(self)
         for name in SubDigraph.subgraphes:
             if name != "cluster0":
