@@ -5,7 +5,7 @@
 #count:5
 #time:48
 
-Select distinct ?entry where {
+select distinct ?entry where {
   ?entry :isoform ?iso.
   ?iso :detectedExpression /:term ?tiss, ?tiss2.
   ?tiss2 :childOf cv:TS-0564. # Liver
