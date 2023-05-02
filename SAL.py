@@ -15,15 +15,13 @@ TODO:
 
     - String :: "[any]"  => 'xsd:string', should be modified
   
-    - UNION [tosee]
+    - UNION [tosee] rq63
 
     - NESTED:
         rq33 :/ maybe due to filter syntax
-        rq58 :(
-        rq70 :) Filter in filter
+        rq58 :( filter boolean parsing issue
         rq91 :( SERVICE
         rq95 :( SERVICE
-        rq99 :) Filter in filter
 """
 
 #Constants enums
@@ -207,9 +205,9 @@ class SubDigraph(nx.DiGraph):
     def __init__(self, cluster : Cluster, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
         super().__init__(None, **attr)
         self.cluster = cluster
-        passFirstSubject = False
 
         SubDigraph.subgraphes[cluster.name] = self
+        """
         print(cluster.name)
         if cluster.supercluster:
             print("super:", cluster.supercluster.name)
@@ -219,18 +217,26 @@ class SubDigraph(nx.DiGraph):
             print(e)
 
         print("#"*10)
-        if cluster.name != "cluster0" and len(cluster.tss) > 0:
+        """
+
+        #REGION: Maybe move to addTSSes
+        passTSSsubjects = set()
+        if cluster.name != "cluster0" and len(cluster.tss) > 0 and self.cluster.getClusterName(self.cluster.tss[0].subject) != self.cluster.name:
             #NODE DUPLICATION (supergraph.node -> subgraph.node)
             n = self.addNode(f"duplicate_{cluster.tss[0].subject}", cluster.tss[0].subject, *SubDigraph.DEFAULT)
+            #WARNING: May handle case when x is None
             x = cluster.getClusterName(cluster.tss[0].subject)
-            self.add_edge(SubDigraph.subgraphes[x].addNode(cluster.tss[0].subject, cluster.tss[0].subject), n, label="") #self.addNode => replace self by proper subdigraph instance
+            self.add_edge(SubDigraph.subgraphes[x].addNode(cluster.tss[0].subject, cluster.tss[0].subject), n, label="")
+
             for i in range(1, len(cluster.tss)):
                 if cluster.tss[i].subject == cluster.tss[0].subject:
                     cluster.tss[i].subject = n
+                    passTSSsubjects.add(cluster.tss[i])
             cluster.tss[0].subject = n
-            passFirstSubject = True
+            passTSSsubjects.add(cluster.tss[0])
+        #ENDREGION
 
-        self.addTSSes(passFirstSubject)
+        self.addTSSes(passTSSsubjects)
         self.addValues()
 
         for s in cluster.subclusters:
@@ -294,7 +300,7 @@ class SubDigraph(nx.DiGraph):
             for v in self.cluster.values[value]:
                 self.add_edge(n, self.addNode(None, v.replace("^^xsd:string", ""), *SubDigraph.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES)
     
-    def addTSSes(self, passFirstSubject):
+    def addTSSes(self, passTSSsubjects = set()):
         """
         Create all nodes and edges from a list of TSS
 
@@ -303,18 +309,18 @@ class SubDigraph(nx.DiGraph):
         """
 
         for tss in self.cluster.tss:
-            if passFirstSubject:
-                sNode = self.cluster.tss[0].subject
-                passFirstSubject = False
+            if tss in passTSSsubjects:
+                sNode = tss.subject
             else:
                 sNode = self.addNode(tss.subject, tss.subject)
+
             for path in tss.paths:
                 bNode = sNode
                 for i in range(len(path)-1):
                     #Check end of TSS
                     if i == len(path) - 2:
                         #Variable at end
-                        if path[i+1].startswith('?'):
+                        if path[i+1].startswith('?') or path[i+1].startswith('$'):
                             self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
                         #String at end
                         elif path[i+1].startswith('"') and path[i+1].endswith('"'):
@@ -436,7 +442,7 @@ class SAL(SparqlListener):
             self.indent -= 1
 
         #TODO: remove explicit xsd:string 
-        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string":
+        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string" and not self.modifier:
             if self.blank:
                 self.currentTSS.addToBlank(ctx.getText())
             else:
@@ -1120,7 +1126,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#minusGraphPattern.
     def enterMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.enter(ctx)
-        self.addCluster("MINUS")
+        #self.addCluster("MINUS")
         pass
 
     # Exit a parse tree produced by SparqlParser#minusGraphPattern.
