@@ -14,7 +14,7 @@ if [ "$1" = "all" ]; then
     for f in $files; do
         echo $f >> tool.log
         echo -e "\e[0A $((++x)) / $count"
-        python SAL.py $f >> tool.log 2>&1
+        python SAL.py $f -v > $f.log 2>> tool.log
     done
     echo -e "\e[K"
     rm -f ./nextprot-queries/*.g
