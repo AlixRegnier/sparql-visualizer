@@ -226,7 +226,6 @@ class SubDigraph(nx.DiGraph):
     def __init__(self, cluster : Cluster, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
         super().__init__(None, **attr)
         self.cluster = cluster
-        print(self.cluster.aliases)
         SubDigraph.subgraphes[cluster.name] = self
         
         self.addTSSes()
@@ -301,6 +300,7 @@ class SubDigraph(nx.DiGraph):
             List of TSS instances that defines all TripleSameSubjectPaths of the query
         """
         
+        """
         print(self.cluster.name)
         if self.cluster.supercluster:
             print("super:", self.cluster.supercluster.name)
@@ -310,7 +310,8 @@ class SubDigraph(nx.DiGraph):
             print(e)
 
         print("#"*10)
-    
+        """
+
         passTSSsubjects = set()
         #TODO: DUPLICATE ALL TSS SUBJECT LIKE FOR THE FIRST ONE
         #TODO: MAY DUPLICATE TSS END
