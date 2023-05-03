@@ -13,13 +13,13 @@ import networkx as nx
 TODO:
     - Alias [handle function aliased]
 
-    - String :: "[any]"  => 'xsd:string', should be modified
-  
+    - TSS duplicate bug ?
+
     - TSS end duplicate ? rq82
 
-    - UNION [tosee] rq63, rq84
-
     - SERVICE [maybe]
+
+    - String :: "[any]"  => 'xsd:string', should be modified
 """
 
 #Constants enums
@@ -27,25 +27,34 @@ class Color:
     BLANK = "black"
     DEFAULT = "blue"
     PROJECTION = "red"
+    TYPE = "grey"
     VALUE = "green3"
     VALUES = "grey"
-    TYPE = "grey"
 
 class Shape:
     BLANK = "ellipse"
     DEFAULT = "ellipse"
     PROJECTION = "ellipse"
+    TYPE = "hexagon"
     VALUE = "box"
     VALUES = "box"
-    TYPE = "hexagon"
 
+class Style:
+    DEFAULT = "dashed"
+    FILTER = "dashed"
+    GROUP = "dashed"
+    OPTIONAL = "dashed"
+    SELECT = "dashed"
+    UNION = "solid"
+
+#Classes
 class Cluster:
     cluster = -1
     def getNextCluster():
         Cluster.cluster += 1
         return f"cluster{Cluster.cluster}"
     
-    def __init__(self, label = "SELECT", style = "dashed"):
+    def __init__(self, label = "SELECT", style = Style.DEFAULT):
         self.aliases = dict()
         self.name = Cluster.getNextCluster()
         self.projections = set()
@@ -162,6 +171,13 @@ class TSS:
                 self.paths[0] += self.paths[i]
             self.paths = [self.paths[0]]
 
+        #Clean TSSP end if some artefacts are remaining
+        #TODO: Find artefacts origin
+        for i in range(len(self.paths) -1, -1, -1):
+            if self.paths[i] != ['']:
+                self.paths = self.paths[:i+1]
+                break
+
     def addToPath(self, value, isVerbPath):
         if self.subject is None:
             self.subject = value
@@ -210,7 +226,7 @@ class SubDigraph(nx.DiGraph):
     def __init__(self, cluster : Cluster, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
         super().__init__(None, **attr)
         self.cluster = cluster
-
+        print(self.cluster.aliases)
         SubDigraph.subgraphes[cluster.name] = self
         
         self.addTSSes()
@@ -296,6 +312,8 @@ class SubDigraph(nx.DiGraph):
         print("#"*10)
     
         passTSSsubjects = set()
+        #TODO: DUPLICATE ALL TSS SUBJECT LIKE FOR THE FIRST ONE
+        #TODO: MAY DUPLICATE TSS END
         if self.cluster.name != "cluster0" and len(self.cluster.tss) > 0 and self.cluster.getClusterName(self.cluster.tss[0].subject) != self.cluster.name:
             #NODE DUPLICATION (supergraph.node -> subgraph.node)
             n = self.addNode(f"duplicate_{self.cluster.tss[0].subject}", self.cluster.tss[0].subject, *SubDigraph.DEFAULT)
@@ -384,7 +402,7 @@ def subdigraphsToDot(name, format = "png", view = False):
         
     __linksubgraph(SubDigraph.subgraphes["cluster0"])
     graph.subgraph(sg["cluster0"])
-    
+
     #Render 
     graph.format = format
     if view:
@@ -444,7 +462,7 @@ class SAL(SparqlListener):
                 self.currentTSS.addToPath(ctx.getText(), self.isVerbPath)
         pass
 
-    def addCluster(self, label, style = "dashed"):
+    def addCluster(self, label, style = Style.DEFAULT):
         s = Cluster(label, style)
         if self.clusters:
             self.clusters[-1].addSubCluster(s)
@@ -515,7 +533,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#selectQuery.
     def enterSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
         self.enter(ctx)
-        self.addCluster("SELECT")
+        self.addCluster("SELECT", Style.SELECT)
         pass
 
     # Exit a parse tree produced by SparqlParser#selectQuery.
@@ -527,7 +545,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#subSelect.
     def enterSubSelect(self, ctx:SparqlParser.SubSelectContext):
         self.enter(ctx)
-        self.addCluster("SELECT")
+        self.addCluster("SELECT", Style.SELECT)
         pass
 
     # Exit a parse tree produced by SparqlParser#subSelect.
@@ -983,7 +1001,7 @@ class SAL(SparqlListener):
     def enterGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
         self.enter(ctx)
         if self.clusters[-1].getLabel() in ("UNION", ""):
-            self.addCluster("")
+            self.addCluster("", Style.GROUP)
         pass
 
     # Exit a parse tree produced by SparqlParser#groupGraphPattern.
@@ -992,7 +1010,7 @@ class SAL(SparqlListener):
         if self.clusters[-1].getLabel() == "":
             #Remove sub blank cluster if it has only one subcluster and no TSS !
             u = self.clusters.pop()
-            print(u.tss)
+
             if len(u.tss) == 0:
                 if self.clusters:
                     for s in u.subclusters:
@@ -1041,7 +1059,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#optionalGraphPattern.
     def enterOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.enter(ctx)
-        self.addCluster("OPTIONAL")
+        self.addCluster("OPTIONAL", Style.OPTIONAL)
         pass
 
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
@@ -1153,7 +1171,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
     def enterGroupOrUnionGraphPattern(self, ctx:SparqlParser.GroupOrUnionGraphPatternContext):
         self.enter(ctx)
-        self.addCluster("UNION", "solid")
+        self.addCluster("UNION", Style.UNION)
         pass
 
     # Exit a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
@@ -1178,7 +1196,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#filterClause.
     def enterFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.enter(ctx)
-        self.addCluster("FILTER")
+        self.addCluster("FILTER", Style.FILTER)
         pass
 
     # Exit a parse tree produced by SparqlParser#filterClause.

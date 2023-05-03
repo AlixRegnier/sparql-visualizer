@@ -23,4 +23,5 @@ elif [ "$1" = "clear" ]; then
     rm -f ./nextprot-queries/*.gv
     rm -f ./nextprot-queries/*.png
     rm -f ./nextprot-queries/*.gexf
+    rm -f ./nextprot-queries/*.log
 fi
