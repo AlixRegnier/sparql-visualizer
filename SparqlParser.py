@@ -7,7 +7,6 @@ if sys.version_info[1] > 5:
 	from typing import TextIO
 else:
 	from typing.io import TextIO
-
 allowsBlankNodes = True
 
 def serializedATN():

@@ -26,6 +26,7 @@ TODO:
 class Color:
     BLANK = "black"
     DEFAULT = "blue"
+    DUPLICATE = "grey"
     PROJECTION = "red"
     TYPE = "grey"
     VALUE = "green3"
@@ -34,6 +35,7 @@ class Color:
 class Shape:
     BLANK = "ellipse"
     DEFAULT = "ellipse"
+    DUPLICATE = "ellipse"
     PROJECTION = "ellipse"
     TYPE = "hexagon"
     VALUE = "box"
@@ -41,6 +43,7 @@ class Shape:
 
 class Style:
     DEFAULT = "dashed"
+    DUPLICATE = "none"
     FILTER = "dashed"
     GROUP = "dashed"
     OPTIONAL = "dashed"
@@ -214,6 +217,7 @@ class SubDigraph(nx.DiGraph):
     #Tuples for shaping and coloring from constants
     BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
     DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
+    DUPLICATE = (Shape.DUPLICATE, Color.DUPLICATE, Color.DUPLICATE)
     PROJECTION = (Shape.PROJECTION, Color.PROJECTION, Color.PROJECTION)
     VALUE = (Shape.VALUE, Color.VALUE, Color.VALUE)
     VALUES = (Shape.VALUES, Color.VALUES, Color.VALUES)
@@ -317,12 +321,13 @@ class SubDigraph(nx.DiGraph):
         #TODO: MAY DUPLICATE TSS END
         if self.cluster.name != "cluster0" and len(self.cluster.tss) > 0 and self.cluster.getClusterName(self.cluster.tss[0].subject) != self.cluster.name:
             #NODE DUPLICATION (supergraph.node -> subgraph.node)
-            n = self.addNode(f"duplicate_{self.cluster.tss[0].subject}", self.cluster.tss[0].subject, *SubDigraph.DEFAULT)
+            n = self.addNode(f"duplicate_{self.cluster.tss[0].subject}", self.cluster.tss[0].subject, *SubDigraph.DUPLICATE)
             #WARNING: May handle case when x is None
             x = self.cluster.getClusterName(self.cluster.tss[0].subject)
             if x is None:
-                x = "cluster0"
-            self.add_edge(SubDigraph.subgraphes[x].addNode(self.cluster.tss[0].subject, self.cluster.tss[0].subject), n, label="", color="grey")
+                print(f"WARNING: {self.cluster.tss[0].subject} PLACED IN {self.cluster.name}")
+                x = self.cluster.name
+            self.add_edge(SubDigraph.subgraphes[x].addNode(self.cluster.tss[0].subject, self.cluster.tss[0].subject), n, label="", color=Color.DUPLICATE, style="dashed",arrowhead=Style.DUPLICATE)
 
             for i in range(1, len(self.cluster.tss)):
                 if self.cluster.tss[i].subject == self.cluster.tss[0].subject:
@@ -387,9 +392,6 @@ def subdigraphsToDot(name, format = "png", view = False):
                     g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
                 else:
                     g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
-            elif x not in sg:
-                #sg[x].node(hex(hash(node)), **SubDigraph.subgraphes[x].nodes[node])
-                pass
     
         for edge in SubDigraph.subgraphes[name].edges:
             graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[name].edges[edge])
@@ -1681,11 +1683,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#numericExpression.
     def enterNumericExpression(self, ctx:SparqlParser.NumericExpressionContext):
         self.enter(ctx)
+    
         pass
 
     # Exit a parse tree produced by SparqlParser#numericExpression.
     def exitNumericExpression(self, ctx:SparqlParser.NumericExpressionContext):
         self.exit(ctx)
+        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#additiveExpression.
