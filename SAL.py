@@ -13,8 +13,14 @@ import networkx as nx
 TODO:
     - Alias [handle function aliased]
 
-    - TSS duplicate bug ?
+        groupClause: ( 'group' | 'GROUP' ) ( 'by' | 'BY' ) groupCondition+;
+        groupCondition: builtInCall | functionCall | '(' expression (('as' | 'AS') var)? ')' | var;
 
+        bind: ( 'bind' | 'BIND' ) '(' expression ( 'as' | 'AS' ) var ')';
+
+        selectClause: ( 'select' | 'SELECT' ) ('distinct' | 'DISTINCT' | 'reduced' | 'REDUCED')? ((var | ('(' expression ( 'as' | 'AS' ) var ')'))+ | '*');
+
+    - TSS duplicate bug ?
     - TSS end duplicate ? rq82
 
     - SERVICE [maybe]
@@ -409,12 +415,10 @@ def subdigraphsToDot(name, format = "png", view = False):
     #Render 
     graph.format = format
     if view:
-        graph.view(cleanup=False)
+        graph.view(cleanup=True)
     else:
-        graph.render(cleanup=False)
+        graph.render(cleanup=True)
 
-        
-        
 # This class defines a complete listener for a parse tree produced by SparqlParser.
 class SAL(SparqlListener):
     
@@ -436,10 +440,11 @@ class SAL(SparqlListener):
         self.mainclusters = []
         self.clusters = deque()
         self.currentTSS = None
-        self.currentAlias = None
         self.datavars = None
         self.datavalues = None
         self.__ctx = None
+        self.expressionLevel = 0
+        self.expressionVars = []
         self.indent = 0
     
     def enter(self, ctx):
@@ -1099,6 +1104,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#bind.
     def exitBind(self, ctx:SparqlParser.BindContext):
         self.exit(ctx)
+        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#inlineData.
@@ -1608,13 +1614,11 @@ class SAL(SparqlListener):
     def exitVar(self, ctx:SparqlParser.VarContext):
         self.exit(ctx)
         self.clusters[-1].addVar(ctx.getText())
-        if self.alias and not self.modifier and self.clusters[-1].getLabel() == "SELECT":
-            if self.currentAlias is None:
-                self.currentAlias = ctx.getText()
+        if self.expressionLevel > 0:
+            if self.expressionVars:
+                self.expressionVars.append(ctx.getText())
             else:
-                self.clusters[-1].setAlias(ctx.getText(), self.currentAlias)
-                self.currentAlias = None
-                self.alias = False
+                self.expressionVars = [ctx.getText()]
         elif self.datablock:
             self.datavars.append(ctx.getText())
         pass
@@ -1632,11 +1636,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#expression.
     def enterExpression(self, ctx:SparqlParser.ExpressionContext):
         self.enter(ctx)
+        self.expressionLevel += 1
         pass
 
     # Exit a parse tree produced by SparqlParser#expression.
     def exitExpression(self, ctx:SparqlParser.ExpressionContext):
         self.exit(ctx)
+        self.expressionLevel -= 1
         pass
 
     # Enter a parse tree produced by SparqlParser#conditionalOrExpression.
@@ -1662,7 +1668,6 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#valueLogical.
     def enterValueLogical(self, ctx:SparqlParser.ValueLogicalContext):
         self.enter(ctx)
-        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#valueLogical.
@@ -1689,7 +1694,6 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#numericExpression.
     def exitNumericExpression(self, ctx:SparqlParser.NumericExpressionContext):
         self.exit(ctx)
-        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#additiveExpression.
@@ -1750,6 +1754,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#builtInCall.
     def exitBuiltInCall(self, ctx:SparqlParser.BuiltInCallContext):
         self.exit(ctx)
+        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#regexExpression.
