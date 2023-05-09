@@ -30,6 +30,8 @@ TODO:
 
 #Constants enums
 class Color:
+    ALIAS_IN = "magenta"
+    ALIAS_OUT = "black"
     BLANK = "black"
     DEFAULT = "blue"
     DUPLICATE = "grey"
@@ -39,6 +41,7 @@ class Color:
     VALUES = "grey"
 
 class Shape:
+    ALIAS = "hexagon"
     BLANK = "ellipse"
     DEFAULT = "ellipse"
     DUPLICATE = "ellipse"
@@ -48,15 +51,43 @@ class Shape:
     VALUES = "box"
 
 class Style:
+    ALIAS_IN = "dotted"
+    ALIAS_OUT = "dashed"
     DEFAULT = "dashed"
-    DUPLICATE = "none"
+    DUPLICATE = "dashed"
     FILTER = "dashed"
     GROUP = "dashed"
     OPTIONAL = "dashed"
     SELECT = "dashed"
     UNION = "solid"
 
+class ArrowStyle:
+    ALIAS = "none"
+    DEFAULT = "normal"
+    DUPLICATE = "none"
+
+from re import sub
 #Classes
+class Alias:
+    
+    def __init__(self, vars, target, text):
+        #Regex that insert spaces in string near operators and when /'AS'/i is followed by '?'
+        self.text = sub("[+\-*/]", lambda s: f" {s.group(0)} ", text).replace(',', ', ')
+        self.vars = vars[:]
+        self.target = target
+    
+    def getVars(self):
+        return self.vars
+    
+    def getTarget(self):
+        return self.target
+    
+    def getText(self):
+        return self.text
+    
+    def __str__(self):
+        return f"Vars: {self.vars}\nTarget: {self.target}\nText: {self.text}"
+
 class Cluster:
     cluster = -1
     def getNextCluster():
@@ -99,6 +130,12 @@ class Cluster:
             return None
         return r
 
+    def getAliases(self):
+        return self.aliases
+    
+    def addAlias(self, vars, var, text):
+        self.aliases[var] = Alias(vars, var, text)
+
     def addVar(self, v):
         if v != "":
             self.vars.add(v)
@@ -117,19 +154,8 @@ class Cluster:
     def getProjections(self):
         if len(self.projections) == 0:
             return self.vars
-        else:
-            a = set()
-            for p in self.projections:
-                if p in self.aliases:
-                    a.add(self.aliases[p])
-        return self.projections | a
-    
-    def setAlias(self, a1, a2):
-        """
-        Set alias to a variable with 2 names
-        """
-        self.aliases[a1] = a2
-        self.aliases[a2] = a1
+        return self.projections
+
 
     def setProjections(self, ps):
         self.projections = set(ps)
@@ -221,6 +247,7 @@ class TSS:
 
 class SubDigraph(nx.DiGraph):
     #Tuples for shaping and coloring from constants
+    ALIAS = (Shape.ALIAS, Color.ALIAS, Color.ALIAS)
     BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
     DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
     DUPLICATE = (Shape.DUPLICATE, Color.DUPLICATE, Color.DUPLICATE)
@@ -240,6 +267,7 @@ class SubDigraph(nx.DiGraph):
         
         self.addTSSes()
         self.addValues()
+        self.addAliases()
 
         for s in cluster.subclusters:
             SubDigraph(s)
@@ -300,7 +328,7 @@ class SubDigraph(nx.DiGraph):
             if n not in self.nodes:
                 n = self.addNode(None, '\n' + value, shape="primersite", color="black", fontcolor="black")
             for v in self.cluster.values[value]:
-                self.add_edge(n, self.addNode(None, v.replace("^^xsd:string", ""), *SubDigraph.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES)
+                self.add_edge(n, self.addNode(None, v.replace("^^xsd:string", ""), *SubDigraph.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES, style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
     
     def addTSSes(self):
         """
@@ -333,7 +361,7 @@ class SubDigraph(nx.DiGraph):
             if x is None:
                 print(f"WARNING: {self.cluster.tss[0].subject} PLACED IN {self.cluster.name}")
                 x = self.cluster.name
-            self.add_edge(SubDigraph.subgraphes[x].addNode(self.cluster.tss[0].subject, self.cluster.tss[0].subject), n, label="", color=Color.DUPLICATE, style="dashed",arrowhead=Style.DUPLICATE)
+            self.add_edge(SubDigraph.subgraphes[x].addNode(self.cluster.tss[0].subject, self.cluster.tss[0].subject), n, label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)
 
             for i in range(1, len(self.cluster.tss)):
                 if self.cluster.tss[i].subject == self.cluster.tss[0].subject:
@@ -355,25 +383,33 @@ class SubDigraph(nx.DiGraph):
                     if i == len(path) - 2:
                         #Variable at end
                         if path[i+1].startswith('?') or path[i+1].startswith('$'):
-                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i])
+                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
                         #String at end
                         elif path[i+1].startswith('"') and path[i+1].endswith('"'):
                             xsdstring = self.prefixVar(path[i+1]) not in self.nodes
                             n = self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE)
                             if xsdstring:
-                                self.add_edge(n, self.addNode(None, "xsd:string", *SubDigraph.TYPE), label="TYPE", color=Color.TYPE, fontcolor=Color.TYPE)
+                                self.add_edge(n, self.addNode(None, "xsd:string", *SubDigraph.TYPE), label="TYPE", color=Color.TYPE, fontcolor=Color.TYPE, style=Style.TYPE, arrowhead=ArrowStyle.TYPE)
                             self.add_edge(bNode, n, label=path[i])
                         #Link blank node to end
                         else:
-                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE), label=path[i])
+                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE), label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
                     #Link blank nodes together
                     else:
                         n = self.getBlankNodeFrom(bNode, path[i])
                         if n is None:
                             tmp, bNode = bNode, self.addNode()
-                            self.add_edge(tmp, bNode, label=path[i])
+                            self.add_edge(tmp, bNode, label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
                         else:
                             tmp, bNode = bNode, n
+
+    def addAliases(self):
+        d = self.cluster.getAliases()
+        for a in d:
+            aNode = self.addNode(None, d[a].getText(), *SubDigraph.ALIAS)
+            self.add_edge(aNode, self.prefixVar(d[a].getTarget()), label="AS", style=Style.ALIAS_OUT, arrowhead=ArrowStyle.ALIAS_OUT)
+            for i in d[a].getVars():
+                self.add_edge(self.prefixVar(i), aNode, color=Color.ALIAS, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
     
 def subdigraphsToDot(name, format = "png", view = False):
     graph = Digraph(name)
@@ -444,6 +480,7 @@ class SAL(SparqlListener):
         self.datavalues = None
         self.__ctx = None
         self.expressionLevel = 0
+        self.expressionText = None
         self.expressionVars = []
         self.indent = 0
     
@@ -565,11 +602,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#selectClause.
     def enterSelectClause(self, ctx:SparqlParser.SelectClauseContext):
         self.enter(ctx)
+        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#selectClause.
     def exitSelectClause(self, ctx:SparqlParser.SelectClauseContext):
         self.clusters[-1].setProjections([v.getText() for v in ctx.var()])
+        self.alias = False 
         self.exit(ctx)
         pass
 
@@ -1099,12 +1138,13 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#bind.
     def enterBind(self, ctx:SparqlParser.BindContext):
         self.enter(ctx)
+        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#bind.
     def exitBind(self, ctx:SparqlParser.BindContext):
+        self.alias = False
         self.exit(ctx)
-        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#inlineData.
@@ -1614,11 +1654,17 @@ class SAL(SparqlListener):
     def exitVar(self, ctx:SparqlParser.VarContext):
         self.exit(ctx)
         self.clusters[-1].addVar(ctx.getText())
-        if self.expressionLevel > 0:
-            if self.expressionVars:
-                self.expressionVars.append(ctx.getText())
-            else:
-                self.expressionVars = [ctx.getText()]
+
+        if self.alias:
+            if self.expressionLevel > 0:
+                if self.expressionVars:
+                    self.expressionVars.append(ctx.getText())
+                else:
+                    self.expressionVars = [ctx.getText()]
+            elif self.expressionLevel == 0 and self.expressionVars:
+                self.clusters[-1].addAlias(self.expressionVars, ctx.getText(), self.expressionText)
+                self.expressionVars = None
+                self.expressionText = None
         elif self.datablock:
             self.datavars.append(ctx.getText())
         pass
@@ -1643,6 +1689,7 @@ class SAL(SparqlListener):
     def exitExpression(self, ctx:SparqlParser.ExpressionContext):
         self.exit(ctx)
         self.expressionLevel -= 1
+        self.expressionText = ctx.getText()
         pass
 
     # Enter a parse tree produced by SparqlParser#conditionalOrExpression.
@@ -1754,7 +1801,6 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#builtInCall.
     def exitBuiltInCall(self, ctx:SparqlParser.BuiltInCallContext):
         self.exit(ctx)
-        print(ctx.getText())
         pass
 
     # Enter a parse tree produced by SparqlParser#regexExpression.
