@@ -10,5 +10,5 @@ select distinct ?entry where {
   ?pm :evidence /:reference ?ref.
   ?ref :provenance db:SRMAtlas.
   ?ref :accession ?ac.
-  filter(!strStarts(?ac,"PAp"))
+  filter(!strstarts(?ac,"PAp"))
 }
