@@ -11,14 +11,6 @@ import networkx as nx
 
 """
 TODO:
-    - Alias [handle function aliased]
-
-        groupClause: ( 'group' | 'GROUP' ) ( 'by' | 'BY' ) groupCondition+;
-        groupCondition: builtInCall | functionCall | '(' expression (('as' | 'AS') var)? ')' | var;
-
-        bind: ( 'bind' | 'BIND' ) '(' expression ( 'as' | 'AS' ) var ')';
-
-
     - TSS end duplicate ? rq82
 
     - SERVICE [maybe]
@@ -78,7 +70,7 @@ class Alias:
     def __init__(self, vars, target, text):
         #Regex that insert spaces in string near operators that are followed by '?' or a digit
         #Insert a space after each ','
-        self.text = sub("[+\-*/](?=[?0-9])|;", Alias.replFun, text).replace(',', ", ")
+        self.text = sub("[+\-*/](?=[?0-9])|;", Alias.replFun, text)
         self.vars = set(vars)
         self.target = target
     
