@@ -31,7 +31,7 @@ TODO:
 #Constants enums
 class Color:
     ALIAS_IN = "magenta"
-    ALIAS_OUT = "black"
+    ALIAS_OUT = "grey"
     BLANK = "black"
     DEFAULT = "blue"
     DUPLICATE = "grey"
@@ -53,27 +53,31 @@ class Shape:
 class Style:
     ALIAS_IN = "dotted"
     ALIAS_OUT = "dashed"
-    DEFAULT = "dashed"
+    DEFAULT = "solid"
     DUPLICATE = "dashed"
     FILTER = "dashed"
     GROUP = "dashed"
     OPTIONAL = "dashed"
     SELECT = "dashed"
+    TYPE = "solid"
     UNION = "solid"
 
 class ArrowStyle:
-    ALIAS = "none"
+    ALIAS_IN = "none"
+    ALIAS_OUT = "none"
     DEFAULT = "normal"
     DUPLICATE = "none"
+    TYPE = "normal"
 
 from re import sub
+
 #Classes
 class Alias:
-    
     def __init__(self, vars, target, text):
-        #Regex that insert spaces in string near operators and when /'AS'/i is followed by '?'
-        self.text = sub("[+\-*/]", lambda s: f" {s.group(0)} ", text).replace(',', ', ')
-        self.vars = vars[:]
+        #Regex that insert spaces in string near operators that are followed by '?' or a digit
+        #Insert a space after each ','
+        self.text = sub("[+\-*/](?=[?0-9])", lambda s: f" {s.group(0)} ", text).replace(',', ', ')
+        self.vars = set(vars)
         self.target = target
     
     def getVars(self):
@@ -247,7 +251,7 @@ class TSS:
 
 class SubDigraph(nx.DiGraph):
     #Tuples for shaping and coloring from constants
-    ALIAS = (Shape.ALIAS, Color.ALIAS, Color.ALIAS)
+    ALIAS = (Shape.ALIAS, Color.ALIAS_OUT, Color.ALIAS_OUT)
     BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
     DEFAULT = (Shape.DEFAULT, Color.DEFAULT, Color.DEFAULT)
     DUPLICATE = (Shape.DUPLICATE, Color.DUPLICATE, Color.DUPLICATE)
@@ -316,6 +320,7 @@ class SubDigraph(nx.DiGraph):
         if name not in SubDigraph.nodeAlreadyAdded:
             self.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor)
             SubDigraph.nodeAlreadyAdded.add(name)
+            print(name)
         return name
 
     def addValues(self):
@@ -407,15 +412,14 @@ class SubDigraph(nx.DiGraph):
         d = self.cluster.getAliases()
         for a in d:
             aNode = self.addNode(None, d[a].getText(), *SubDigraph.ALIAS)
-            self.add_edge(aNode, self.prefixVar(d[a].getTarget()), label="AS", style=Style.ALIAS_OUT, arrowhead=ArrowStyle.ALIAS_OUT)
+            self.add_edge(aNode, self.addNode(d[a].getTarget(), d[a].getTarget()), label="AS", style=Style.ALIAS_OUT, arrowhead=ArrowStyle.ALIAS_OUT)
             for i in d[a].getVars():
-                self.add_edge(self.prefixVar(i), aNode, color=Color.ALIAS, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
+                self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
     
 def subdigraphsToDot(name, format = "png", view = False):
     graph = Digraph(name)
     graph.graph_attr["rankdir"] = "LR"
     projections = { "cluster0_" + p for p in SubDigraph.subgraphes["cluster0"].cluster.getProjections() }
-
 
     sg = dict()
 
@@ -431,7 +435,7 @@ def subdigraphsToDot(name, format = "png", view = False):
             x = SubDigraph.subgraphes[name].cluster.getClusterName(node[node.find('_')+1:])
             if x is None or x == name:
                 if node in projections:
-                    g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+                        g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
                 else:
                     g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
     
@@ -1979,7 +1983,7 @@ def main(argv):
     verbose = False
     if len(argv) > 2 and argv[2] == "-v":
         verbose = True
-    input_stream = FileStream(argv[1])
+    input_stream = FileStream(argv[1], encoding="utf-8")
     lexer = SparqlLexer(input_stream)
     stream = CommonTokenStream(lexer)
     listener = SAL(verbose)
