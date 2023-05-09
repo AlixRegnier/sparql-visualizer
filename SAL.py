@@ -18,9 +18,7 @@ TODO:
 
         bind: ( 'bind' | 'BIND' ) '(' expression ( 'as' | 'AS' ) var ')';
 
-        selectClause: ( 'select' | 'SELECT' ) ('distinct' | 'DISTINCT' | 'reduced' | 'REDUCED')? ((var | ('(' expression ( 'as' | 'AS' ) var ')'))+ | '*');
 
-    - TSS duplicate bug ?
     - TSS end duplicate ? rq82
 
     - SERVICE [maybe]
@@ -73,10 +71,14 @@ from re import sub
 
 #Classes
 class Alias:
+    @staticmethod
+    def replFun(s : str) -> str: 
+        return f" {s.group(0)} "
+    
     def __init__(self, vars, target, text):
         #Regex that insert spaces in string near operators that are followed by '?' or a digit
         #Insert a space after each ','
-        self.text = sub("[+\-*/](?=[?0-9])", lambda s: f" {s.group(0)} ", text).replace(',', ', ')
+        self.text = sub("[+\-*/](?=[?0-9])|;", Alias.replFun, text).replace(',', ", ")
         self.vars = set(vars)
         self.target = target
     
@@ -320,7 +322,6 @@ class SubDigraph(nx.DiGraph):
         if name not in SubDigraph.nodeAlreadyAdded:
             self.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor)
             SubDigraph.nodeAlreadyAdded.add(name)
-            print(name)
         return name
 
     def addValues(self):
@@ -721,10 +722,12 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#groupCondition.
     def enterGroupCondition(self, ctx:SparqlParser.GroupConditionContext):
         self.enter(ctx)
+        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#groupCondition.
     def exitGroupCondition(self, ctx:SparqlParser.GroupConditionContext):
+        self.alias = False
         self.exit(ctx)
         pass
 
