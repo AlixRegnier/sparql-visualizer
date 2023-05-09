@@ -69,7 +69,6 @@ class Alias:
     
     def __init__(self, vars, target, text):
         #Regex that insert spaces in string near operators that are followed by '?' or a digit
-        #Insert a space after each ','
         self.text = sub("[+\-*/](?=[?0-9])|;", Alias.replFun, text)
         self.vars = set(vars)
         self.target = target
@@ -264,11 +263,12 @@ class SubDigraph(nx.DiGraph):
         SubDigraph.subgraphes[cluster.name] = self
         
         self.addTSSes()
-        self.addValues()
         self.addAliases()
 
         for s in cluster.subclusters:
             SubDigraph(s)
+
+        self.addValues()
 
     @staticmethod
     def getNextBlankIdentifier():
@@ -323,7 +323,7 @@ class SubDigraph(nx.DiGraph):
             
             #Path values
 
-            if n not in self.nodes:
+            if g == self.cluster.name and n not in self.nodes :
                 n = self.addNode(None, '\n' + value, shape="primersite", color="black", fontcolor="black")
             for v in self.cluster.values[value]:
                 self.add_edge(n, self.addNode(None, v.replace("^^xsd:string", ""), *SubDigraph.VALUES), label="VALUE", color=Color.VALUES, fontcolor=Color.VALUES, style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
@@ -335,42 +335,37 @@ class SubDigraph(nx.DiGraph):
         tsses : List[TSS]
             List of TSS instances that defines all TripleSameSubjectPaths of the query
         """
-        
-        """
-        print(self.cluster.name)
-        if self.cluster.supercluster:
-            print("super:", self.cluster.supercluster.name)
-        print("vars:", self.cluster.vars)
-        print("tss:")
-        for e in self.cluster.tss:
-            print(e)
 
-        print("#"*10)
-        """
-
-        passTSSsubjects = set()
+        asNode = dict()
         #TODO: DUPLICATE ALL TSS SUBJECT LIKE FOR THE FIRST ONE
         #TODO: MAY DUPLICATE TSS END
-        if self.cluster.name != "cluster0" and len(self.cluster.tss) > 0 and self.cluster.getClusterName(self.cluster.tss[0].subject) != self.cluster.name:
-            #NODE DUPLICATION (supergraph.node -> subgraph.node)
-            n = self.addNode(f"duplicate_{self.cluster.tss[0].subject}", self.cluster.tss[0].subject, *SubDigraph.DUPLICATE)
-            #WARNING: May handle case when x is None
-            x = self.cluster.getClusterName(self.cluster.tss[0].subject)
-            if x is None:
-                print(f"WARNING: {self.cluster.tss[0].subject} PLACED IN {self.cluster.name}")
-                x = self.cluster.name
-            self.add_edge(SubDigraph.subgraphes[x].addNode(self.cluster.tss[0].subject, self.cluster.tss[0].subject), n, label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)
+        if self.cluster.name != "cluster0":
+            for tss in self.cluster.tss:
+                if tss.subject not in asNode:
+                    xsubject = self.cluster.getClusterName(tss.subject)
+                
+                    if xsubject is None:
+                        print(f"WARNING: {tss.subject} PLACED IN {self.cluster.name}")
+                        xsubject = self.cluster.name
 
-            for i in range(1, len(self.cluster.tss)):
-                if self.cluster.tss[i].subject == self.cluster.tss[0].subject:
-                    self.cluster.tss[i].subject = n
-                    passTSSsubjects.add(self.cluster.tss[i])
-            self.cluster.tss[0].subject = n
-            passTSSsubjects.add(self.cluster.tss[0])
+                    if xsubject != self.cluster.name:
+                        asNode[tss.subject] = self.addNode(f"duplicate_{tss.subject}", tss.subject, *SubDigraph.DUPLICATE)
+                        self.add_edge(SubDigraph.subgraphes[xsubject].addNode(tss.subject, tss.subject), asNode[tss.subject], label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)
+        
+                for path in tss.paths:
+                    if path[-1] not in asNode and (path[-1].startswith('?') or path[-1].startswith('$')):
+                        xend = self.cluster.getClusterName(path[-1])
+                        if xend is None:
+                            print(f"WARNING: {path[-1]} PLACED IN {self.cluster.name}")
+                            xend = self.cluster.name
+
+                        if xend != self.cluster.name:
+                            asNode[path[-1]] = self.addNode(f"duplicate_{path[-1]}", path[-1], *SubDigraph.DUPLICATE)
+                            self.add_edge(asNode[path[-1]], SubDigraph.subgraphes[xend].addNode(path[-1], path[-1]), label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)        
 
         for tss in self.cluster.tss:
-            if tss in passTSSsubjects:
-                sNode = tss.subject
+            if tss.subject in asNode:
+                sNode = asNode[tss.subject]
             else:
                 sNode = self.addNode(tss.subject, tss.subject)
 
@@ -381,8 +376,11 @@ class SubDigraph(nx.DiGraph):
                     if i == len(path) - 2:
                         #Variable at end
                         if path[i+1].startswith('?') or path[i+1].startswith('$'):
-                            self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
-                        #String at end
+                            if path[i+1] in asNode:
+                                self.add_edge(bNode, asNode[path[i+1]], label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
+                            else:
+                                self.add_edge(bNode, self.addNode(path[i+1], path[i+1]), label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
+                        #Value at end (value is terminal)
                         elif path[i+1].startswith('"') and path[i+1].endswith('"'):
                             xsdstring = self.prefixVar(path[i+1]) not in self.nodes
                             n = self.addNode(path[i+1], path[i+1], *SubDigraph.VALUE)
@@ -400,6 +398,7 @@ class SubDigraph(nx.DiGraph):
                             self.add_edge(tmp, bNode, label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
                         else:
                             tmp, bNode = bNode, n
+        #del asNode
 
     def addAliases(self):
         d = self.cluster.getAliases()
@@ -580,8 +579,8 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#selectQuery.
     def exitSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
-        self.exit(ctx)
         self.clusters.pop()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#subSelect.
@@ -592,8 +591,8 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#subSelect.
     def exitSubSelect(self, ctx:SparqlParser.SubSelectContext):
-        self.exit(ctx)
         self.clusters.pop()
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#selectClause.
@@ -714,12 +713,10 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#groupCondition.
     def enterGroupCondition(self, ctx:SparqlParser.GroupConditionContext):
         self.enter(ctx)
-        self.alias = True
         pass
 
     # Exit a parse tree produced by SparqlParser#groupCondition.
     def exitGroupCondition(self, ctx:SparqlParser.GroupConditionContext):
-        self.alias = False
         self.exit(ctx)
         pass
 
@@ -1382,8 +1379,9 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#triplesSameSubjectPath.
     def exitTriplesSameSubjectPath(self, ctx:SparqlParser.TriplesSameSubjectPathContext):
-        self.exit(ctx)
         self.currentTSS.close()
+        self.currentTSS = None
+        self.exit(ctx)
         pass
 
     # Enter a parse tree produced by SparqlParser#propertyListPath.
@@ -1652,6 +1650,9 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#var.
     def exitVar(self, ctx:SparqlParser.VarContext):
         self.exit(ctx)
+        if self.modifier:
+            return
+        
         self.clusters[-1].addVar(ctx.getText())
 
         if self.alias:
