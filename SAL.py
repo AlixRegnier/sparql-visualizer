@@ -10,9 +10,6 @@ from graphviz import *
 import networkx as nx
 
 """
-TODO:
-    - TSS end duplicate ? rq82
-
     - SERVICE [maybe]
 
     - String :: "[any]"  => 'xsd:string', should be modified
@@ -59,17 +56,32 @@ class ArrowStyle:
     DUPLICATE = "none"
     TYPE = "normal"
 
-from re import sub
+import re
 
 #Classes
 class Alias:
     @staticmethod
-    def replFun(s : str) -> str: 
+    def dSpace(s) -> str: 
         return f" {s.group(0)} "
+    
+    @staticmethod
+    def nSpace(s) -> str: 
+        return f"{s.group(0)} "
+    
+    @staticmethod
+    def __sub(s : str) -> str:
+        return re.sub("distinct|,", Alias.nSpace, re.sub("[+*/<>=&|;]|(?<=\w)-", Alias.dSpace, s), flags=re.IGNORECASE)
     
     def __init__(self, vars, target, text):
         #Regex that insert spaces in string near operators that are followed by '?' or a digit
-        self.text = sub("[+\-*/](?=[?0-9])|;", Alias.replFun, text)
+        self.text = ""
+        currentIndex = 0
+        for e in re.finditer("\"|'.*?\"|'", text):
+            self.text += Alias.__sub(text[currentIndex:e.start()]) + e.string
+            currentIndex = e.end() + 1
+        self.text += Alias.__sub(text[currentIndex:])
+            
+
         self.vars = set(vars)
         self.target = target
     
@@ -257,7 +269,7 @@ class SubDigraph(nx.DiGraph):
     subgraphes = dict()
     nodeAlreadyAdded = set()
 
-    def __init__(self, cluster : Cluster, **attr): #May add OPTIONAL, UNION, MINUS (need to know operand order)
+    def __init__(self, cluster : Cluster, **attr): #May add MINUS (need to know operand order)
         super().__init__(None, **attr)
         self.cluster = cluster
         SubDigraph.subgraphes[cluster.name] = self
@@ -265,6 +277,10 @@ class SubDigraph(nx.DiGraph):
         self.addTSSes()
         self.addAliases()
 
+        if cluster.name == "cluster0":
+            for p in cluster.projections:
+                self.addNode(p, p, *SubDigraph.PROJECTION)
+        
         for s in cluster.subclusters:
             SubDigraph(s)
 
@@ -333,12 +349,10 @@ class SubDigraph(nx.DiGraph):
         Create all nodes and edges from a list of TSS
 
         tsses : List[TSS]
-            List of TSS instances that defines all TripleSameSubjectPaths of the query
+            List of TSS instances that defines all TriplesSameSubjectPaths of the query
         """
 
         asNode = dict()
-        #TODO: DUPLICATE ALL TSS SUBJECT LIKE FOR THE FIRST ONE
-        #TODO: MAY DUPLICATE TSS END
         if self.cluster.name != "cluster0":
             for tss in self.cluster.tss:
                 if tss.subject not in asNode:
@@ -398,7 +412,6 @@ class SubDigraph(nx.DiGraph):
                             self.add_edge(tmp, bNode, label=path[i], style=Style.DEFAULT, arrowhead=ArrowStyle.DEFAULT)
                         else:
                             tmp, bNode = bNode, n
-        #del asNode
 
     def addAliases(self):
         d = self.cluster.getAliases()
@@ -427,7 +440,8 @@ def subdigraphsToDot(name, format = "png", view = False):
             x = SubDigraph.subgraphes[name].cluster.getClusterName(node[node.find('_')+1:])
             if x is None or x == name:
                 if node in projections:
-                        g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+                    g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+                    projections.remove(node)
                 else:
                     g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
     
@@ -435,7 +449,7 @@ def subdigraphsToDot(name, format = "png", view = False):
             graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[name].edges[edge])
                 
         sg[g.name] = g
-    
+
     def __linksubgraph(sdg : SubDigraph):
         for s in sdg.cluster.subclusters:
             __linksubgraph(SubDigraph.subgraphes[s.name])
@@ -1134,7 +1148,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#bind.
     def enterBind(self, ctx:SparqlParser.BindContext):
         self.enter(ctx)
-        self.alias = True
+        self.alias = True        
         pass
 
     # Exit a parse tree produced by SparqlParser#bind.
@@ -1985,7 +1999,6 @@ def main(argv):
     listener = SAL(verbose)
     parser = SparqlParser(stream)
     parser.addParseListener(listener)
-
     parser.statement() #=tree
     #ParseTreeWalker.DEFAULT.walk(listener, tree)
     #for t in listener.getMainSelects()[0].tss:
