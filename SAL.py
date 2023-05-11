@@ -510,7 +510,7 @@ class SAL(SparqlListener):
             self.indent -= 1
 
         #TODO: remove explicit xsd:string 
-        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string" and not self.modifier:
+        if self.currentTSS and self.__ctx == ctx and ctx.getText() != "xsd:string" and not self.modifier and not isinstance(ctx, SparqlParser.PathModContext):
             if self.blank:
                 self.currentTSS.addToBlank(ctx.getText())
             else:
@@ -1517,6 +1517,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathMod.
     def exitPathMod(self, ctx:SparqlParser.PathModContext):
+        self.currentTSS.paths[-1][-1] = self.currentTSS.paths[-1][-1] + ctx.getText()
         self.exit(ctx)
         pass
 
