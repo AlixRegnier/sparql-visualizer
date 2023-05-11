@@ -1507,6 +1507,8 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#pathEltOrInverse.
     def exitPathEltOrInverse(self, ctx:SparqlParser.PathEltOrInverseContext):
+        if ctx.getText().startswith('^'):
+            self.currentTSS.paths[-1][-1] = '^' + self.currentTSS.paths[-1][-1]
         self.exit(ctx)
         pass
 
