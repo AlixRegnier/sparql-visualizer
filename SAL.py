@@ -170,18 +170,15 @@ class Cluster:
         self.projections = set(ps)
         self.addVars(ps)
 
-    def drawGraph(self):
-        d = SubDigraph(self)
-        return d
+    def getGraph(self):
+        return SubDigraph(self)
     
-    def getNetworkxGraph(self):
-        """
-        A TESTER
-        """
-        d = SubDigraph(self)
+    def getFullGraph(self):
+        d = nx.DiGraph()
+
+        SubDigraph(self)
         for name in SubDigraph.subgraphes:
-            if name != "cluster0":
-                d = nx.compose(d, SubDigraph.subgraphes[name])
+            d = nx.compose(d, SubDigraph.subgraphes[name])
         return d    
     
 class TSS:
@@ -271,19 +268,23 @@ class SubDigraph(nx.DiGraph):
 
     def __init__(self, cluster : Cluster, **attr): #May add MINUS (need to know operand order)
         super().__init__(None, **attr)
-        self.cluster = cluster
+
+        if cluster.name in SubDigraph.subgraphes:
+            return
         SubDigraph.subgraphes[cluster.name] = self
         
+        self.cluster = cluster
+
         self.addTSSes()
         self.addAliases()
-
+        
         if cluster.name == "cluster0":
             for p in cluster.projections:
                 self.addNode(p, p, *SubDigraph.PROJECTION)
-        
+
         for s in cluster.subclusters:
             SubDigraph(s)
-
+        
         self.addValues()
 
     @staticmethod
@@ -420,7 +421,19 @@ class SubDigraph(nx.DiGraph):
             self.add_edge(aNode, self.addNode(d[a].getTarget(), d[a].getTarget()), label="AS", style=Style.ALIAS_OUT, arrowhead=ArrowStyle.ALIAS_OUT)
             for i in d[a].getVars():
                 self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
-    
+
+def getRelationGraph(graph : nx.DiGraph):
+    g = nx.DiGraph()
+
+    for edge in graph.edges:
+        if "label" in graph.edges[edge] and (graph.edges[edge]["label"] not in ("VALUE", "TYPE", "AS", "") or "_duplicate" in edge[1]):
+            g.add_node(edge[0] + graph.edges[edge]["label"], label=graph.edges[edge]["label"])
+            for e in graph.edges:
+                if edge[1] == e[0]:
+                    if "label" in graph.edges[e] and graph.edges[e]["label"] not in ("VALUE", "TYPE", "AS"):
+                        g.add_edge(edge[0] + graph.edges[edge]["label"], edge[1] + graph.edges[e]["label"])
+    return g
+
 def subdigraphsToDot(name, format = "png", view = False):
     graph = Digraph(name)
     graph.graph_attr["rankdir"] = "LR"
@@ -2002,12 +2015,11 @@ def main(argv):
     listener = SAL(verbose)
     parser = SparqlParser(stream)
     parser.addParseListener(listener)
-    parser.statement() #=tree
-    #ParseTreeWalker.DEFAULT.walk(listener, tree)
-    #for t in listener.getMainSelects()[0].tss:
-    #    print(t)
-    graph = listener.getMainClusters()[0].drawGraph()
-    subdigraphsToDot(argv[1])
-    #nx.write_gexf(graph, sys.argv[1].replace(".rq", ".gexf"))
+    parser.statement()
+
+    graph = listener.getMainClusters()[0].getGraph()
+    rgraph = getRelationGraph(listener.getMainClusters()[0].getFullGraph())
+    nx.write_gexf(rgraph, sys.argv[1].replace(".rq", ".relation.gexf"))
+    #subdigraphsToDot(argv[1])
 if __name__ == '__main__':
     main(sys.argv)

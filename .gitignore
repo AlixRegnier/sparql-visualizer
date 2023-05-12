@@ -1,8 +1,11 @@
 #Custom
 __pycache__
+need_to_handle
+test
 tmp*
 *.pyc
 *.gv
 *.dot
 *.png
 *.log
+*.gexf
