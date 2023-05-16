@@ -1,6 +1,7 @@
 #Custom
 __pycache__
 need_to_handle
+mcs_result
 test
 tmp*
 *.pyc

@@ -1,17 +1,17 @@
 #! /usr/bin/env python3
 
-import sys
 from antlr4 import *
+from collections import deque
+from graphviz import Digraph
+import networkx as nx
+import re
 from SparqlLexer import SparqlLexer
 from SparqlParser import SparqlParser
 from SparqlListener import SparqlListener
-from collections import deque
-from graphviz import *
-import networkx as nx
 
 """
     - SERVICE [maybe]
-
+    - Duplicate primitives types when targetted by different nodes
     - String :: "[any]"  => 'xsd:string', should be modified
 """
 
@@ -56,7 +56,7 @@ class ArrowStyle:
     DUPLICATE = "none"
     TYPE = "normal"
 
-import re
+
 
 #Classes
 class Alias:
@@ -99,10 +99,7 @@ class Alias:
 
 class Cluster:
     cluster = -1
-    def getNextCluster():
-        Cluster.cluster += 1
-        return f"cluster{Cluster.cluster}"
-    
+
     def __init__(self, label = "SELECT", style = Style.DEFAULT):
         self.aliases = dict()
         self.name = Cluster.getNextCluster()
@@ -115,6 +112,15 @@ class Cluster:
         self.values = dict()
         self.vars = set()
 
+    @staticmethod
+    def getNextCluster():
+        Cluster.cluster += 1
+        return f"cluster{Cluster.cluster}"
+    
+    @staticmethod
+    def reset():
+        Cluster.cluster = -1
+        
     def addSubCluster(self, s):
         self.subclusters.append(s)
         s.supercluster = self
@@ -165,12 +171,11 @@ class Cluster:
             return self.vars
         return self.projections
 
-
     def setProjections(self, ps):
         self.projections = set(ps)
         self.addVars(ps)
 
-    def getGraph(self):
+    def generateGraph(self):
         return SubDigraph(self)
     
     def getFullGraph(self):
@@ -179,7 +184,7 @@ class Cluster:
         SubDigraph(self)
         for name in SubDigraph.subgraphes:
             d = nx.compose(d, SubDigraph.subgraphes[name])
-        return d    
+        return d
     
 class TSS:
     def __init__(self):
@@ -271,6 +276,7 @@ class SubDigraph(nx.DiGraph):
 
         if cluster.name in SubDigraph.subgraphes:
             return
+        
         SubDigraph.subgraphes[cluster.name] = self
         
         self.cluster = cluster
@@ -297,6 +303,57 @@ class SubDigraph(nx.DiGraph):
         SubDigraph.blankCount += 1
         return f"blank_{SubDigraph.blankCount}"
     
+    @staticmethod
+    def reset():
+        SubDigraph.blankCount = 0
+        SubDigraph.subgraphes = dict()
+        SubDigraph.nodeAlreadyAdded = set()
+
+    @staticmethod
+    def allSubgraphsToDot(name, format = "png", view = False):
+        graph = Digraph(name)
+        graph.graph_attr["rankdir"] = "LR"
+        projections = { "cluster0_" + p for p in SubDigraph.subgraphes["cluster0"].cluster.getProjections() }
+
+        sg = dict()
+
+        for name in SubDigraph.subgraphes:
+            g = Digraph(name)
+            if name != "cluster0":
+                g.graph_attr["style"] = SubDigraph.subgraphes[name].cluster.getStyle()
+                g.graph_attr["label"] = SubDigraph.subgraphes[name].cluster.getLabel()
+            else:
+                g.graph_attr["style"] = "invis"
+
+            for node in SubDigraph.subgraphes[name].nodes:            
+                x = SubDigraph.subgraphes[name].cluster.getClusterName(node[node.find('_')+1:])
+                if x is None or x == name:
+                    if node in projections:
+                        g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+                        projections.remove(node)
+                    else:
+                        g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
+        
+            for edge in SubDigraph.subgraphes[name].edges:
+                graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[name].edges[edge])
+                    
+            sg[g.name] = g
+
+        def __linksubgraph(sdg : SubDigraph):
+            for s in sdg.cluster.subclusters:
+                __linksubgraph(SubDigraph.subgraphes[s.name])
+                sg[sdg.cluster.name].subgraph(sg[s.name])
+            
+        __linksubgraph(SubDigraph.subgraphes["cluster0"])
+        graph.subgraph(sg["cluster0"])
+
+        #Render 
+        graph.format = format
+        if view:
+            graph.view(cleanup=True)
+        else:
+            graph.render(cleanup=True)
+
     def prefixVar(self, name):
         """
         Prefix a node name by its owner select name
@@ -423,64 +480,30 @@ class SubDigraph(nx.DiGraph):
                 self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
 
 def getRelationGraph(graph : nx.DiGraph):
-    g = nx.DiGraph()
+    #Set edges as nodes is a line graph
+    g = nx.line_graph(graph)
 
     for edge in graph.edges:
-        if "label" in graph.edges[edge] and (graph.edges[edge]["label"] not in ("VALUE", "TYPE", "AS", "") or "_duplicate" in edge[1]):
-            g.add_node(edge[0] + graph.edges[edge]["label"], label=graph.edges[edge]["label"])
-            for e in graph.edges:
-                if edge[1] == e[0]:
-                    if "label" in graph.edges[e] and graph.edges[e]["label"] not in ("VALUE", "TYPE", "AS"):
-                        g.add_edge(edge[0] + graph.edges[edge]["label"], edge[1] + graph.edges[e]["label"])
+        if "label" in graph.edges[edge]:
+            if graph.edges[edge]["label"] in ("VALUE", "TYPE", "AS", "") and "_duplicate" not in edge[1]:
+                g.remove_node(edge)
+            else:
+                g.nodes[edge]["label"] = graph.edges[edge]["label"]
+        else:
+            g.remove_node(edge)
     return g
 
-def subdigraphsToDot(name, format = "png", view = False):
-    graph = Digraph(name)
-    graph.graph_attr["rankdir"] = "LR"
-    projections = { "cluster0_" + p for p in SubDigraph.subgraphes["cluster0"].cluster.getProjections() }
-
-    sg = dict()
-
-    for name in SubDigraph.subgraphes:
-        g = Digraph(name)
-        if name != "cluster0":
-            g.graph_attr["style"] = SubDigraph.subgraphes[name].cluster.getStyle()
-            g.graph_attr["label"] = SubDigraph.subgraphes[name].cluster.getLabel()
-        else:
-            g.graph_attr["style"] = "invis"
-
-        for node in SubDigraph.subgraphes[name].nodes:            
-            x = SubDigraph.subgraphes[name].cluster.getClusterName(node[node.find('_')+1:])
-            if x is None or x == name:
-                if node in projections:
-                    g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
-                    projections.remove(node)
-                else:
-                    g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
-    
-        for edge in SubDigraph.subgraphes[name].edges:
-            graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[name].edges[edge])
-                
-        sg[g.name] = g
-
-    def __linksubgraph(sdg : SubDigraph):
-        for s in sdg.cluster.subclusters:
-            __linksubgraph(SubDigraph.subgraphes[s.name])
-            sg[sdg.cluster.name].subgraph(sg[s.name])
-        
-    __linksubgraph(SubDigraph.subgraphes["cluster0"])
-    graph.subgraph(sg["cluster0"])
-
-    #Render 
-    graph.format = format
-    if view:
-        graph.view(cleanup=True)
-    else:
-        graph.render(cleanup=True)
+def parse_file(file, verbose=False):
+    input_stream = FileStream(file, encoding="utf-8")
+    lexer = SparqlLexer(input_stream)
+    stream = CommonTokenStream(lexer)
+    listener = SAL(verbose)  
+    ParseTreeWalker.DEFAULT.walk(listener, SparqlParser(stream).statement()) #statement() is the tree entry
+    return listener.getMainClusters()[0]
 
 # This class defines a complete listener for a parse tree produced by SparqlParser.
 class SAL(SparqlListener):
-    
+
     def __init__(self, verbose = False):
         #Flags
         self.alias = False
@@ -2003,23 +2026,3 @@ class SAL(SparqlListener):
     def exitBlankNode(self, ctx:SparqlParser.BlankNodeContext):
         self.exit(ctx)
         pass
-
-
-def main(argv):
-    verbose = False
-    if len(argv) > 2 and argv[2] == "-v":
-        verbose = True
-    input_stream = FileStream(argv[1], encoding="utf-8")
-    lexer = SparqlLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    listener = SAL(verbose)
-    parser = SparqlParser(stream)
-    parser.addParseListener(listener)
-    parser.statement()
-
-    graph = listener.getMainClusters()[0].getGraph()
-    rgraph = getRelationGraph(listener.getMainClusters()[0].getFullGraph())
-    nx.write_gexf(rgraph, sys.argv[1].replace(".rq", ".relation.gexf"))
-    #subdigraphsToDot(argv[1])
-if __name__ == '__main__':
-    main(sys.argv)
