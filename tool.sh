@@ -12,6 +12,7 @@ if [ "$1" = "clear" ]; then
     rm -f ./nextprot-queries/*.png
     rm -f ./nextprot-queries/*.gexf
     rm -f ./nextprot-queries/*.log
+    rm -f ./mcs_result/*.png
 #Génère le parser et retirer les fichiers superflus
 #Ajoute "allowsBlankNodes" en variable globale
 elif [ "$1" = "antlr4" ]; then
