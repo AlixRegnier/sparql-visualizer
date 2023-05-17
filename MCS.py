@@ -74,11 +74,11 @@ def equality(n1, n2) -> bool:
             #print("WARNING: A node wasn't labelled !")
             return False
 
-incumbent = dict()
+
 def associationMCCIS(g1, g2):
     incumbent = dict()
     g = nx.tensor_product(g1, g2)
-    search(g, set(), set(), g.nodes)
+    search(g, set(), set(), g.nodes, incumbent)
     return incumbent
 
 def colour(g : nx.Graph, uncoloured) -> List[List[str]]:
@@ -93,7 +93,7 @@ def colour(g : nx.Graph, uncoloured) -> List[List[str]]:
             invd[d[k]] = [k]
     return list(invd.values())
     
-def search(g : nx.Graph, solution : set, connected : set, remaining : set):
+def search(g : nx.Graph, solution : set, connected : set, remaining : set, incumbent):
     colourClasses = colour(g, remaining - connected) + colour(g, remaining & connected)
     while len(colourClasses) > 0:
         for v in colourClasses[-1][::-1]:
@@ -102,16 +102,16 @@ def search(g : nx.Graph, solution : set, connected : set, remaining : set):
             solutionbis = solution | {v}
             if len(solutionbis) > len(incumbent):
                 incumbent = solutionbis
-            connectedbis = connected | set(g.neighbors())
-            remainingbis = remaining & set(g.neighbors())
+            connectedbis = connected | set(g.neighbors(v))
+            remainingbis = remaining & set(g.neighbors(v))
             if len(remainingbis):
-                search(g, solutionbis, connectedbis, remainingbis)
+                search(g, solutionbis, connectedbis, remainingbis, incumbent)
         colourClasses.pop()
 
 
 
 #TODO: Implement a little function for getting MCS from g1 and g2
-def most_common_subgraph(g1 : nx.DiGraph, g2 : nx.DiGraph, node_match : function) -> Dict[nx.DiGraph]:
+def most_common_subgraph(g1 : nx.DiGraph, g2 : nx.DiGraph, node_match):
 
     best = 0
     n1Label = dict()
@@ -172,5 +172,4 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
 """
 
 def MCS(g1, g2):
-    print(associationMCCIS(g1, g2))
-    input()
+    return g1.subgraph(associationMCCIS(g1, g2))
