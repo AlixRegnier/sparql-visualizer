@@ -2,8 +2,7 @@ import networkx as nx
 from networkx.algorithms.isomorphism import *
 import matplotlib.pyplot as plt
 from graphviz import Digraph
-from typing import List, Dict
-
+from typing import List, Dict, Set
 #Citations
 """
 #Good approach
@@ -74,11 +73,83 @@ def equality(n1, n2) -> bool:
         except KeyError:
             #print("WARNING: A node wasn't labelled !")
             return False
-    
-#TODO: Implement a little function for getting MCS from g1 and g2
-def most_common_subgraph(g1 : nx.DiGraph, g2 : nx.DiGraph) -> Dict[nx.DiGraph]:
-    pass
 
+incumbent = dict()
+def associationMCCIS(g1, g2):
+    incumbent = dict()
+    g = nx.tensor_product(g1, g2)
+    search(g, set(), set(), g.nodes)
+    return incumbent
+
+def colour(g : nx.Graph, uncoloured) -> List[List[str]]:
+    #TODO: Replace by: Segundo, P.S., Rodr´ıguez-Losada, D., Jim´enez, A.: An exact bit-parallel algorithm for the maximum clique problem. Computers & OR 38(2), 571–581 (2011), http://dx.doi.org/10.1016/j.cor.2010.07.019
+    d = nx.greedy_color(g.subgraph(uncoloured)) 
+
+    invd = dict()
+    for k in d:
+        if d[k] in invd:
+            invd[d[k]].append(k)
+        else:
+            invd[d[k]] = [k]
+    return list(invd.values())
+    
+def search(g : nx.Graph, solution : set, connected : set, remaining : set):
+    colourClasses = colour(g, remaining - connected) + colour(g, remaining & connected)
+    while len(colourClasses) > 0:
+        for v in colourClasses[-1][::-1]:
+            if len(solution) + len(colourClasses) <= len(incumbent) or v not in connected and len(solution):
+                return
+            solutionbis = solution | {v}
+            if len(solutionbis) > len(incumbent):
+                incumbent = solutionbis
+            connectedbis = connected | set(g.neighbors())
+            remainingbis = remaining & set(g.neighbors())
+            if len(remainingbis):
+                search(g, solutionbis, connectedbis, remainingbis)
+        colourClasses.pop()
+
+
+
+#TODO: Implement a little function for getting MCS from g1 and g2
+def most_common_subgraph(g1 : nx.DiGraph, g2 : nx.DiGraph, node_match : function) -> Dict[nx.DiGraph]:
+
+    best = 0
+    n1Label = dict()
+    n2Label = dict()
+
+    def hand_in_hand(g1 : nx.DiGraph, g2 : nx.DiGraph, n1 : str, visited : Set[str]):
+        visited.add(n1)
+        for n2 in n2Label[g1.nodes[n1]["label"]] - visited:
+            for ns in g1.successors(n1):
+                pass
+            
+            for np in g1.predecessors(node):
+                pass
+
+    for node in g1.nodes:
+        if g1.nodes[node]["label"] in n1Label:
+            n1Label[g1.nodes[node]["label"]].add(node)
+        else:
+            n1Label[g1.nodes[node]["label"]] = {node}
+    
+    for node in g2.nodes:
+        if g2.nodes[node]["label"] in n2Label:
+            n2Label[g2.nodes[node]["label"]].add(node)
+        else:
+            n2Label[g2.nodes[node]["label"]] = {node}
+
+    listOfMCS = []
+    for node in g1.nodes:
+        s = set()
+        hand_in_hand(g1, g2, node, s)
+        for mcs in listOfMCS:
+            if len(mcs) < len(s):
+                listOfMCS = [s]
+            elif len(mcs) > len(s) or mcs == s:
+                break
+        else:
+            listOfMCS.append(s)
+"""
 #Inputs must be NetworkX DiGraph
 def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
     matcher = ISMAGS(g1, g2, equality)
@@ -97,5 +168,9 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
                     break
             else:
                 matchs.append(subiso)
-
     return matchs
+"""
+
+def MCS(g1, g2):
+    print(associationMCCIS(g1, g2))
+    input()

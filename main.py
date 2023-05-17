@@ -38,7 +38,7 @@ def process(files, render_query = True, render_relation = True):
     return pfiles
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) == 1:
         exit(usage())
     #TODO: Add argument parser for getting if graph/relation/MCS need to be rendered, single/multiple log file if verbose
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         elif p.is_file() and p.suffix == ".rq":
             files.append(p)
     
-    relationsGraphs = process(files)
+    relationsGraphs = process(files, False, False)
 
     print("\nCalculating all MCS:")
     m = len(relationsGraphs) * len(relationsGraphs) - len(relationsGraphs)
@@ -60,11 +60,13 @@ if __name__ == "__main__":
     for k1 in relationsGraphs:
         for k2 in relationsGraphs:
             if k1 != k2:
+                print(k1, k2)
                 for i, e in enumerate(MCS(relationsGraphs[k1], relationsGraphs[k2])):
-                    print(k1, k2)
                     dotGraph(e, f"./mcs_result/{k1}_{k2}.{i+1}")
                     x += 1
-                    print(f"\r{x} / {m}", end='')
+                    print(f"{x} / {m}", end='')
     print("End !")
 
+if __name__ == "__main__":
+    main()
             
