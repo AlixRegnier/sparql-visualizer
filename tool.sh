@@ -7,7 +7,7 @@
 if [ "$1" = "all" ]; then
     python main.py ./nextprot-queries
 #Effacer les fichiers créés
-if [ "$1" = "clear" ]; then
+elif [ "$1" = "clear" ]; then
     rm -f ./nextprot-queries/*.gv
     rm -f ./nextprot-queries/*.png
     rm -f ./nextprot-queries/*.gexf

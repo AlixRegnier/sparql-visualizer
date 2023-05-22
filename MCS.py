@@ -2,10 +2,11 @@ import networkx as nx
 from networkx.algorithms.isomorphism import *
 import matplotlib.pyplot as plt
 from graphviz import Digraph
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Callable
+from math import factorial
 #Citations
 """
-#Good approach
+#Kind of first approach
 G. Levi, A note on the derivation of maximal common subgraphs of two directed or undirected graphs, CALCOLO 9 (1973) 341–352. 
 
 #Clique
@@ -56,99 +57,136 @@ def drawGraph(g : nx.DiGraph):
     nx.draw(g, pos = nx.spring_layout(g, k = 0.5), with_labels = True, labels = { n : g.nodes[n]["label"] for n in g.nodes })
     plt.show()
 
-def dotGraph(g : nx.DiGraph, name, format = "png"):
+def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = "png"):
     graph = Digraph(name)
     graph.format = format
 
     graph.graph_attr["rankdir"] = "LR"
     for node in g.nodes:
-        graph.node(hex(hash(node)), label=g.nodes[node]["label"])
+        if nodelabel:
+            graph.node(hex(hash(node)), label=g.nodes[node]["label"])
+        else:
+            graph.node(hex(hash(node)), label="")
+
     for edge in g.edges:
-        graph.edge(hex(hash(edge[0])), hex(hash(edge[1])))
+        if edgelabel:
+            graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), label=g.edges[edge]["label"])
+        else:
+            graph.edge(hex(hash(edge[0])), hex(hash(edge[1])))
+
     graph.render(cleanup=True)
 
-def equality(n1, n2) -> bool:
-        try:
-            return n1["label"] == n2["label"]
-        except KeyError:
-            #print("WARNING: A node wasn't labelled !")
-            return False
+def equality(e1, e2) -> bool:
+    try:
+        return e1["label"] == e2["label"]
+    except KeyError:
+        print("### Ohayou")
+        return "label" not in e1 and "label" not in e2
 
+class NodeEdgeDict:
+    def __init__(self, g : nx.DiGraph):
+        #Edge -> in/out nodes
+        self.inNodes = {}
+        self.outNodes = {}
 
-def associationMCCIS(g1, g2):
-    incumbent = dict()
-    g = nx.tensor_product(g1, g2)
-    search(g, set(), set(), g.nodes, incumbent)
-    return incumbent
+        #Node -> in/out edges
+        self.inEdges = {}
+        self.outEdges = {}
 
-def colour(g : nx.Graph, uncoloured) -> List[List[str]]:
-    #TODO: Replace by: Segundo, P.S., Rodr´ıguez-Losada, D., Jim´enez, A.: An exact bit-parallel algorithm for the maximum clique problem. Computers & OR 38(2), 571–581 (2011), http://dx.doi.org/10.1016/j.cor.2010.07.019
-    d = nx.greedy_color(g.subgraph(uncoloured)) 
+        for e in g.edges:
+            #First init of dicts
+            if e["label"] not in self.inNodes:
+                self.inNodes[e["label"]] = dict()
+                self.outNodes[e["label"]] = dict()
+            if e[0] not in self.inEdges:
+                self.inEdges[e[0]] = dict()
+            if e[1] not in self.outEdges:
+                self.outEdges[e[1]] = dict()
 
-    invd = dict()
-    for k in d:
-        if d[k] in invd:
-            invd[d[k]].append(k)
-        else:
-            invd[d[k]] = [k]
-    return list(invd.values())
-    
-def search(g : nx.Graph, solution : set, connected : set, remaining : set, incumbent):
-    colourClasses = colour(g, remaining - connected) + colour(g, remaining & connected)
-    while len(colourClasses) > 0:
-        for v in colourClasses[-1][::-1]:
-            if len(solution) + len(colourClasses) <= len(incumbent) or v not in connected and len(solution):
-                return
-            solutionbis = solution | {v}
-            if len(solutionbis) > len(incumbent):
-                incumbent = solutionbis
-            connectedbis = connected | set(g.neighbors(v))
-            remainingbis = remaining & set(g.neighbors(v))
-            if len(remainingbis):
-                search(g, solutionbis, connectedbis, remainingbis, incumbent)
-        colourClasses.pop()
+            #InNodes
+            if e[0] in self.inNodes[e["label"]]:
+                self.inNodes[e["label"]][e[0]] += 1
+            else:
+                self.inNodes[e["label"]][e[0]] = 1
 
+            #OutNodes
+            if e[1] in self.outNodes[e["label"]]:
+                self.outNodes[e["label"]][e[1]] += 1
+            else:
+                self.outNodes[e["label"]][e[1]] = 1
 
-
-#TODO: Implement a little function for getting MCS from g1 and g2
-def most_common_subgraph(g1 : nx.DiGraph, g2 : nx.DiGraph, node_match):
-
-    best = 0
-    n1Label = dict()
-    n2Label = dict()
-
-    def hand_in_hand(g1 : nx.DiGraph, g2 : nx.DiGraph, n1 : str, visited : Set[str]):
-        visited.add(n1)
-        for n2 in n2Label[g1.nodes[n1]["label"]] - visited:
-            for ns in g1.successors(n1):
-                pass
+            #InEdges
+            if e["label"] in self.inEdges[e[0]]:
+                self.inEdges[e[0]][e["label"]] += 1
+            else:
+                self.inEdges[e[0]][e["label"]] = 1
+            #OutEdges
+            if e["label"] in self.outEdges[e[1]]:
+                self.outEdges[e[1]][e["label"]] += 1
+            else:
+                self.outEdges[e[1]][e["label"]] = 1
             
-            for np in g1.predecessors(node):
-                pass
+    #Nodes that can follow a labelled rule
+    def getInNodes(self, label) -> dict:
+        return self.inNodes[label]
 
-    for node in g1.nodes:
-        if g1.nodes[node]["label"] in n1Label:
-            n1Label[g1.nodes[node]["label"]].add(node)
-        else:
-            n1Label[g1.nodes[node]["label"]] = {node}
+    #Nodes that can be reached by following 
+    def getOutNodes(self, label) -> dict:
+        return self.outNodes[label]
     
-    for node in g2.nodes:
-        if g2.nodes[node]["label"] in n2Label:
-            n2Label[g2.nodes[node]["label"]].add(node)
-        else:
-            n2Label[g2.nodes[node]["label"]] = {node}
+    #Edges that are going to node n
+    def getInEdges(self, n) -> dict:
+        return self.inEdges[n]
+    
+    #Edges that can be followed from node n
+    def getOutEdges(self, n) -> dict:
+        return self.outEdges[n]
+    
+#TODO: Implement a little function for getting MCS from g1 and g2
+#WARNING: Doesn't remind the existing edge for have been used, all edges between any MCS will be kept
+def search(g1 : nx.DiGraph, g2 : nx.DiGraph, g1dicts : NodeEdgeDict, g2dicts : NodeEdgeDict, n1, n2, visited = set()) -> List[Set]:
+    if n1 in visited or n2 in visited:
+        return []
+    
+    _in = g1dicts.getInEdges(n1) & g2dicts.getInEdges(n2)
+    _out = g1dicts.getOutEdges(n1) & g2dicts.getOutEdges(n2)
 
-    listOfMCS = []
-    for node in g1.nodes:
-        s = set()
-        hand_in_hand(g1, g2, node, s)
-        for mcs in listOfMCS:
-            if len(mcs) < len(s):
-                listOfMCS = [s]
-            elif len(mcs) > len(s) or mcs == s:
-                break
-        else:
-            listOfMCS.append(s)
+    #No compatibility
+    if len(_in) == 0 and len(_out) == 0:
+        return []
+    
+    #Get how many possibilities there are
+    x = 1
+    for i in _in:
+        n = max(g1dicts.getInEdges(n1)[i], g2dicts.getInEdges(n2)[i])
+        k = min(g1dicts.getInEdges(n1)[i], g2dicts.getInEdges(n2)[i])
+        x *= factorial(n)/factorial(n-k)
+
+    for o in _out:
+        n = max(g1dicts.getOutEdges(n1)[o], g2dicts.getOutEdges(n2)[o])
+        k = min(g1dicts.getOutEdges(n1)[o], g2dicts.getOutEdges(n2)[o])
+        x *= factorial(n)/factorial(n-k)
+
+    print(x)
+
+def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
+    g1dicts = NodeEdgeDict(g1)
+    g2dicts = NodeEdgeDict(g2)
+    
+    mcss = {} #All MCS found, dict [int -> List<set<node>>], int as mcs length
+    for n1 in g1.nodes:
+        for n2 in g2.nodes:
+            s = search(g1, g2, g1dicts, g2dicts, n1, n2)
+            for p in s:
+                if len(p) > 0 and len(p) in mcss and p not in mcss[len(p)]:
+                    mcss[len(p)].append(p)
+                else:
+                    mcss[len(p)] = [p]
+    print(mcss)
+    return mcss
+            
+    
+#Weird code
 """
 #Inputs must be NetworkX DiGraph
 def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
@@ -170,6 +208,3 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
                 matchs.append(subiso)
     return matchs
 """
-
-def MCS(g1, g2):
-    return g1.subgraph(associationMCCIS(g1, g2))

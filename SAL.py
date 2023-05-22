@@ -493,6 +493,18 @@ def getRelationGraph(graph : nx.DiGraph):
             g.remove_node(edge)
     return g
 
+def getSimpleGraph(graph : nx.DiGraph):
+    g = graph.copy()
+    for edge in graph.edges:
+        if edge in g.edges:
+            if "label" in g.edges[edge]:
+                if edge[1] in g.nodes and g.edges[edge]["label"] in ("VALUE", "TYPE", "AS", "") and "_duplicate" not in edge[1]:
+                    g.remove_node(edge[1])
+            else:
+                g.remove_node(edge[1])
+    g.remove_nodes_from(set(nx.isolates(g)))
+    return g
+    
 def parse_file(file, verbose=False):
     input_stream = FileStream(file, encoding="utf-8")
     lexer = SparqlLexer(input_stream)

@@ -12,7 +12,7 @@ def usage():
     print("Usage: python main.py [-v] (file1 file2 ..)\n\n\t-v\tVerbose (print parsing tree and nested values)\n")
     return 1
 
-def process(files, render_query = True, render_relation = True):
+def process(files, render_query = True, render_simple = False, render_relation = False):
     pfiles = dict()
     for i in range(len(files)):
         try:
@@ -23,18 +23,24 @@ def process(files, render_query = True, render_relation = True):
             maincluster.generateGraph()
             if render_query:
                 SubDigraph.allSubgraphsToDot(str(files[i])) #TODO: Replace all static stuff by dynamic ones
+
+            fullgraph = maincluster.getFullGraph()
+            simplegraph = getSimpleGraph(fullgraph)
+            if render_simple:
+                dotGraph(simplegraph, str(files[i]) + ".simple", nodelabel=False)
             if render_relation:
-                dotGraph(getRelationGraph(maincluster.getFullGraph()), str(files[i]) + ".relation")
-            #Reset static values for next iteration
-            SubDigraph.reset()
-            Cluster.reset()
-            
-            #Merge all subdigraphes to create a customized line graph (relations as nodes)
-            pfiles[basename(files[i].stem)] = getRelationGraph(maincluster.getFullGraph())
+                dotGraph(getRelationGraph(fullgraph), str(files[i]) + ".relation", edgelabel=False)
+
+            #Merge all subdigraphes and simplify it
+            pfiles[basename(files[i].stem)] = simplegraph
             print(f"\r{i+1} / {len(files)}", end=' ')
         except Exception as e:
             print("\rFAILED:", files[i], end="\n\n")
-        #    print(e, file=sys.stderr)
+            print(e, file=sys.stderr)
+        finally:
+            #Reset static values for next iteration
+            SubDigraph.reset()
+            Cluster.reset()
     return pfiles
 
 
@@ -52,20 +58,21 @@ def main():
         elif p.is_file() and p.suffix == ".rq":
             files.append(p)
     
-    relationsGraphs = process(files, False, False)
-
+    graphs = process(files, True, True, True)
     print("\nCalculating all MCS:")
-    m = len(relationsGraphs) * len(relationsGraphs) - len(relationsGraphs)
+    m = len(graphs) * len(graphs) - len(graphs)
     x = 0
-    for k1 in relationsGraphs:
-        for k2 in relationsGraphs:
+    for k1 in graphs:
+        for k2 in graphs:
             if k1 != k2:
                 print(k1, k2)
-                for i, e in enumerate(MCS(relationsGraphs[k1], relationsGraphs[k2])):
-                    dotGraph(e, f"./mcs_result/{k1}_{k2}.{i+1}")
-                    x += 1
-                    print(f"{x} / {m}", end='')
-    print("End !")
+                i = 1
+                for r in MCS(graphs[k1], graphs[k2]).values():
+                    for mcs in r:
+                        dotGraph(mcs, f"./mcs_result/{k1}_{k2}.{i}")
+                        i += 1
+                x += 1
+                print(f"{x} / {m}", end='')
 
 if __name__ == "__main__":
     main()
