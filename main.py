@@ -1,8 +1,8 @@
 #Parser and graph renderers
-from SAL import *
+from SAL import parse_file, SubDigraph, getRelationGraph, getSimpleGraph, Cluster
 
 #Most Common Subgraph
-from MCS import *
+from MCS import dotGraph, MCS
 
 from pathlib import Path
 from os.path import basename
@@ -45,34 +45,36 @@ def process(files, render_query = True, render_simple = False, render_relation =
 
 
 def main():
-    if len(sys.argv) == 1:
-        exit(usage())
-    #TODO: Add argument parser for getting if graph/relation/MCS need to be rendered, single/multiple log file if verbose
-    files = []
-    for i in range(1, len(sys.argv)):
-        p = Path(sys.argv[i])
-        if p.is_dir():
-            for file in Path.iterdir(p):
-                if file.suffix == ".rq":
-                    files.append(file)
-        elif p.is_file() and p.suffix == ".rq":
-            files.append(p)
-    
-    graphs = process(files, True, True, True)
-    print("\nCalculating all MCS:")
-    m = len(graphs) * len(graphs) - len(graphs)
-    x = 0
-    for k1 in graphs:
-        for k2 in graphs:
-            if k1 != k2:
-                print(k1, k2)
-                i = 1
-                for r in MCS(graphs[k1], graphs[k2]).values():
-                    for mcs in r:
-                        dotGraph(mcs, f"./mcs_result/{k1}_{k2}.{i}")
-                        i += 1
+    try:
+        if len(sys.argv) == 1:
+            exit(usage())
+        #TODO: Add argument parser for getting if graph/relation/MCS need to be rendered, single/multiple log file if verbose
+        files = []
+        for i in range(1, len(sys.argv)):
+            p = Path(sys.argv[i])
+            if p.is_dir():
+                for file in Path.iterdir(p):
+                    if file.suffix == ".rq":
+                        files.append(file)
+            elif p.is_file() and p.suffix == ".rq":
+                files.append(p)
+        
+        graphs = process(files, True, True, True)
+        print("\nCalculating all MCS:\n")
+        m = (len(graphs) * len(graphs) - len(graphs)) // 2
+        x = 0
+        key_graph = list(graphs.keys())
+        for i in range(len(key_graph)):
+            for j in range(i+1, len(key_graph)):
+                print(key_graph[i], key_graph[j])
+                c = 1
+                for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
+                    dotGraph(graphs[key_graph[i]].subgraph(mcs.keys()), f"./mcs_result/{key_graph[i]}_{key_graph[j]}.{c}")
+                    c += 1
                 x += 1
-                print(f"{x} / {m}", end='')
+                print(f"{x} / {m}", end='\n')
+    except KeyboardInterrupt:
+        print("Aborted by user")
 
 if __name__ == "__main__":
     main()
