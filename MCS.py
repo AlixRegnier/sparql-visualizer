@@ -3,7 +3,7 @@ from networkx.algorithms.isomorphism import *
 import matplotlib.pyplot as plt
 from graphviz import Digraph
 from typing import List, Dict
-from itertools import permutations, product
+from itertools import permutations, product, filterfalse, chain
 from functools import reduce
 
 #Citations
@@ -167,20 +167,12 @@ def search(g1 : nx.DiGraph, g2 : nx.DiGraph, g1dicts : NodeEdgeDict, g2dicts : N
     x = [{n1:n2}]
     #For each matches from outcoming edges make a recursive call for each possibilities, a list of dicts by match
     for i in _in:
-        _x = []
-        for (a, b) in unique_permutations(g1dicts.getInEdges(n1)[i], g2dicts.getInEdges(n2)[i]):
-            t = search(g1, g2, g1dicts, g2dicts, a, b, visited1.copy(), visited2.copy())
-            if len(t):
-                _x.extend(t)
+        _x = tuple(chain.from_iterable(search(g1, g2, g1dicts, g2dicts, a, b, visited1.copy(), visited2.copy()) for (a, b) in unique_permutations(g1dicts.getInEdges(n1)[i], g2dicts.getInEdges(n2)[i])))
         if _x:
             x = [reduce(lambda a, b: {**a, **b}, e) for e in product(x, _x)] #Foreach list, merge their dictionaries
 
     for o in _out:
-        _x = []
-        for (a, b) in unique_permutations(g1dicts.getOutEdges(n1)[o], g2dicts.getOutEdges(n2)[o]):
-            t = search(g1, g2, g1dicts, g2dicts, a, b, visited1.copy(), visited2.copy())
-            if len(t):
-                _x.extend(t)
+        _x = tuple(chain.from_iterable(search(g1, g2, g1dicts, g2dicts, a, b, visited1.copy(), visited2.copy()) for (a, b) in unique_permutations(g1dicts.getOutEdges(n1)[o], g2dicts.getOutEdges(n2)[o])))
         if _x:
             x = [reduce(lambda a, b: {**a, **b}, e) for e in product(x, _x)] #Foreach list, merge their dictionaries
     return x
@@ -202,17 +194,12 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
             #Filter results if subset of a wider solution
             #Filter previous results
             for p in s:
-                if len(p) > 1:
+                if len(p) > 2:
                     for d in mcss:
                         if isSubdict(d, p):
                             break
                     else:
-                        i = 0
-                        while i < len(mcss):
-                            if isSubdict(p, mcss[i]):
-                                mcss.pop(i)
-                            else:
-                                i += 1
+                        mcss = list(filterfalse(lambda e: isSubdict(p, e), mcss))
                         mcss.append(p)
     """
     if len(mcss) == 0:

@@ -69,7 +69,7 @@ def main():
                 print(key_graph[i], key_graph[j])
                 c = 1
                 for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
-                    dotGraph(graphs[key_graph[i]].subgraph(mcs.keys()), f"./mcs_result/{key_graph[i]}_{key_graph[j]}.{c}")
+                    dotGraph(graphs[key_graph[i]].subgraph(mcs.keys()), f"./mcs_result/{key_graph[i]}_{key_graph[j]}.{c}", False, True)
                     c += 1
                 x += 1
                 print(f"{x} / {m}", end='\n')
