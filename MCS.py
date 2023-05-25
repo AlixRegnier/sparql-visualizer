@@ -179,9 +179,7 @@ def search(g1 : nx.DiGraph, g2 : nx.DiGraph, g1dicts : NodeEdgeDict, g2dicts : N
 
 #Check if d2 is a subdict of d1
 def isSubdict(d1, d2):
-    if d1 | d2 == d1:
-        return True
-    return False
+    return {**d1, **d2 } == d1
 
 def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
     g1dicts = NodeEdgeDict(g1)
