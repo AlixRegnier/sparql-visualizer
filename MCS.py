@@ -1,8 +1,9 @@
+from __future__ import annotations
 import networkx as nx
 from networkx.algorithms.isomorphism import *
 import matplotlib.pyplot as plt
 from graphviz import Digraph
-from typing import List, Dict
+from typing import List, Dict, Set, Iterable
 from itertools import permutations, product, filterfalse, chain
 from functools import reduce
 
@@ -17,66 +18,6 @@ McCreesh, C., Ndiaye, S.N., Prosser, P., Solnon, C. (2016). Clique and Constrain
 #McSplit
 McCreesh, Ciaran & Prosser, Patrick & Trimble, James. (2017). A Partitioning Algorithm for Maximum Common Subgraph Problems. 712-719. 10.24963/ijcai.2017/99. 
 """
-
-#
-#VF2
-#https://networkx.org/documentation/stable/reference/algorithms/isomorphism.vf2.html
-#https://doi.org/10.1016/j.dam.2018.02.018
-"""
-vf2pp_is_isomorphic(G1, G2, node_label = "label")
-    Boolean if G1 and G2 are isomorphic /!\ not subgraph isomorphisms /!\
-
-vf2pp_all_isomorphisms(G1, G2, node_label = "label")
-    Yields all the possible mappings between G1 and G2 (all subgraphs isomorphisms)
-
-vf2pp_isomorphism(G1, G2, node_label = "label")
-    Return first isomorphisms found by vf2pp_all_isomorphisms()
-
-"""
-
-#ISMAGS
-#https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.isomorphism.ISMAGS.html
-#https://doi.org/10.1371/journal.pone.0097896
-
-"""
-find_isomorphisms()
-    Find all subgraph isomorphisms between subgraph and graph
-
-is_isomorphic()
-    Returns True if graph is isomorphic to subgraph and False otherwise.
-
-isomorphisms_iter()
-    Does the same as find_isomorphisms() if graph and subgraph have the same number of nodes.
-
-largest_common_subgraph()
-    Find the largest common induced subgraphs between subgraph and graph.
-
-subgraph_is_isomorphic()
-    Returns True if a subgraph of graph is isomorphic to subgraph and False otherwise.
-"""
-
-def drawGraph(g : nx.DiGraph):
-    nx.draw(g, pos = nx.spring_layout(g, k = 0.5), with_labels = True, labels = { n : g.nodes[n]["label"] for n in g.nodes })
-    plt.show()
-
-def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = "png"):
-    graph = Digraph(name)
-    graph.format = format
-
-    graph.graph_attr["rankdir"] = "LR"
-    for node in g.nodes:
-        if nodelabel:
-            graph.node(hex(hash(node)), label=g.nodes[node]["label"])
-        else:
-            graph.node(hex(hash(node)), label="")
-
-    for edge in g.edges:
-        if edgelabel:
-            graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), label=g.edges[edge]["label"])
-        else:
-            graph.edge(hex(hash(edge[0])), hex(hash(edge[1])))
-
-    graph.render(cleanup=True)
 
 class NodeEdgeDict:
     def __init__(self, g : nx.DiGraph):
@@ -206,27 +147,49 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
         print(f"{len(mcss)} isomorphisms found")
     """
     return mcss
-            
+
+class Module:
+    def __init__(self, graph : nx.DiGraph, n : int, tags : Set[str], queries : Iterable[str]):
+        self.graph = graph.copy()
+        self.n = n
+        self.tags = set(tags)
+        self.queries = set(queries)
     
-#Weird code
-"""
-#Inputs must be NetworkX DiGraph
-def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph) -> List[nx.DiGraph]:
-    matcher = ISMAGS(g1, g2, equality)
-    matchs = []
-    best = 2 #Need at least 2 nodes
-    for iso in matcher.largest_common_subgraph():
-        f = g1.copy().subgraph(iso.keys())
-        subiso = f.subgraph(max(nx.weakly_connected_components(f), key=len))
+    def getGraph(self) -> nx.DiGraph:
+        return self.graph
+    
+    def getOccurrence(self) -> int:
+        return self.n
+    
+    def increaseOccurrence(self):
+        self.n += 1
+    
+    def getTags(self) -> Set[str]:
+        return set(self.tags)
+    
+    def getQueries(self) -> Set[str]:
+        return set(self.queries)
+    
+    def addTags(self, tags):
+        if len(self.tags) == 0:
+            self.tags = set(tags)
+        else:
+            self.tags &= tags
+
+    def addQueries(self, *queries):
+        self.queries |= set(queries)
+
+    @staticmethod
+    def __edgematch(e1, e2) -> bool:
+        try:
+            return e1["label"] == e2["label"]
+        except KeyError:
+            return "label" not in e1 and "label" not in e2
         
-        if subiso.number_of_nodes() > best:
-            best = subiso.number_of_nodes()
-            matchs = [subiso]
-        elif subiso.number_of_nodes() == best:
-            for i in range(len(matchs)):
-                if set(matchs[i].nodes) == set(subiso.nodes):
-                    break
-            else:
-                matchs.append(subiso)
-    return matchs
-"""
+    def __eq__(self, o : Module | nx.DiGraph ) -> bool:
+        if isinstance(o, Module):
+            return nx.is_isomorphic(self.graph, o.graph, edge_match=Module.__edgematch)
+        return nx.is_isomorphic(self.graph, o, edge_match=Module.__edgematch)
+
+    
+

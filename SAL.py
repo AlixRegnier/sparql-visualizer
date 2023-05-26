@@ -503,6 +503,11 @@ def getSimpleGraph(graph : nx.DiGraph):
             else:
                 g.remove_node(edge[1])
     g.remove_nodes_from(set(nx.isolates(g)))
+
+    #Remove all labels as they aren't taken into account on MCS process
+    for node in g.nodes:
+        g.nodes[node]["label"] = ""
+
     return g
     
 def parse_file(file, verbose=False):

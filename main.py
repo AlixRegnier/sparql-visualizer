@@ -2,7 +2,9 @@
 from SAL import parse_file, SubDigraph, getRelationGraph, getSimpleGraph, Cluster
 
 #Most Common Subgraph
-from MCS import dotGraph, MCS
+from MCS import MCS, Module
+
+from utils import dotGraph, get_tags
 
 from pathlib import Path
 from os.path import basename
@@ -14,6 +16,7 @@ def usage():
 
 def process(files, render_query = True, render_simple = False, render_relation = False):
     pfiles = dict()
+    tfiles = dict()
     for i in range(len(files)):
         try:
             #Parse file
@@ -32,7 +35,9 @@ def process(files, render_query = True, render_simple = False, render_relation =
                 dotGraph(getRelationGraph(fullgraph), str(files[i]) + ".relation", edgelabel=False)
 
             #Merge all subdigraphes and simplify it
-            pfiles[basename(files[i].stem)] = simplegraph
+            k = basename(files[i].stem)
+            pfiles[k] = simplegraph
+            tfiles[k] = get_tags(files[i])
             print(f"\r{i+1} / {len(files)}", end=' ')
         except Exception as e:
             print("\rFAILED:", files[i], end="\n\n")
@@ -41,7 +46,7 @@ def process(files, render_query = True, render_simple = False, render_relation =
             #Reset static values for next iteration
             SubDigraph.reset()
             Cluster.reset()
-    return pfiles
+    return pfiles, tfiles
 
 
 def main():
@@ -59,23 +64,45 @@ def main():
             elif p.is_file() and p.suffix == ".rq":
                 files.append(p)
         
-        graphs = process(files, True, True, True)
+        graphs, tags = process(files, False, False, False)
+        modules = []
+
         print("\nCalculating all MCS:\n")
-        m = (len(graphs) * len(graphs) - len(graphs)) // 2
+        total = (len(graphs) * len(graphs) - len(graphs)) // 2
         x = 0
-        key_graph = list(graphs.keys())
+        key_graph = sorted(graphs.keys())
         for i in range(len(key_graph)):
             for j in range(i+1, len(key_graph)):
-                print(key_graph[i], key_graph[j])
-                c = 1
                 for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
-                    dotGraph(graphs[key_graph[i]].subgraph(mcs.keys()), f"./mcs_result/{key_graph[i]}_{key_graph[j]}.{c}", False, True)
-                    c += 1
+                    #CHECK ISOMORPHISM
+                    isomorph = graphs[key_graph[i]].subgraph(mcs.keys())
+                    for m in modules:
+                        if m == isomorph:
+                            m.increaseOccurrence()
+                            m.addTags(tags[key_graph[i]] & tags[key_graph[j]])
+                            m.addQueries(key_graph[i], key_graph[j])
+                            break
+                    else:
+                        modules.append(Module(isomorph, 1, tags[key_graph[i]] & tags[key_graph[j]], [key_graph[i], key_graph[j]]))
                 x += 1
-                print(f"{x} / {m}", end='\n')
+                print(f"\r{x} / {total} {key_graph[i]} {key_graph[j]}", end="")
+        padding=len(str(len(modules)))                
+        print()
+        for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurrence(), reverse=True)):
+            with open(f"./mcs_result/module{i+1:0{padding}}.txt", "w") as f:
+                f.write(f"Nombre d'occurrences:\n{m.getOccurrence()}\n")
+                f.write("\nTags:\n")
+                if m.getTags():
+                    f.write('\n'.join(sorted(m.getTags())))
+                else:
+                    f.write("NONE")
+                f.write("\n\nQueries:\n")
+                f.write('\n'.join(sorted(m.getQueries())))    
+            print(f"module{i+1:0{padding}} : {m.getOccurrence()} occurences")
+            dotGraph(m.getGraph(), f"./mcs_result/module{i+1:0{padding}}", False, True)
+
     except KeyboardInterrupt:
-        print("Aborted by user")
+        print("\nAborted by user")
 
 if __name__ == "__main__":
     main()
-            
