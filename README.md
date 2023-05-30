@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 <!-- main.py may be changed for another filename, and imported python files may be moved into a new directory -->
 Command line|
 --|
-``python3 main.py [-e \<extension>] [-a|-gmrs] \<files> [-O \<renderdir>] [-M \<mcsdir>]``
+``python3 main.py [-e <extension>] [-a\|-gmrs] <files> [-O <renderdir>] [-M <mcsdir>]``
 
 *files* either can be a set of file or directories containing *.rq
 
