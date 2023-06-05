@@ -1,9 +1,7 @@
 from __future__ import annotations
 import networkx as nx
 from networkx.algorithms.isomorphism import *
-import matplotlib.pyplot as plt
-from graphviz import Digraph
-from typing import List, Dict, Set, Iterable
+from typing import List, Dict, Set
 from itertools import permutations, product, filterfalse, chain
 from functools import reduce
 
@@ -140,20 +138,15 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
                     else:
                         mcss = list(filterfalse(lambda e: isSubdict(p, e), mcss))
                         mcss.append(p)
-    """
-    if len(mcss) == 0:
-        print("No isomorphisms found")
-    else:
-        print(f"{len(mcss)} isomorphisms found")
-    """
     return mcss
 
 class Module:
-    def __init__(self, graph : nx.DiGraph, n : int, tags : Set[str], queries : Iterable[str]):
+    def __init__(self, graph : nx.DiGraph, n : int):
         self.graph = graph.copy()
         self.n = n
-        self.tags = set(tags)
-        self.queries = set(queries)
+        self.tags = set()
+        self.alltags = set()
+        self.queries = dict()
     
     def getGraph(self) -> nx.DiGraph:
         return self.graph
@@ -164,11 +157,14 @@ class Module:
     def increaseOccurrence(self):
         self.n += 1
     
-    def getTags(self) -> Set[str]:
-        return set(self.tags)
+    def getAlltags(self) -> Set[str]:
+        return self.alltags
     
-    def getQueries(self) -> Set[str]:
-        return set(self.queries)
+    def getTags(self) -> Set[str]:
+        return self.tags
+    
+    def getQueries(self) -> Dict[str, int]:
+        return self.queries
     
     def addTags(self, tags):
         if len(self.tags) == 0:
@@ -176,8 +172,13 @@ class Module:
         else:
             self.tags &= tags
 
-    def addQueries(self, *queries):
-        self.queries |= set(queries)
+        self.alltags |= tags
+
+    def addQuery(self, query):
+        if query in self.queries:
+            self.queries[query] += 1
+        else:
+            self.queries[query] = 1
 
     @staticmethod
     def __edgematch(e1, e2) -> bool:
@@ -190,6 +191,21 @@ class Module:
         if isinstance(o, Module):
             return nx.is_isomorphic(self.graph, o.graph, edge_match=Module.__edgematch)
         return nx.is_isomorphic(self.graph, o, edge_match=Module.__edgematch)
+    
+    def __str__(self) -> str:
+        s = f"Nombre d'occurrences:\n{self.getOccurrence()}\n\nCommon tags:\n"
+
+        if self.getTags():
+            s += '\n'.join(sorted(self.getTags()))
+        else:
+            s += "NONE"
+        s += "\n\nAll tags:\n"
+        s += '\n'.join(sorted(self.getAlltags()))
+        s += "\n\nQueries:\n"
+        for k in sorted(self.queries.keys()):
+            s += f"{k}\t{self.queries[k]}\n"
+    
+        return s
 
     
 
