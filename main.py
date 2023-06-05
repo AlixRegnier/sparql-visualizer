@@ -130,7 +130,7 @@ if __name__ == "__main__":
     argparser.add_argument("-g", "--graph", action="store_true", help="Render graph")
     argparser.add_argument("-m", "--mcs", action="store_true", help="Calculate all MCS")
     argparser.add_argument("-r", "--relation", action="store_true",  help="Render relation graph")
-    argparser.add_argument("-s", "--simplified", action="store_true",  help="Render simplified graph")
+    argparser.add_argument("-s", "--simple", action="store_true",  help="Render simplified graph")
     argparser.add_argument("-e", metavar="E", nargs=1, default=".rq", help="Read files in directory suffixed with <E> (default: \".rq\")")
     argparser.add_argument("files", nargs=argparse.ONE_OR_MORE, help=argparse.SUPPRESS)
 

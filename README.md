@@ -31,7 +31,7 @@ Argument|Long|Value|Description
 -O||dir|Modify output directory for rendering to \<dir> (*default:* `query directory` )
 -q|--quiet|-|No print
 -r|--relation|-|Render relation graph
--s|--simplified|-|Render simplified graph
+-s|--simple|-|Render simplified graph
 -v|--verbose|-|Verbose
 
 *Examples:*
