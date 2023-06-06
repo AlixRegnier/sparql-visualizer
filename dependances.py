@@ -16,7 +16,7 @@ def em(e1, e2) -> bool:
     except KeyError:
         return "label" not in e1 and "label" not in e2
     
-modules = sorted(modules, key=lambda e: e.getOccurrence(), reverse=True)
+modules = sorted(modules, key=lambda e: e.getName()) #Safer way to retrieve modules order than reverse sorting by occurrencies
 
 def isXsubgraphOfY(x, y):
     return DiGraphMatcher(y, x, edge_match=em).subgraph_is_isomorphic()

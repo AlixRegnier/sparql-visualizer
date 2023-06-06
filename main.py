@@ -64,7 +64,7 @@ def em(e1, e2) -> bool:
     except KeyError:
         return "label" not in e1 and "label" not in e2
 
-def main(flag_graph, flag_mcs, flag_relation, flag_simplified, flag_verbose, extension, render_output, mcs_output ):
+def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extension, render_output, mcs_output ):
     try:
         files = []
         for i in range(1, len(sys.argv)):
@@ -76,7 +76,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simplified, flag_verbose, ext
             elif p.is_file() and p.suffix == extension:
                 files.append(p)
         
-        graphs, tags = process(files, flag_graph, flag_simplified, flag_relation, render_output, flag_verbose)
+        graphs, tags = process(files, flag_graph, flag_simple, flag_relation, render_output, flag_verbose)
         modules = []
 
         if flag_mcs:
@@ -120,6 +120,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simplified, flag_verbose, ext
                 print(f"module{i+1:0{padding}} : {m.getOccurrence()} occurences")
                 dotGraph(m.getGraph(), f"{mcs_output}/module{i+1:0{padding}}", False, True)
                 with open(f"{mcs_output}/module{i+1:0{padding}}.dat", "wb") as f:
+                    m.setName(f"module{i+1:0{padding}}")
                     pickle.dump(m, f)
     except KeyboardInterrupt:
         print("\nAborted by user")
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     if args.all:
-        args.graph = args.mcs = args.relation = args.simplified = True
+        args.graph = args.mcs = args.relation = args.simple = True
     if isinstance(args.M, list):
         args.M = args.M[0]
     if isinstance(args.O, list):
@@ -152,5 +153,5 @@ if __name__ == "__main__":
     if isinstance(args.e, list):
         args.e = args.e[0]
 
-    main(args.graph, args.mcs, args.relation, args.simplified, args.verbose, args.e, args.O, args.M)
+    main(args.graph, args.mcs, args.relation, args.simple, args.verbose, args.e, args.O, args.M)
 

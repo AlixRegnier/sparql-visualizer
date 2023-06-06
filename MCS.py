@@ -8,7 +8,7 @@ from functools import reduce
 #Citations
 """
 #Kind of first approach
-G. Levi, A note on the derivation of maximal common subgraphs of two directed or undirected graphs, CALCOLO 9 (1973) 341–352. 
+G. Levi, A note on the derivation of maximal common subgraphs of two directed or undirected graphs, CALCOLO 9 (1973) 341-352. 
 
 #Clique
 McCreesh, C., Ndiaye, S.N., Prosser, P., Solnon, C. (2016). Clique and Constraint Models for Maximum Common (Connected) Subgraph Problems. In: Rueher, M. (eds) Principles and Practice of Constraint Programming. CP 2016. Lecture Notes in Computer Science(), vol 9892. Springer, Cham. https://doi.org/10.1007/978-3-319-44953-1_23
@@ -20,34 +20,16 @@ McCreesh, Ciaran & Prosser, Patrick & Trimble, James. (2017). A Partitioning Alg
 class NodeEdgeDict:
     def __init__(self, g : nx.DiGraph):
         #Edge -> in/out nodes
-        self.inNodes = {}
-        self.outNodes = {}
-
         #Node -> in/out edges
         self.inEdges = {}
         self.outEdges = {}
 
         for e in g.edges:
             #First init of dicts
-            if g.edges[e]["label"] not in self.inNodes:
-                self.inNodes[g.edges[e]["label"]] = dict()
-                self.outNodes[g.edges[e]["label"]] = dict()
             if e[0] not in self.inEdges:
                 self.inEdges[e[0]] = dict()
             if e[1] not in self.outEdges:
                 self.outEdges[e[1]] = dict()
-
-            #InNodes
-            if e[0] in self.inNodes[g.edges[e]["label"]]:
-                self.inNodes[g.edges[e]["label"]][e[0]].append(e[1])
-            else:
-                self.inNodes[g.edges[e]["label"]][e[0]] = [e[1]]
-
-            #OutNodes
-            if e[1] in self.outNodes[g.edges[e]["label"]]:
-                self.outNodes[g.edges[e]["label"]][e[1]].append(e[0])
-            else:
-                self.outNodes[g.edges[e]["label"]][e[1]] = [e[0]]
 
             #InEdges
             if g.edges[e]["label"] in self.inEdges[e[0]]:
@@ -60,14 +42,6 @@ class NodeEdgeDict:
                 self.outEdges[e[1]][g.edges[e]["label"]].append(e[0])
             else:
                 self.outEdges[e[1]][g.edges[e]["label"]] = [e[0]]
-            
-    #Nodes that can follow a labelled rule
-    def getInNodes(self, label) -> dict:
-        return self.inNodes[label] if label in self.inNodes else dict()
-
-    #Nodes that can be reached by following 
-    def getOutNodes(self, label) -> dict:
-        return self.outNodes[label] if label in self.outNodes else dict()
     
     #Edges that are going to node n
     def getInEdges(self, n) -> dict:
@@ -78,7 +52,7 @@ class NodeEdgeDict:
         return self.outEdges[n] if n in self.outEdges else dict()
 
     def __str__(self) -> str:
-        return f"InNodes: {self.inNodes}\n\nOutNodes: {self.outNodes}\n\nInEdges: {self.inEdges}\n\nOutEdges: {self.outEdges}\n"
+        return f"InEdges: {self.inEdges}\n\nOutEdges: {self.outEdges}\n"
     
 def unique_permutations(l1, l2):
     if len(l1) >= len(l2):
@@ -144,12 +118,16 @@ class Module:
     def __init__(self, graph : nx.DiGraph, n : int):
         self.graph = graph.copy()
         self.n = n
+        self.name = ""
         self.tags = set()
         self.alltags = set()
         self.queries = dict()
     
     def getGraph(self) -> nx.DiGraph:
         return self.graph
+
+    def getName(self) -> str:
+        return self.name
     
     def getOccurrence(self) -> int:
         return self.n
@@ -166,6 +144,9 @@ class Module:
     def getQueries(self) -> Dict[str, int]:
         return self.queries
     
+    def setName(self, name):
+        self.name = name
+
     def addTags(self, tags):
         if len(self.tags) == 0:
             self.tags = set(tags)
