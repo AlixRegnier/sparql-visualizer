@@ -2,7 +2,7 @@
 from SAL import parse_file, SubDigraph, getRelationGraph, getSimpleGraph, Cluster
 
 #Most Common Subgraph
-from MCS import MCS, Module
+from MCS import MCS, Module, extractMCS
 
 from utils import dotGraph, get_tags
 import argparse
@@ -94,31 +94,18 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                 for j in range(i+1, len(key_graph)):
                     for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
                         #CHECK ISOMORPHISM
-                        isomorph1 = graphs[key_graph[i]].subgraph(mcs.keys()) #Weak point => could be different than a subgraph with j index
-                        isomorph2 = graphs[key_graph[j]].subgraph(mcs.values()) #Weak point => could be different than a subgraph with j index
+                        isomorph = extractMCS(graphs[key_graph[i]], graphs[key_graph[j]], mcs)
                         for m in modules:
-                            a = 0
-                            if m == isomorph1:
-                                mapping1 = next(DiGraphMatcher(m.getGraph(), isomorph1, edge_match=em).match())
-                                m.addQuery(key_graph[i], mapping1) 
+                            if m == isomorph:
+                                match = next(DiGraphMatcher(m.getGraph(), isomorph, edge_match=em).match())
+                                m.addQuery(key_graph[i], match) 
+                                m.addQuery(key_graph[j], { k : mcs[match[k]] for k in match } )
                                 m.addTags(tags[key_graph[i]])
-                                a += 1
-
-                            if m == isomorph2:
-                                mapping2 = next(DiGraphMatcher(m.getGraph(), isomorph2, edge_match=em).match())
-                                m.addQuery(key_graph[j], mapping2)
                                 m.addTags(tags[key_graph[j]])
-                                a+=1
-                            elif a == 1:
-                                dotGraph(isomorph1, "iso1", False)
-                                dotGraph(isomorph2, "iso2", False)
-                                input("stop")
-                            
-                            if a > 0:
-                                m.increaseOccurrence()
+                                m.increaseOccurence()
                                 break
                         else:
-                            module = Module(isomorph1, 1)
+                            module = Module(isomorph, 1)
                             module.addQuery(key_graph[i], { k : k for k in mcs }) #Seems stupid but it is actually very smart
                             module.addQuery(key_graph[j], mcs)
                             module.addTags(tags[key_graph[i]])

@@ -112,11 +112,27 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
                     else:
                         mcss = list(filterfalse(lambda e: isSubdict(p, e), mcss))
                         mcss.append(p)
-    
-    #if mcss:
-    #    return [max(mcss, key=len)]
+
     return mcss
 
+def extractMCS(g1 : nx.DiGraph, g2 : nx.DiGraph, mapping : Dict[str, str]) -> nx.DiGraph:
+    g1dicts = NodeEdgeDict(g1)
+    g2dicts = NodeEdgeDict(g2)
+    _g1 = g1.subgraph(mapping.keys()).copy()
+    remove = set()
+
+    for n1 in _g1.nodes:
+        for diff in g1dicts.getInEdges(n1).keys() - g2dicts.getInEdges(mapping[n1]).keys():
+            for x in g1dicts.getInEdges(n1)[diff]:
+                remove.add((x, n1))
+
+        for diff in g1dicts.getOutEdges(n1).keys() - g2dicts.getOutEdges(mapping[n1]).keys():
+            for x in g1dicts.getOutEdges(n1)[diff]:
+                remove.add((n1, x))
+    
+    _g1.remove_edges_from(remove)    
+    return _g1
+    
 class Module:
     def __init__(self, graph : nx.DiGraph, n : int):
         self.graph = graph.copy()
@@ -133,7 +149,7 @@ class Module:
     def getName(self) -> str:
         return self.name
     
-    def getOccurrence(self) -> int:
+    def getOccurence(self) -> int:
         return self.n
     
     def increaseOccurrence(self):
