@@ -36,7 +36,8 @@ def process(files, render_query = True, render_simple = False, render_relation =
 
             fullgraph = maincluster.getFullGraph()
             simplegraph = getSimpleGraph(fullgraph)
-
+            with open(name + ".simple.dat", "wb") as f:
+                pickle.dump(simplegraph, f)
 
             if render_simple:
                 dotGraph(simplegraph, name + ".simple", nodelabel=False)
@@ -76,6 +77,10 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
             elif p.is_file() and p.suffix == extension:
                 files.append(p)
         
+        if len(files) == 0:
+            print("No queries were found. Exit")
+            exit(0)
+
         graphs, tags = process(files, flag_graph, flag_simple, flag_relation, render_output, flag_verbose)
         modules = []
 
@@ -89,30 +94,47 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                 for j in range(i+1, len(key_graph)):
                     for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
                         #CHECK ISOMORPHISM
-                        isomorph = graphs[key_graph[i]].subgraph(mcs.keys())
+                        isomorph1 = graphs[key_graph[i]].subgraph(mcs.keys()) #Weak point => could be different than a subgraph with j index
+                        isomorph2 = graphs[key_graph[j]].subgraph(mcs.values()) #Weak point => could be different than a subgraph with j index
                         for m in modules:
-                            if m == isomorph:
-                                m.increaseOccurrence()
+                            a = 0
+                            if m == isomorph1:
+                                mapping1 = next(DiGraphMatcher(m.getGraph(), isomorph1, edge_match=em).match())
+                                m.addQuery(key_graph[i], mapping1) 
                                 m.addTags(tags[key_graph[i]])
+                                a += 1
+
+                            if m == isomorph2:
+                                mapping2 = next(DiGraphMatcher(m.getGraph(), isomorph2, edge_match=em).match())
+                                m.addQuery(key_graph[j], mapping2)
                                 m.addTags(tags[key_graph[j]])
-                                m.addQuery(key_graph[i])
-                                m.addQuery(key_graph[j])
+                                a+=1
+                            elif a == 1:
+                                dotGraph(isomorph1, "iso1", False)
+                                dotGraph(isomorph2, "iso2", False)
+                                input("stop")
+                            
+                            if a > 0:
+                                m.increaseOccurrence()
                                 break
                         else:
-                            module = Module(isomorph, 1)
+                            module = Module(isomorph1, 1)
+                            module.addQuery(key_graph[i], { k : k for k in mcs }) #Seems stupid but it is actually very smart
+                            module.addQuery(key_graph[j], mcs)
                             module.addTags(tags[key_graph[i]])
                             module.addTags(tags[key_graph[j]])
-                            module.addQuery(key_graph[i])
-                            module.addQuery(key_graph[j])
                             modules.append(module)
                     x += 1
                     print(f"\r{x} / {total} {key_graph[i]} {key_graph[j]}", end="")
-            padding=len(str(len(modules)))                
+            padding=len(str(len(modules)))
+            """                
+            #ENRICHISSEMENT
             for m in modules:
                 for k in key_graph:
                     if k not in m.getQueries() and DiGraphMatcher(graphs[k], m.getGraph(), edge_match=em).subgraph_is_isomorphic():
                         m.addQuery(k)
                         m.addTags(tags[k])
+            """
 
             for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurrence(), reverse=True)):
                 with open(f"{mcs_output}/module{i+1:0{padding}}.txt", "w") as f:

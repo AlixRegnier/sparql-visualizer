@@ -19,7 +19,7 @@ def drawGraph(g : nx.DiGraph):
     nx.draw(g, pos = nx.spring_layout(g, k = 0.5), with_labels = True, labels = { n : g.nodes[n]["label"] for n in g.nodes })
     plt.show()
 
-def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = "png"):
+def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = "png", cleanup=False):
     graph = Digraph(name)
     graph.format = format
 
@@ -36,4 +36,4 @@ def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = 
         else:
             graph.edge(hex(hash(edge[0])), hex(hash(edge[1])))
 
-    graph.render(cleanup=True)
+    graph.render(cleanup=cleanup)

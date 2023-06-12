@@ -310,7 +310,7 @@ class SubDigraph(nx.DiGraph):
         SubDigraph.nodeAlreadyAdded = set()
 
     @staticmethod
-    def allSubgraphsToDot(name, format = "png", view = False):
+    def allSubgraphsToDot(name, format = "png", view = False, cleanup=False):
         graph = Digraph(name)
         graph.graph_attr["rankdir"] = "LR"
         projections = { "cluster0_" + p for p in SubDigraph.subgraphes["cluster0"].cluster.getProjections() }
@@ -350,9 +350,9 @@ class SubDigraph(nx.DiGraph):
         #Render 
         graph.format = format
         if view:
-            graph.view(cleanup=True)
+            graph.view(cleanup=cleanup)
         else:
-            graph.render(cleanup=True)
+            graph.render(cleanup=cleanup)
 
     def prefixVar(self, name):
         """

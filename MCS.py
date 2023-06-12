@@ -112,6 +112,9 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
                     else:
                         mcss = list(filterfalse(lambda e: isSubdict(p, e), mcss))
                         mcss.append(p)
+    
+    #if mcss:
+    #    return [max(mcss, key=len)]
     return mcss
 
 class Module:
@@ -122,6 +125,7 @@ class Module:
         self.tags = set()
         self.alltags = set()
         self.queries = dict()
+        self.associations = dict()
     
     def getGraph(self) -> nx.DiGraph:
         return self.graph
@@ -134,7 +138,13 @@ class Module:
     
     def increaseOccurrence(self):
         self.n += 1
-    
+
+    def addAssociation(self, query, a:  Dict[str, str]):
+        if query not in self.associations:
+            self.associations[query] = [a.copy()]
+        elif a not in self.associations[query]:
+            self.associations[query].append(a.copy())
+
     def getAlltags(self) -> Set[str]:
         return self.alltags
     
@@ -155,11 +165,13 @@ class Module:
 
         self.alltags |= tags
 
-    def addQuery(self, query):
+    def addQuery(self, query, mapping): # [OccurenceInQuery, List<Set>]
         if query in self.queries:
-            self.queries[query] += 1
+            self.queries[query][0] += 1
+            if mapping not in self.queries[query][1]:
+                self.queries[query][1].append(mapping)
         else:
-            self.queries[query] = 1
+            self.queries[query] = [1, [mapping]]
 
     @staticmethod
     def __edgematch(e1, e2) -> bool:
@@ -184,9 +196,6 @@ class Module:
         s += '\n'.join(sorted(self.getAlltags()))
         s += "\n\nQueries:\n"
         for k in sorted(self.queries.keys()):
-            s += f"{k}\t{self.queries[k]}\n"
+            s += f"{k}\t{self.queries[k][0]}\n"
     
         return s
-
-    
-

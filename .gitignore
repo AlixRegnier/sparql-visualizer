@@ -10,3 +10,5 @@ tmp*
 *.png
 *.log
 *.gexf
+*.dat
+query-dameron
