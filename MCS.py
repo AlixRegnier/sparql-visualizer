@@ -152,7 +152,7 @@ class Module:
     def getOccurence(self) -> int:
         return self.n
     
-    def increaseOccurrence(self):
+    def increaseOccurence(self):
         self.n += 1
 
     def addAssociation(self, query, a:  Dict[str, str]):
@@ -202,7 +202,7 @@ class Module:
         return nx.is_isomorphic(self.graph, o, edge_match=Module.__edgematch)
     
     def __str__(self) -> str:
-        s = f"Nombre d'occurrences:\n{self.getOccurrence()}\n\nCommon tags:\n"
+        s = f"Nombre d'occurrences:\n{self.getOccurence()}\n\nCommon tags:\n"
 
         if self.getTags():
             s += '\n'.join(sorted(self.getTags()))

@@ -116,7 +116,8 @@ if QUERYINDEX > 0:
     for q in queries:
         for m in modules:
             if q not in m.getQueries() and isXsubgraphOfY(m.getGraph(), queries[q]):
-                m.addQuery(q)
+                for mapping in DiGraphMatcher(queries[q], m.getGraph(), edge_match=em).subgraph_isomorphisms_iter():
+                    m.addQuery(q, { mapping[k] : k for k in mapping })
                 j += 1
             i += 1
             print(f"\r{i} / {MAX}", end="")

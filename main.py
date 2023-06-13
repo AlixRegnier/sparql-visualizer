@@ -123,10 +123,10 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                         m.addTags(tags[k])
             """
 
-            for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurrence(), reverse=True)):
+            for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurence(), reverse=True)):
                 with open(f"{mcs_output}/module{i+1:0{padding}}.txt", "w") as f:
                     f.write(str(m))   
-                print(f"module{i+1:0{padding}} : {m.getOccurrence()} occurences")
+                print(f"module{i+1:0{padding}} : {m.getOccurence()} occurences")
                 dotGraph(m.getGraph(), f"{mcs_output}/module{i+1:0{padding}}", False, True)
                 with open(f"{mcs_output}/module{i+1:0{padding}}.dat", "wb") as f:
                     m.setName(f"module{i+1:0{padding}}")
