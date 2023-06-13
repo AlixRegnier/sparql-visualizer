@@ -115,7 +115,7 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
 
     return mcss
 
-def extractMCS(g1 : nx.DiGraph, g2 : nx.DiGraph, mapping : Dict[str, str]) -> nx.DiGraph:
+def extractMapping(g1 : nx.DiGraph, g2 : nx.DiGraph, mapping : Dict[str, str]) -> nx.DiGraph:
     g1dicts = NodeEdgeDict(g1)
     g2dicts = NodeEdgeDict(g2)
     _g1 = g1.subgraph(mapping.keys()).copy()

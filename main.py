@@ -2,7 +2,7 @@
 from SAL import parse_file, SubDigraph, getRelationGraph, getSimpleGraph, Cluster
 
 #Most Common Subgraph
-from MCS import MCS, Module, extractMCS
+from MCS import MCS, Module, extractMapping
 
 from utils import dotGraph, get_tags
 import argparse
@@ -94,7 +94,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                 for j in range(i+1, len(key_graph)):
                     for mcs in MCS(graphs[key_graph[i]], graphs[key_graph[j]]):
                         #CHECK ISOMORPHISM
-                        isomorph = extractMCS(graphs[key_graph[i]], graphs[key_graph[j]], mcs)
+                        isomorph = extractMapping(graphs[key_graph[i]], graphs[key_graph[j]], mcs)
                         for m in modules:
                             if m == isomorph:
                                 match = next(DiGraphMatcher(m.getGraph(), isomorph, edge_match=em).match())
