@@ -27,8 +27,7 @@ def isXsubgraphOfY(x, y):
     return DiGraphMatcher(y, x, edge_match=em).subgraph_is_isomorphic()
 
 subgraphs = [[] for _ in range(len(modules))]
-
-nbSousmodules = [[] for _ in range(len(modules))]
+directSubgraph = [[] for _ in range(len(modules))]
 MAX = len(modules) * len(modules)
 x = 0
 print("Calcul de la composition:")
@@ -36,7 +35,6 @@ for i in range(len(modules)):
     for j in range(len(modules)):
         if i != j:
             if isXsubgraphOfY(modules[i].getGraph(), modules[j].getGraph()):
-                nbSousmodules[j].append(f"module{i+1:03}")
                 rm = []
                 for k in subgraphs[j]:
                     if isXsubgraphOfY(modules[i].getGraph(), modules[k].getGraph()):
@@ -45,13 +43,14 @@ for i in range(len(modules)):
                         rm.append(k)
                 else:
                     subgraphs[j].append(i)
+                    directSubgraph[j].append(i)
 
                 for k in rm:
                     subgraphs[j].remove(k)
         x += 1
         print(f"\r{x} / {MAX}", end="")
 
-
+"""
 ###############Plus grand module###############
 maxIndex = []
 maxLength = 0
@@ -65,9 +64,9 @@ for i in range(len(nbSousmodules)):
 for i in maxIndex:
     print(f"\nmodule{i+1:03}:", nbSousmodules[i], end="")
 ###############################################
+"""
 
-with open("dependances.txt", "w") as f:
-    f.write("Submodules of moduleXXX:\n\n")
+with open("compositionIndirect.txt", "w") as f:
     for i in range(len(subgraphs)):
         f.write(f"\nmodule{i+1:03}: ")
         for k in subgraphs[i]:
@@ -81,17 +80,25 @@ with open("module-query.txt", "w") as ff:
             ff.write(q + " ")
 """
 
-graphcompo = nx.DiGraph()
+compoindirect = nx.DiGraph()
+compodirect = nx.DiGraph()
 feuilles = []
 with open("feuilles.txt", "w") as f:
     for i in range(len(subgraphs)):
-        graphcompo.add_node(i+1, label=f"module{i+1:03}")
+        compoindirect.add_node(f"module{i+1:03}")
         if len(subgraphs[i]) == 0: #Feuille
             f.write(f"module{i+1:03}\n")
             feuilles.append(modules[i])
         for j in subgraphs[i]:
-            graphcompo.add_edge(j+1, i+1)
-nx.write_gexf(graphcompo, "dependances.gexf")
+            compoindirect.add_edge(f"module{j+1:03}", f"module{i+1:03}")
+
+for i in range(len(directSubgraph)):
+    compodirect.add_node(f"module{i+1:03}")
+    for j in directSubgraph[i]:
+        compodirect.add_edge(f"module{j+1:03}", f"module{i+1:03}")
+
+nx.write_gexf(compoindirect, "compositionIndirect.gexf")
+nx.write_gexf(compodirect, "compositionDirect.gexf")
 
 s = set()
 
@@ -147,10 +154,34 @@ while s != "":
     s = input("\nquery:")
 
 
-"""
+def inversedict(dictionnaire : dict):
+    return { dictionnaire[k] : k for k in dictionnaire}
+
+#Pour chaque modules
 for i in range(len(modules)):
     for j in range(i+1, len(modules)):
-        for query in modules[i].getQueries().keys() & modules[j].getQueries.keys():
-            #CALCULATE WHERE EACH MODULES OVERLAP ON <QUERY>
-            #THEN INTERSECTION OF OVERLAPS IS THE WAY HOW TO CONNECT BOTH MODULES TO EACH OTHER
-"""
+        for query in modules[i].getQueries().keys() & modules[j].getQueries().keys():
+            for mappingi in modules[i].getQueries()[query][1]:
+                for mappingj in modules[j].getQueries()[query][1]:
+                    #Query nodes as key
+                    di = inversedict(mappingi)
+                    dj = inversedict(mappingj)
+                    intersection = di.keys() & dj.keys()
+                    if intersection:
+                        modules[i].addMappingModule(f"module{j+1:03}", { di[k] : dj[k] for k in intersection})
+                        modules[j].addMappingModule(f"module{i+1:03}", { dj[k] : di[k] for k in intersection})
+
+association = nx.Graph()
+for i in range(len(modules)):
+    association.add_node(f"module{i+1:03}")
+    for modulej in modules[i].getMappingModules().keys():
+        if (f"module{i+1:03}", modulej) not in compodirect.edges and (modulej, f"module{i+1:03}") not in compodirect.edges:
+            association.add_edge(f"module{i+1:03}", modulej)
+
+#for e in indi
+
+nx.write_gexf(association, "association.gexf")
+print("Modules qui ne mappent aucun autre module:\n", nx.isolates(association))
+
+
+            

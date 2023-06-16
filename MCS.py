@@ -130,6 +130,7 @@ def extractMapping(g1 : nx.DiGraph, g2 : nx.DiGraph, mapping : Dict[str, str]) -
             for x in g1dicts.getOutEdges(n1)[diff]:
                 remove.add((n1, x))
     
+    #
     _g1.remove_edges_from(remove)    
     return _g1
     
@@ -142,6 +143,7 @@ class Module:
         self.alltags = set()
         self.queries = dict()
         self.associations = dict()
+        self.mappingModules = dict()
     
     def getGraph(self) -> nx.DiGraph:
         return self.graph
@@ -172,6 +174,16 @@ class Module:
     
     def setName(self, name):
         self.name = name
+
+    def addMappingModule(self, moduleName, mapping : dict):
+        if moduleName in self.mappingModules:
+            if mapping not in self.mappingModules[moduleName]:
+                self.mappingModules[moduleName].append(mapping)
+        else:
+            self.mappingModules[moduleName] = [mapping]
+        
+    def getMappingModules(self) -> Dict[str, List[Dict]]:
+        return self.mappingModules
 
     def addTags(self, tags):
         if len(self.tags) == 0:
