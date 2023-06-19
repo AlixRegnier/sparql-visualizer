@@ -35,6 +35,8 @@ for i in range(len(modules)):
     for j in range(len(modules)):
         if i != j:
             if isXsubgraphOfY(modules[i].getGraph(), modules[j].getGraph()):
+
+                directSubgraph[j].append(i)
                 rm = []
                 for k in subgraphs[j]:
                     if isXsubgraphOfY(modules[i].getGraph(), modules[k].getGraph()):
@@ -43,42 +45,33 @@ for i in range(len(modules)):
                         rm.append(k)
                 else:
                     subgraphs[j].append(i)
-                    directSubgraph[j].append(i)
 
                 for k in rm:
                     subgraphs[j].remove(k)
         x += 1
         print(f"\r{x} / {MAX}", end="")
 
-"""
-###############Plus grand module###############
-maxIndex = []
-maxLength = 0
-for i in range(len(nbSousmodules)):
-    if len(nbSousmodules[i]) > maxLength:
-        maxLength = len(nbSousmodules[i])
-        maxIndex = [i]
-    elif len(nbSousmodules[i]) == maxLength:
-        maxIndex.append(i)
-
-for i in maxIndex:
-    print(f"\nmodule{i+1:03}:", nbSousmodules[i], end="")
-###############################################
-"""
-
+#Write module indirect composition
 with open("compositionIndirect.txt", "w") as f:
     for i in range(len(subgraphs)):
         f.write(f"\nmodule{i+1:03}: ")
         for k in subgraphs[i]:
             f.write(f"module{k+1:03} ")
 
-"""
+
+#Write module direct composition
+with open("compositionDirect.txt", "w") as f:
+    for i in range(len(directSubgraph)):
+        f.write(f"\nmodule{i+1:03}: ")
+        for k in directSubgraph[i]:
+            f.write(f"module{k+1:03} ")
+
+#Write module -> queries entries
 with open("module-query.txt", "w") as ff:
     for i in range(len(modules)):
         ff.write(f"\nmodule{i+1:03}: ")
         for q in modules[i].getQueries():
             ff.write(q + " ")
-"""
 
 compoindirect = nx.DiGraph()
 compodirect = nx.DiGraph()
@@ -114,7 +107,7 @@ if QUERYINDEX > 0:
             queries[basename(sys.argv[i]).rstrip("rq.simple.dat")] = pickle.load(f)
     print("Requêtes non couvertes:", queries.keys() - s)
 
-    print("Vérification des requêtes dans lesquelles les modules sont inclus")
+    print("\nRevérification des requêtes dans lesquelles les modules sont inclus")
 
     MAX = len(queries) * len(modules)
     print()
@@ -138,7 +131,7 @@ if QUERYINDEX > 0:
     print(f"{j} ajouts d'appartenance à une requête")
     print("Requêtes non couvertes:", queries.keys() - s)
 
-
+"""
 setfeuilles = { f.getName() for f in feuilles }
 s = input("query:")
 while s != "":
@@ -152,14 +145,14 @@ while s != "":
     print("Feuilles:")
     print(r & setfeuilles)
     s = input("\nquery:")
-
+"""
 
 def inversedict(dictionnaire : dict):
     return { dictionnaire[k] : k for k in dictionnaire}
 
-#Pour chaque modules
+#Save module mapping (how to connect them)
 for i in range(len(modules)):
-    for j in range(i+1, len(modules)):
+    for j in range(i+1, len(modules)): #i+1 won't check self-mapping /!\
         for query in modules[i].getQueries().keys() & modules[j].getQueries().keys():
             for mappingi in modules[i].getQueries()[query][1]:
                 for mappingj in modules[j].getQueries()[query][1]:
@@ -172,16 +165,19 @@ for i in range(len(modules)):
                         modules[j].addMappingModule(f"module{i+1:03}", { dj[k] : di[k] for k in intersection})
 
 association = nx.Graph()
+associationFiltered = nx.Graph()
 for i in range(len(modules)):
     association.add_node(f"module{i+1:03}")
+    associationFiltered.add_node(f"module{i+1:03}")
     for modulej in modules[i].getMappingModules().keys():
         if (f"module{i+1:03}", modulej) not in compodirect.edges and (modulej, f"module{i+1:03}") not in compodirect.edges:
-            association.add_edge(f"module{i+1:03}", modulej)
-
-#for e in indi
+            associationFiltered.add_edge(f"module{i+1:03}", modulej)
+        association.add_edge(f"module{i+1:03}", modulej)
 
 nx.write_gexf(association, "association.gexf")
-print("Modules qui ne mappent aucun autre module:\n", nx.isolates(association))
+nx.write_gexf(associationFiltered, "associationFiltered.gexf")
+print("Modules qui ne mappent aucun autre module (normal):\n", list(nx.isolates(association)))
+print("Modules qui ne mappent aucun autre module (filtered):\n", list(nx.isolates(associationFiltered)))
 
 
             
