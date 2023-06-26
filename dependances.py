@@ -4,6 +4,7 @@ from MCS import Module
 from os.path import basename
 import pickle
 import sys
+import statistics
 
 modules = []
 QUERYINDEX = -1
@@ -93,6 +94,13 @@ for i in range(len(directSubgraph)):
 nx.write_gexf(compoindirect, "compositionIndirect.gexf")
 nx.write_gexf(compodirect, "compositionDirect.gexf")
 
+m = sorted([len(k) for k in directSubgraph])
+if len(m) > 0:
+    print(f"Composition: Minimum={min(m)}, Mediane={statistics.median(m)}, Maximum={max(m)}")
+else:
+    print("Composition: empty")
+
+
 s = set()
 
 for m in feuilles:
@@ -179,5 +187,3 @@ nx.write_gexf(associationFiltered, "associationFiltered.gexf")
 print("Modules qui ne mappent aucun autre module (normal):\n", list(nx.isolates(association)))
 print("Modules qui ne mappent aucun autre module (filtered):\n", list(nx.isolates(associationFiltered)))
 
-
-            
