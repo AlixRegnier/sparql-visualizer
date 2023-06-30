@@ -9,13 +9,6 @@ from SparqlLexer import SparqlLexer
 from SparqlParser import SparqlParser
 from SparqlListener import SparqlListener
 
-"""
-TODO
-    - SERVICE [maybe]
-    - Duplicate primitives types when targetted by different nodes
-    - String :: "[any]"  => 'xsd:string', should be modified
-"""
-
 #Constants enums
 class Color:
     ALIAS_IN = "magenta"
@@ -493,6 +486,10 @@ class SubDigraph(nx.DiGraph):
                 self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
 
 def parse_file(file, verbose=False):
+    """
+    file : str, path of file
+    verbose : bool, true will make a lot of prints
+    """
     input_stream = FileStream(file, encoding="utf-8")
     lexer = SparqlLexer(input_stream)
     stream = CommonTokenStream(lexer)
@@ -502,7 +499,9 @@ def parse_file(file, verbose=False):
 
 # This class defines a complete listener for a parse tree produced by SparqlParser.
 class SAL(SparqlListener):
-
+    """
+    Class that tracks AST rules
+    """
     def __init__(self, verbose = False):
         #Flags
         self.alias = False
