@@ -1,10 +1,11 @@
 #Parser and graph renderers
-from SAL import parse_file, SubDigraph, getRelationGraph, getSimpleGraph, Cluster
+from SAL import parse_file, SubDigraph, Cluster
 
 #Most Common Subgraph
-from MCS import MCS, Module, extractMapping
+from MCS import MCS, extractMapping
+from module import Module
 
-from utils import dotGraph, get_tags
+from utils import dotGraph, get_tags, getSimpleGraph, getRelationGraph
 import argparse
 from networkx.algorithms.isomorphism import DiGraphMatcher
 from pathlib import Path
@@ -13,6 +14,15 @@ import sys
 import pickle
 
 def process(files, render_query = True, render_simple = False, render_relation = False, render_output=None, verbose=False):
+    """
+    Return 2 dictionaries G, T
+
+    G contains [query -> graph]
+    T contains [query -> tags]
+
+    Flags can be set from command line if you went to render some graphs in PNG or if you need to use parser in verbose mode
+    """
+
     pfiles = dict()
     tfiles = dict()
     if render_output is not None:
@@ -59,11 +69,6 @@ def process(files, render_query = True, render_simple = False, render_relation =
             Cluster.reset()
     return pfiles, tfiles
 
-def em(e1, e2) -> bool:
-    try:
-        return e1["label"] == e2["label"]
-    except KeyError:
-        return "label" not in e1 and "label" not in e2
 
 def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extension, render_output, mcs_output ):
     try:
@@ -114,14 +119,6 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                     x += 1
                     print(f"\r{x} / {total} {key_graph[i]} {key_graph[j]}", end="")
             padding=len(str(len(modules)))
-            """                
-            #ENRICHISSEMENT
-            for m in modules:
-                for k in key_graph:
-                    if k not in m.getQueries() and DiGraphMatcher(graphs[k], m.getGraph(), edge_match=em).subgraph_is_isomorphic():
-                        m.addQuery(k)
-                        m.addTags(tags[k])
-            """
 
             for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurence(), reverse=True)):
                 with open(f"{mcs_output}/module{i+1:0{padding}}.txt", "w") as f:
@@ -135,6 +132,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
         print("\nAborted by user")
 
 if __name__ == "__main__":
+    #####################PARSING ARGUMENT###############################
     argparser = argparse.ArgumentParser()
     argparser.add_argument("-a", "--all", action="store_true", help="Alias using -g -m -r -s")
     argparser.add_argument("-g", "--graph", action="store_true", help="Render graph")
@@ -161,6 +159,8 @@ if __name__ == "__main__":
         args.O = args.O[0]
     if isinstance(args.e, list):
         args.e = args.e[0]
+
+    ####################################################################
 
     main(args.graph, args.mcs, args.relation, args.simple, args.verbose, args.e, args.O, args.M)
 

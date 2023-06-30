@@ -1,26 +1,16 @@
 from __future__ import annotations
 import networkx as nx
 from networkx.algorithms.isomorphism import *
-from typing import List, Dict, Set
+from typing import List, Dict
 from itertools import permutations, product, filterfalse, chain
 from functools import reduce
 
-#Citations
-"""
-#Kind of first approach
-G. Levi, A note on the derivation of maximal common subgraphs of two directed or undirected graphs, CALCOLO 9 (1973) 341-352. 
-
-#Clique
-McCreesh, C., Ndiaye, S.N., Prosser, P., Solnon, C. (2016). Clique and Constraint Models for Maximum Common (Connected) Subgraph Problems. In: Rueher, M. (eds) Principles and Practice of Constraint Programming. CP 2016. Lecture Notes in Computer Science(), vol 9892. Springer, Cham. https://doi.org/10.1007/978-3-319-44953-1_23
-
-#McSplit
-McCreesh, Ciaran & Prosser, Patrick & Trimble, James. (2017). A Partitioning Algorithm for Maximum Common Subgraph Problems. 712-719. 10.24963/ijcai.2017/99. 
-"""
-
 class NodeEdgeDict:
+    """
+    Class that stores in and out arcs labels for each vertices and vertice that can be found by following arcs
+    """
     def __init__(self, g : nx.DiGraph):
-        #Edge -> in/out nodes
-        #Node -> in/out edges
+        #verticeId -> in/out arcs
         self.inEdges = {}
         self.outEdges = {}
 
@@ -55,6 +45,11 @@ class NodeEdgeDict:
         return f"InEdges: {self.inEdges}\n\nOutEdges: {self.outEdges}\n"
     
 def unique_permutations(l1, l2):
+    """
+    Retourne l'arrangement des paires d'éléments entre l1 et l2
+    Soit toutes les paires (a, b) avec a et b appartenant respectivement à l1 et l2
+    """
+
     if len(l1) >= len(l2):
         for p in (tuple(zip(x, l2)) for x in permutations(l1, len(l2))):
             yield p[0]
@@ -64,6 +59,9 @@ def unique_permutations(l1, l2):
 
 #WARNING: Doesn't remind the existing edge for have been used, all edges between any MCS will be kept
 def search(g1 : nx.DiGraph, g2 : nx.DiGraph, g1dicts : NodeEdgeDict, g2dicts : NodeEdgeDict, n1, n2, visited1, visited2) -> List[Dict[str, str]]:
+    """
+    Recursive function of MCS algorithm
+    """
     if n1 in visited1 or n2 in visited2:
         return []
     
@@ -90,11 +88,17 @@ def search(g1 : nx.DiGraph, g2 : nx.DiGraph, g1dicts : NodeEdgeDict, g2dicts : N
             x = [reduce(lambda a, b: {**a, **b}, e) for e in product(x, _x)] #Foreach list, merge their dictionaries
     return x
 
-#Check if d2 is a subdict of d1
 def isSubdict(d1, d2):
-    return {**d1, **d2 } == d1
+    """
+    Return True if d2 is a subdict of d1
+    (True if overwriting d1's datas with d2's datas won't change values of d1)
+    """
+    return { **d1, **d2 } == d1
 
 def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
+    """
+    Retourne tout les MCS (plusieurs fois le même si le mapping diffère)
+    """
     g1dicts = NodeEdgeDict(g1)
     g2dicts = NodeEdgeDict(g2)
 
@@ -102,128 +106,39 @@ def MCS(g1 : nx.DiGraph, g2 : nx.DiGraph):
     for n1 in g1.nodes:
         for n2 in g2.nodes:
             s = search(g1, g2, g1dicts, g2dicts, n1, n2, set(), set())
-            #Filter results if subset of a wider solution
-            #Filter previous results
+            
+            #Remove results that are a subset of a wider result
             for p in s:
-                if len(p) > 2:
+                if len(p) > 2: #Module shall have at least 3 vertices
                     for d in mcss:
                         if isSubdict(d, p):
                             break
-                    else:
+                    else: #If there weren't any subdict in previous loop then check list before adding new result
                         mcss = list(filterfalse(lambda e: isSubdict(p, e), mcss))
                         mcss.append(p)
 
     return mcss
 
 def extractMapping(g1 : nx.DiGraph, g2 : nx.DiGraph, mapping : Dict[str, str]) -> nx.DiGraph:
+    """
+    Extract perfectly the mapping vertices (and arcs) specified between g1 and g2
+    """
+
     g1dicts = NodeEdgeDict(g1)
     g2dicts = NodeEdgeDict(g2)
     _g1 = g1.subgraph(mapping.keys()).copy()
-    remove = set()
+    remove = set() #to store wrong arcs
 
     for n1 in _g1.nodes:
+        #Store wrong mapping arcs from result (in arcs)
         for diff in g1dicts.getInEdges(n1).keys() - g2dicts.getInEdges(mapping[n1]).keys():
             for x in g1dicts.getInEdges(n1)[diff]:
                 remove.add((x, n1))
-
+        
+        #Store wrong mapping arcs from result (out arcs)
         for diff in g1dicts.getOutEdges(n1).keys() - g2dicts.getOutEdges(mapping[n1]).keys():
             for x in g1dicts.getOutEdges(n1)[diff]:
                 remove.add((n1, x))
     
-    #
-    _g1.remove_edges_from(remove)    
+    _g1.remove_edges_from(remove) #Remove all arcs  
     return _g1
-    
-class Module:
-    def __init__(self, graph : nx.DiGraph, n : int):
-        self.graph = graph.copy()
-        self.n = n
-        self.name = ""
-        self.tags = set()
-        self.alltags = set()
-        self.queries = dict()
-        self.associations = dict()
-        self.mappingModules = dict()
-    
-    def getGraph(self) -> nx.DiGraph:
-        return self.graph
-
-    def getName(self) -> str:
-        return self.name
-    
-    def getOccurence(self) -> int:
-        return self.n
-    
-    def increaseOccurence(self):
-        self.n += 1
-
-    def addAssociation(self, query, a:  Dict[str, str]):
-        if query not in self.associations:
-            self.associations[query] = [a.copy()]
-        elif a not in self.associations[query]:
-            self.associations[query].append(a.copy())
-
-    def getAlltags(self) -> Set[str]:
-        return self.alltags
-    
-    def getTags(self) -> Set[str]:
-        return self.tags
-    
-    def getQueries(self) -> Dict[str, int]:
-        return self.queries
-    
-    def setName(self, name):
-        self.name = name
-
-    def addMappingModule(self, moduleName, mapping : dict):
-        if moduleName in self.mappingModules:
-            if mapping not in self.mappingModules[moduleName]:
-                self.mappingModules[moduleName].append(mapping)
-        else:
-            self.mappingModules[moduleName] = [mapping]
-        
-    def getMappingModules(self) -> Dict[str, List[Dict]]:
-        return self.mappingModules
-
-    def addTags(self, tags):
-        if len(self.tags) == 0:
-            self.tags = set(tags)
-        else:
-            self.tags &= tags
-
-        self.alltags |= tags
-
-    def addQuery(self, query, mapping): # [OccurenceInQuery, List<Set>]
-        if query in self.queries:
-            self.queries[query][0] += 1
-            if mapping not in self.queries[query][1]:
-                self.queries[query][1].append(mapping)
-        else:
-            self.queries[query] = [1, [mapping]]
-
-    @staticmethod
-    def __edgematch(e1, e2) -> bool:
-        try:
-            return e1["label"] == e2["label"]
-        except KeyError:
-            return "label" not in e1 and "label" not in e2
-        
-    def __eq__(self, o : Module | nx.DiGraph ) -> bool:
-        if isinstance(o, Module):
-            return nx.is_isomorphic(self.graph, o.graph, edge_match=Module.__edgematch)
-        return nx.is_isomorphic(self.graph, o, edge_match=Module.__edgematch)
-    
-    def __str__(self) -> str:
-        s = f"Nombre d'occurrences:\n{self.getOccurence()}\n\nCommon tags:\n"
-
-        if self.getTags():
-            s += '\n'.join(sorted(self.getTags()))
-        else:
-            s += "NONE"
-        s += "\n\nAll tags:\n"
-        s += '\n'.join(sorted(self.getAlltags()))
-        s += "\n\nQueries:\n"
-        for k in sorted(self.queries.keys()):
-            s += f"{k}\t{self.queries[k][0]}\n"
-    
-        return s

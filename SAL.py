@@ -10,6 +10,7 @@ from SparqlParser import SparqlParser
 from SparqlListener import SparqlListener
 
 """
+TODO
     - SERVICE [maybe]
     - Duplicate primitives types when targetted by different nodes
     - String :: "[any]"  => 'xsd:string', should be modified
@@ -56,10 +57,11 @@ class ArrowStyle:
     DUPLICATE = "none"
     TYPE = "normal"
 
-
-
 #Classes
 class Alias:
+    """
+    Class that store an alias
+    """
     @staticmethod
     def dSpace(s) -> str: 
         return f" {s.group(0)} "
@@ -98,6 +100,10 @@ class Alias:
         return f"Vars: {self.vars}\nTarget: {self.target}\nText: {self.text}"
 
 class Cluster:
+    """
+    Class that will be used as dot special cluster
+    """
+
     cluster = -1
 
     def __init__(self, label = "SELECT", style = Style.DEFAULT):
@@ -187,6 +193,9 @@ class Cluster:
         return d
     
 class TSS:
+    """
+    Class that stores triples or 'chained' triples
+    """
     def __init__(self):
         self.subject = None
         self.__neednewpath = True
@@ -257,6 +266,10 @@ class TSS:
         return f"{self.subject}\n{self.paths}"
 
 class SubDigraph(nx.DiGraph):
+    """
+    Class that inherits from NetworkX DiGraph, many instances will be used for the composition of the final graph
+    """
+
     #Tuples for shaping and coloring from constants
     ALIAS = (Shape.ALIAS, Color.ALIAS_OUT, Color.ALIAS_OUT)
     BLANK = (Shape.BLANK, Color.BLANK, Color.BLANK)
@@ -479,37 +492,6 @@ class SubDigraph(nx.DiGraph):
             for i in d[a].getVars():
                 self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
 
-def getRelationGraph(graph : nx.DiGraph):
-    #Set edges as nodes is a line graph
-    g = nx.line_graph(graph)
-
-    for edge in graph.edges:
-        if "label" in graph.edges[edge]:
-            if graph.edges[edge]["label"] in ("VALUE", "TYPE", "AS", "") and "_duplicate" not in edge[1]:
-                g.remove_node(edge)
-            else:
-                g.nodes[edge]["label"] = graph.edges[edge]["label"]
-        else:
-            g.remove_node(edge)
-    return g
-
-def getSimpleGraph(graph : nx.DiGraph):
-    g = graph.copy()
-    for edge in graph.edges:
-        if edge in g.edges:
-            if "label" in g.edges[edge]:
-                if edge[1] in g.nodes and g.edges[edge]["label"] in ("VALUE", "TYPE", "AS", "") and "_duplicate" not in edge[1]:
-                    g.remove_node(edge[1])
-            else:
-                g.remove_node(edge[1])
-    g.remove_nodes_from(set(nx.isolates(g)))
-
-    #Remove all labels as they aren't taken into account on MCS process
-    for node in g.nodes:
-        g.nodes[node]["label"] = ""
-
-    return g
-    
 def parse_file(file, verbose=False):
     input_stream = FileStream(file, encoding="utf-8")
     lexer = SparqlLexer(input_stream)

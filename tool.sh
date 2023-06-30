@@ -6,6 +6,7 @@
 #Appliquer le script sur tout les scripts dans ./nextprot-queries
 if [ "$1" = "all" ]; then
     python main.py ./nextprot-queries
+    python dependances.py ./mcs_result/*.dat ./nextprot-queries/*.dat
 #Effacer les fichiers créés
 elif [ "$1" = "clear" ]; then
     rm -f ./nextprot-queries/*.gv
@@ -13,8 +14,7 @@ elif [ "$1" = "clear" ]; then
     rm -f ./nextprot-queries/*.gexf
     rm -f ./nextprot-queries/*.log
     rm -f ./mcs_result/*.png
-#Génère le parser et retirer les fichiers superflus
-#Ajoute "allowsBlankNodes" en variable globale
+#Génère le parser et retire les fichiers superflus et ajoute "allowsBlankNodes" en variable globale
 elif [ "$1" = "antlr4" ]; then
     java -jar ~/software/antlr-4.10.1/antlr-4.10.1-complete.jar -Dlanguage=Python3 Sparql.g4
     head -9 SparqlParser.py > tmp.txt

@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 <!-- main.py may be changed for another filename, and imported python files may be moved into a new directory -->
 Command line|
 --|
-``python3 main.py (-a \| [-gmrs]) [-e E] [-M dir] [-O dir] [(-v \| -q)] <FILES>``
+``python3 main.py (-a \| [-gmrs]) [-e E] [-M dir] [-O dir] [-v] <FILES>``
 
 *files* either can be a set of file or directories containing *.rq
 
@@ -29,7 +29,6 @@ Argument|Long|Value|Description
 -m|--mcs|-|Calculate all MCS (<a href="https://en.wikipedia.org/wiki/Maximum_common_induced_subgraph">*maximum common induced subgraphs*</a> )
 -M||dir|Modify output directory for MCS to \<dir> (*default:* `./mcs_result` )
 -O||dir|Modify output directory for rendering to \<dir> (*default:* `query directory` )
--q|--quiet|-|No print
 -r|--relation|-|Render relation graph
 -s|--simple|-|Render simplified graph
 -v|--verbose|-|Verbose

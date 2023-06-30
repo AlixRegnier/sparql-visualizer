@@ -1,6 +1,7 @@
 import networkx as nx
 from networkx.algorithms.isomorphism import DiGraphMatcher
-from MCS import Module
+from module import Module
+from utils import em
 from os.path import basename
 import pickle
 import sys
@@ -8,27 +9,32 @@ import statistics
 
 modules = []
 QUERYINDEX = -1
+
+#Load pickle files to retrieve modules/queries as graph
 for i in range(1,len(sys.argv)):
-    if "simple" in sys.argv[i]:
+    if "simple" in sys.argv[i]: #Marche mais moche, ça permet juste de différencier si c'est une requête ou un module
         QUERYINDEX = i
         break
     with open(sys.argv[i], "rb") as f:
         modules.append(pickle.load(f))
-
-
-def em(e1, e2) -> bool:
-    try:
-        return e1["label"] == e2["label"]
-    except KeyError:
-        return "label" not in e1 and "label" not in e2
     
-modules = sorted(modules, key=lambda e: e.getName()) #Safer way to retrieve modules order than reverse sorting by occurrencies
+modules = sorted(modules, key=lambda e: e.getName())
 
 def isXsubgraphOfY(x, y):
+    """
+    Return True if X is a subgraph of Y
+
+    If a graph X is isomorphic with a subgraph Y' of Y then, we can consider X being a subgraph of Y
+    """
+
     return DiGraphMatcher(y, x, edge_match=em).subgraph_is_isomorphic()
 
+#Composition indirecte
 subgraphs = [[] for _ in range(len(modules))]
+
+#Composition directe
 directSubgraph = [[] for _ in range(len(modules))]
+
 MAX = len(modules) * len(modules)
 x = 0
 print("Calcul de la composition:")
@@ -74,8 +80,12 @@ with open("module-query.txt", "w") as ff:
         for q in modules[i].getQueries():
             ff.write(q + " ")
 
+#Graphe de composition indirecte
 compoindirect = nx.DiGraph()
+
+#Graphe de composition directe
 compodirect = nx.DiGraph()
+
 feuilles = []
 with open("feuilles.txt", "w") as f:
     for i in range(len(subgraphs)):
@@ -94,6 +104,7 @@ for i in range(len(directSubgraph)):
 nx.write_gexf(compoindirect, "compositionIndirect.gexf")
 nx.write_gexf(compodirect, "compositionDirect.gexf")
 
+#Calcul min, max et médiane du nombre de sous-modules
 m = sorted([len(k) for k in directSubgraph])
 if len(m) > 0:
     print(f"Composition: Minimum={min(m)}, Mediane={statistics.median(m)}, Maximum={max(m)}")
@@ -103,11 +114,13 @@ else:
 
 s = set()
 
+#On ajoute dans un ensemble toutes les requêtes qui ont servi à annoter toutes les feuilles
 for m in feuilles:
     s |= m.getQueries().keys()
 
 print("\nLes feuilles couvrent au plus:", len(s), "/", 777)
 
+#On itère sur les requêtes
 if QUERYINDEX > 0:
     queries = {}
     for i in range(QUERYINDEX, len(sys.argv)):
@@ -139,28 +152,18 @@ if QUERYINDEX > 0:
     print(f"{j} ajouts d'appartenance à une requête")
     print("Requêtes non couvertes:", queries.keys() - s)
 
-"""
-setfeuilles = { f.getName() for f in feuilles }
-s = input("query:")
-while s != "":
-    r = set()
-    for m in modules:
-        if s in m.getQueries():
-            r.add(m.getName())
-
-    print("Modules:")
-    print(r)
-    print("Feuilles:")
-    print(r & setfeuilles)
-    s = input("\nquery:")
-"""
-
 def inversedict(dictionnaire : dict):
+    """
+    Return dictionary with key-value pairs reversed
+    Dict<K,V> => Dict<V,K>
+    """
     return { dictionnaire[k] : k for k in dictionnaire}
 
-#Save module mapping (how to connect them)
+#Save module-module mapping (how to connect them)
 for i in range(len(modules)):
-    for j in range(i+1, len(modules)): #i+1 won't check self-mapping /!\
+    # j starting at i+1 will avoid checking self-module mapping but this check can be interesting for modules that maps itself not totally
+    # to check self mapping, j should start to i in next line
+    for j in range(i+1, len(modules)):
         for query in modules[i].getQueries().keys() & modules[j].getQueries().keys():
             for mappingi in modules[i].getQueries()[query][1]:
                 for mappingj in modules[j].getQueries()[query][1]:
@@ -172,8 +175,12 @@ for i in range(len(modules)):
                         modules[i].addMappingModule(f"module{j+1:03}", { di[k] : dj[k] for k in intersection})
                         modules[j].addMappingModule(f"module{i+1:03}", { dj[k] : di[k] for k in intersection})
 
+#Graphe d'association
 association = nx.Graph()
+
+#Graphe d'association des modules en enlevant les associations avec des modules interdépendants
 associationFiltered = nx.Graph()
+
 for i in range(len(modules)):
     association.add_node(f"module{i+1:03}")
     associationFiltered.add_node(f"module{i+1:03}")
