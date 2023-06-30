@@ -1,9 +1,6 @@
 #Custom
 __pycache__
-need_to_handle
 mcs_result
-test
-tmp*
 *.pyc
 *.gv
 *.dot
@@ -11,4 +8,3 @@ tmp*
 *.log
 *.gexf
 *.dat
-query-dameron
