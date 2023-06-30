@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sparql-visualizer"
+version = "1.0.1"
+dynamic = ["dependencies"]
+authors = [
+  { name="Alix Regnier", email="regnier.alix@outlook.com" },
+]
+
+description = "SPARQL query visualizer"
+readme = "README.md"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[project.urls]
+"Homepage" = "https://github.com/AlixRegnier/sparql-visualizer"
+"Bug Tracker" = "https://github.com/AlixRegnier/sparql-visualizer/issues"

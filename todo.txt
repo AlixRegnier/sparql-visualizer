@@ -1,0 +1,65 @@
+* dependances.py is currently a script in development that calculate compositions and associations
+
+* Replace DiGraph implementation by MultiDiGraph
+
+* Duplicate primitives types nodes, they are currently targetted by multiple nodes
+
+* Any value that is in two double quotes are currently targeting 'xsd:string'
+
+* Implement "-q, --quiet" (that should also disable ANTLR4 from printing)
+
+* HAVING
+nextprot-queries/NXQ_00003.rq
+nextprot-queries/NXQ_00009.rq
+nextprot-queries/NXQ_00014.rq
+nextprot-queries/NXQ_00019.rq
+nextprot-queries/NXQ_00020.rq
+nextprot-queries/NXQ_00024.rq
+nextprot-queries/NXQ_00025.rq
+nextprot-queries/NXQ_00030.rq
+nextprot-queries/NXQ_00031.rq
+nextprot-queries/NXQ_00033.rq
+nextprot-queries/NXQ_00065.rq
+nextprot-queries/NXQ_00074.rq
+nextprot-queries/NXQ_00083.rq
+nextprot-queries/NXQ_00111.rq
+nextprot-queries/NXQ_00138.rq
+nextprot-queries/NXQ_00146.rq
+nextprot-queries/NXQ_00149.rq
+nextprot-queries/NXQ_00202.rq
+nextprot-queries/NXQ_00226.rq
+nextprot-queries/NXQ_00227.rq
+nextprot-queries/NXQ_00229.rq
+nextprot-queries/NXQ_00234.rq
+nextprot-queries/NXQ_00235.rq
+nextprot-queries/NXQ_00249.rq
+nextprot-queries/NXQ_00268.rq
+nextprot-queries/NXQ_00278.rq
+nextprot-queries/NXQ_00280.rq
+nextprot-queries/NXQ_00281.rq
+nextprot-queries/NXQ_00283.rq
+nextprot-queries/NXQ_00286.rq
+
+* INVERSED PATH
+nextprot-queries/NXQ_00030.rq
+nextprot-queries/NXQ_00132.rq
+
+* SERVICE
+nextprot-queries/NXQ_00091.rq
+nextprot-queries/NXQ_00095.rq
+nextprot-queries/NXQ_00140.rq
+nextprot-queries/NXQ_00246.rq
+nextprot-queries/NXQ_00249.rq
+nextprot-queries/NXQ_00252.rq
+nextprot-queries/NXQ_00253.rq
+nextprot-queries/NXQ_00254.rq
+nextprot-queries/NXQ_00258.rq
+nextprot-queries/NXQ_00259.rq
+nextprot-queries/NXQ_00260.rq
+nextprot-queries/NXQ_00269.rq
+nextprot-queries/NXQ_00270.rq
+nextprot-queries/NXQ_00272.rq
+nextprot-queries/NXQ_00273.rq
+nextprot-queries/NXQ_00276.rq
+nextprot-queries/NXQ_00293.rq
+nextprot-queries/NXQ_00300.rq
