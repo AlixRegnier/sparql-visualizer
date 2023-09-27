@@ -5,9 +5,9 @@ from collections import deque
 from graphviz import Digraph
 import networkx as nx
 import re
-from SparqlLexer import SparqlLexer
-from SparqlParser import SparqlParser
-from SparqlListener import SparqlListener
+from ANTLR4.SparqlLexer import SparqlLexer
+from ANTLR4.SparqlParser import SparqlParser
+from ANTLR4.SparqlListener import SparqlListener
 
 #Constants enums
 class Color:
