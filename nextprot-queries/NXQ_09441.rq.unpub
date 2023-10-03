@@ -1,0 +1,12 @@
+#id:NXQ_09441
+#title:Check there are no entries annotated to SL-0086 » Cytoplasm, or a child term thereof, which do not have the Swiss-Prot keyword KW-0963 » Cytoplasm
+#tags:QC,keyword,subcellular location
+#acs:NX_Q96A47,NX_A5PKW4,NX_Q9Y5H0
+#count:2545
+#time:1.807
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :subcellularLocation /:term /:childOf cv:SL-0086.
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0963.}
+}

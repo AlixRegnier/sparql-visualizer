@@ -1,0 +1,14 @@
+#id:NXQ_09118
+#title:Check there are no entries with expression profile annotations to "Not detected" with evidence from Bgee of quality SILVER
+#comment:Special case
+#tags:QC,quality,evidence,expression
+#acs:
+#count:0
+#time:1.034
+
+select distinct ?entry where {
+  ?entry :isoform /:expressionProfile /:evidence ?ev1.
+  ?ev1 :expressionLevel :Negative.
+  ?ev1 :assignedBy source:Bgee.
+  ?ev1 :quality :SILVER.
+}

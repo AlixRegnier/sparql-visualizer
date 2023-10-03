@@ -1,0 +1,10 @@
+#id:NXQ_09580
+#title:Check there are no entries with the Swiss-Prot keyword Flowering (KW-0287)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.796
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0287.
+}

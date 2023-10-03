@@ -1,0 +1,12 @@
+#id:NXQ_09041
+#title:Check there are no entries with induction annotations with evidence NOT from UniProt
+#tags:QC,provenance,expression
+#acs:
+#count:0
+#time:0.322
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :induction /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

@@ -1,0 +1,18 @@
+#id:NXQ_00205
+#title:Variants supported by a evidences that are only provided by Cosmic
+#tags:snorql-only
+#acs:NX_Q05086,NX_Q05D32,NX_Q06418
+#count:975807
+#time:86
+
+select distinct ?id where {
+  ?entry :isoform ?iso.
+  ?iso :variant ?var.
+  ?var :quality :SILVER. #if we don't use this filter but instead add source:Uniprot (all GOLD) in the NOT IN filter then the query is too computationally demanding and hangs
+  ?var :entryAnnotationId ?id.
+  ?var :evidence ?ev.
+  ?ev :assignedBy source:Cosmic.
+  FILTER NOT EXISTS{?var :evidence / :assignedBy source:dbSNP} #update when we have ClinVar as new source
+  #  FILTER NOT EXISTS{?var :evidence / :assignedBy ?src2exclude . filter (?src2exclude != source:Cosmic) }
+  }
+

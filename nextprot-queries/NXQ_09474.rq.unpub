@@ -1,0 +1,10 @@
+#id:NXQ_09474
+#title:Check there are no entries with the Swiss-Prot keyword Bacterial flagellum (KW-0975)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:3.922
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0975.
+}

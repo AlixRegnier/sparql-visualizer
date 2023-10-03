@@ -1,0 +1,12 @@
+#id:NXQ_09413
+#title:Check there are no entries whose gene is located on chromosome unknown which does not have AC NX_O00370 NX_Q96PT3 NX_Q96PT4 NX_Q9UN81
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.726
+
+select distinct ?entry where {
+  ?entry :gene  ?gene .
+  ?gene :chromosome "unknown"^^xsd:string .
+  filter (?entry not in (entry:NX_O00370,entry:NX_Q96PT3,entry:NX_Q96PT4,entry:NX_Q9UN81))
+}

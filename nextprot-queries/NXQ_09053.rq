@@ -1,0 +1,12 @@
+#id:NXQ_09053
+#title:Check there are no entries with miscellaneous annotations with evidence NOT from UniProt
+#tags:QC,provenance,miscellaneous
+#acs:
+#count:0
+#time:0.734
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :miscellaneous /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

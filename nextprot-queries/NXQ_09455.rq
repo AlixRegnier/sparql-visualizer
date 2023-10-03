@@ -1,0 +1,16 @@
+#id:NXQ_09455
+#title:Check there are no entries with a modified residue annotation specifying an acetylation site that do not have the keyword Acetylation (KW-0007)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.756
+
+select distinct ?entry where {  # Include ?acetyl if result is not 0 to identify problem site
+  ?acetyl a :UniprotPtmCv.
+  cv:KW-0007 :related  ?acetyl.
+  ?entry :isoform ?iso.
+  ?iso :modifiedResidue ?mod.
+  ?mod :term ?acetyl.  
+  filter not exists {?mod :negativeEvidence ?negev} # No negative evidence  
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0007.}
+}

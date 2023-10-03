@@ -1,0 +1,13 @@
+#id:NXQ_09679
+#title:Check there are no entries with variant annotations from gnomAD for which the evidence code is NOT nucleotide sequencing assay evidence
+#tags:QC,evidence,ECO,variant
+#acs:
+#count:0
+#time:6.018
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev1.
+  ?ev1 :assignedBy source:gnomAD.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000219))
+}

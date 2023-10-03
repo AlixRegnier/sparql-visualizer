@@ -1,0 +1,10 @@
+#id:NXQ_09588
+#title:Check there are no entries with the Swiss-Prot keyword Fusion of virus membrane with host outer membrane (KW-1239)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.788
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1239.
+}

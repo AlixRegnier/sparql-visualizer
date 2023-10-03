@@ -1,0 +1,12 @@
+#id:NXQ_09443
+#title:Check there are no entries annotated to SL-0039 » Cell membrane, or a child term thereof, which do not have the Swiss-Prot keyword KW-1003 » Cell membrane
+#tags:QC,keyword,subcellular location
+#acs:NX_A8K8V0,NX_Q14005,NX_Q9HC77,...
+#count:77
+#time:1.077
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :subcellularLocation /:term /:childOf cv:SL-0039.
+  filter not exists {?entry :isoform /:keyword / :term cv:KW-1003.}
+}

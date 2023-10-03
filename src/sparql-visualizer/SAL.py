@@ -178,7 +178,7 @@ class Cluster:
         return SubDigraph(self)
     
     def getFullGraph(self):
-        d = nx.DiGraph()
+        d = nx.MultiDiGraph()
 
         SubDigraph(self)
         for name in SubDigraph.subgraphes:
@@ -258,7 +258,7 @@ class TSS:
     def __str__(self):
         return f"{self.subject}\n{self.paths}"
 
-class SubDigraph(nx.DiGraph):
+class SubDigraph(nx.MultiDiGraph):
     """
     Class that inherits from NetworkX DiGraph, many instances will be used for the composition of the final graph
     """

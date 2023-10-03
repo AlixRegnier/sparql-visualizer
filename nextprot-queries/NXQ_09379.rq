@@ -1,0 +1,12 @@
+#id:NXQ_09379
+#title:Check there are no entries with sequence caution annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.613
+
+select distinct ?entry where {
+  ?entry :isoform /:sequenceCaution /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

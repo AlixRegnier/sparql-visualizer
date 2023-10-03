@@ -1,0 +1,13 @@
+#id:NXQ_09385
+#title:Check there are no entries with SRM peptide mapping annotations with evidence from UniProt that is negative
+#comment:synthetic peptides
+#tags:QC,evidence,negative,proteomics
+#acs:
+#count:0
+#time:0.748
+
+select distinct ?entry where {
+  ?entry :isoform /:srmPeptideMapping /:evidence ?ev.
+  ?ev :assignedBy source:SRMAtlas.
+  ?ev :negative 1.
+}

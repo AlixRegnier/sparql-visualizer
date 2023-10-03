@@ -1,0 +1,11 @@
+#id:NXQ_00089
+#title:Protein that have a signal sequence which is not cleaved
+#tags:signal sequence,tutorial
+#acs:P00739,P05120,O60721
+#count:8
+#time:0.5
+
+select distinct ?entry where {
+  ?entry :isoform / :signalPeptide / rdfs:comment ?comment .
+  filter(contains(?comment,"Not cleaved"))
+}

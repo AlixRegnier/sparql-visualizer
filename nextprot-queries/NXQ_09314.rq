@@ -1,0 +1,12 @@
+#id:NXQ_09314
+#title:Check there are no entries with catalytic activity annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.719
+
+select distinct ?entry where {
+  ?entry :isoform /:catalyticActivity /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

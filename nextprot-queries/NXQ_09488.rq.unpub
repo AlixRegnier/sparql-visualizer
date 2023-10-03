@@ -1,0 +1,10 @@
+#id:NXQ_09488
+#title:Check there are no entries with the Swiss-Prot keyword Bradykinin receptor impairing toxin (KW-1222)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.771
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1222.
+}

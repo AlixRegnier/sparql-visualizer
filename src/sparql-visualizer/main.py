@@ -5,11 +5,12 @@ from SAL import parse_file, SubDigraph, Cluster
 from MCS import MCS, extractMapping
 from module import Module
 
-from utils import dotGraph, get_tags, getSimpleGraph, getRelationGraph
+from utils import dotGraph, edgematch, get_tags, getSimpleGraph, getRelationGraph
 import argparse
 from networkx.algorithms.isomorphism import DiGraphMatcher
 from pathlib import Path
-from os.path import basename
+from os.path import basename, isdir 
+from os import mkdir
 import sys
 import pickle
 
@@ -31,6 +32,7 @@ def process(files, render_query = True, render_simple = False, render_relation =
     for i in range(len(files)):
         try:
             #Parse file
+            
             maincluster = parse_file(str(files[i]), verbose)
 
             #Determine output filename
@@ -60,9 +62,9 @@ def process(files, render_query = True, render_simple = False, render_relation =
             pfiles[k] = simplegraph
             tfiles[k] = get_tags(files[i])
             print(f"\r{i+1} / {len(files)}", end=' ')
-        except Exception as e:
-            print("\rFAILED:", files[i], end="\n\n")
-            print(e, file=sys.stderr)
+        except Exception:
+            print("\rSKIPPED:", files[i], end="\n")
+            print("An error occured while trying to parse file\n")
         finally:
             #Reset static values for next iteration
             SubDigraph.reset()
@@ -102,7 +104,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                         isomorph = extractMapping(graphs[key_graph[i]], graphs[key_graph[j]], mcs)
                         for m in modules:
                             if m == isomorph:
-                                match = next(DiGraphMatcher(m.getGraph(), isomorph, edge_match=em).match())
+                                match = next(DiGraphMatcher(m.getGraph(), isomorph, edge_match=edgematch).match())
                                 m.addQuery(key_graph[i], match) 
                                 m.addQuery(key_graph[j], { k : mcs[match[k]] for k in match } )
                                 m.addTags(tags[key_graph[i]])
@@ -119,7 +121,10 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                     x += 1
                     print(f"\r{x} / {total} {key_graph[i]} {key_graph[j]}", end="")
             padding=len(str(len(modules)))
-
+            
+            if not isdir(mcs_output):
+                mkdir(mcs_output)
+            print()
             for i, m in enumerate(sorted(modules, key=lambda e: e.getOccurence(), reverse=True)):
                 with open(f"{mcs_output}/module{i+1:0{padding}}.txt", "w") as f:
                     f.write(str(m))   
@@ -128,6 +133,8 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                 with open(f"{mcs_output}/module{i+1:0{padding}}.dat", "wb") as f:
                     m.setName(f"module{i+1:0{padding}}")
                     pickle.dump(m, f)
+    except OSError:
+        print("FAILED: On creating MCS output directory")
     except KeyboardInterrupt:
         print("\nAborted by user")
 

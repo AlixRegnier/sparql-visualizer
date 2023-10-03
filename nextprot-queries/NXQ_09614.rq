@@ -1,0 +1,13 @@
+#id:NXQ_09614
+#title:Check there are no entries with antibody mapping annotations from HPA for which there is xref from HPA
+#tags:QC,HPA
+#acs:
+#count:0
+#time:0.234
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :antibodyMapping /:evidence ?ev.
+  ?ev :assignedBy source:Human_protein_atlas.
+  filter not exists {?ev :fromXref db:HPA.}
+}

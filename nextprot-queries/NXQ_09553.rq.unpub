@@ -1,0 +1,10 @@
+#id:NXQ_09553
+#title:Check there are no entries with the Swiss-Prot keyword Degradation of host peptidoglycans during virus entry (KW-1236)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.906
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1236.
+}

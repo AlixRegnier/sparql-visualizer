@@ -1,0 +1,10 @@
+#id:NXQ_09534
+#title:Check there are no entries with the Swiss-Prot keyword Covalent protein-RNA linkage (KW-0191)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:1.003
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0191.
+}

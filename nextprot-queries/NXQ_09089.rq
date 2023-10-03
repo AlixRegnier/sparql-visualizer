@@ -1,0 +1,12 @@
+#id:NXQ_09089
+#title:Check there are no entries with zinc finger region annotations with evidence NOT from UniProt
+#tags:QC,provenance,sequence,region
+#acs:
+#count:0
+#time:0.677
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :zincFingerRegion /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

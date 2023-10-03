@@ -1,0 +1,12 @@
+#id:NXQ_09231
+#title:Check there are no entries with miscellaneous site annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,miscellaneous
+#acs:
+#count:0
+#time:0.712
+
+select distinct ?entry where {
+  ?entry :isoform /:miscellaneousSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

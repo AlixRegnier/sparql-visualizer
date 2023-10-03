@@ -1,0 +1,32 @@
+#id:NXQ_00141
+#title:Human proteins expressed in brain with IHC expression level: "high" and observed in a PDB structure involving a virus protein
+#tags:3D structure,expression,PPI,snorql-only,tutorial
+#acs:NX_P49023,NX_P05161,NX_Q16630
+#count:51
+#time:53
+
+PREFIX PDBo: <https://rdf.wwpdb.org/schema/pdbx-v50.owl#>
+
+select distinct ?entry  where {   
+SERVICE <http://integbio.jp/rdf/sparql> {
+SELECT distinct ?uplink
+WHERE {
+  GRAPH <http://rdf.integbio.jp/dataset/pdbj> {
+  ?entity PDBo:of_datablock ?pdb .
+  ?entity2 PDBo:of_datablock ?pdb .
+  ?entity3 PDBo:of_datablock ?pdb .
+  ?entity PDBo:referenced_by_entity_src_gen / PDBo:entity_src_gen.pdbx_gene_src_scientific_name ?name .
+  filter(contains(?name,"virus")) # at least one viral chain
+  ?entity2 PDBo:referenced_by_entity_src_gen / PDBo:entity_src_gen.pdbx_gene_src_scientific_name ?name2 .
+  filter(contains(?name2,"Homo")) # at least one human chain
+  ?entity3 PDBo:link_to_uniprot ?uplink; PDBo:struct_ref.db_code ?id .
+  filter(contains(?id,"HUMAN") && substr(?id,7,1) != "_") # eq SwissProt/Reviewed
+  }
+  }  
+ }
+  # get human proteins highly expressed in brain according to HPA
+  ?entry skos:exactMatch ?uplink .
+  ?entry :isoform / :highExpression ?expressionprofile .
+  ?expressionprofile :term / :childOf cv:TS-0095 .
+  ?expressionprofile :evidence / :reference / :provenance db:HPA .
+}

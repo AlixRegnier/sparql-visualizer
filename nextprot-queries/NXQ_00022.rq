@@ -1,0 +1,23 @@
+#id:NXQ_00022
+#title:Proteins with no function annotated
+#comment:WARNING The previous version of this query included PE5 proteins
+#tags:function,tutorial
+#acs:A0PJZ0,A0ZSE6,Q9BRQ4
+#count:2323
+#time:3.3
+
+select distinct ?entry where {
+ ?entry :isoform ?iso.
+ filter not exists { ?iso :functionInfo ?_. }
+ filter not exists { ?iso :catalyticActivity ?_ .} 
+ filter not exists { ?iso :transportActivity ?_ .} 
+ filter not exists { ?iso :pathway ?_. }
+ filter not exists { 
+   ?iso :function / :term  ?fterm . 
+			  filter(?fterm != cv:GO_0005524 && ?fterm != cv:GO_0000287 && ?fterm != cv:GO_0005515 && ?fterm != cv:GO_0042802
+			    && ?fterm != cv:GO_0008270 && ?fterm != cv:GO_0051260 && ?fterm != cv:GO_0005509
+					  && ?fterm != cv:GO_0003676 && ?fterm != cv:GO_0003824 && ?fterm != cv:GO_0007165 && ?fterm != cv:GO_0035556
+					  && ?fterm != cv:GO_0046914 && ?fterm != cv:GO_0046872)
+   }
+ filter not exists { ?entry :existence :Uncertain }   # Remove PE5 proteins
+}

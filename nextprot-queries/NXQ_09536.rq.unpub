@@ -1,0 +1,10 @@
+#id:NXQ_09536
+#title:Check there are no entries with the Swiss-Prot keyword Crown gall tumor (KW-0192)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.9
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0192.
+}

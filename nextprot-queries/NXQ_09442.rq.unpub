@@ -1,0 +1,12 @@
+#id:NXQ_09442
+#title:Check there are no entries annotated to SL-0191 » Nucleus, or a child term thereof, which do not have the Swiss-Prot keyword KW-0539 » Nucleus
+#tags:QC,keyword,subcellular location
+#acs:NX_P57729,NX_Q8TE56,NX_Q14714,...
+#count:2018-01-16
+#time:0.83
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :subcellularLocation /:term /:childOf cv:SL-0191.
+  filter not exists {?entry :isoform /:keyword / :term cv:KW-0539.}
+}

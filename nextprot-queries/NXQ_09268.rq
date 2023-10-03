@@ -1,0 +1,12 @@
+#id:NXQ_09268
+#title:Check there are no entries with UniProt keyword annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,keyword
+#acs:
+#count:0
+#time:0.729
+
+select distinct ?entry where {
+  ?entry :isoform /:uniprotKeyword /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

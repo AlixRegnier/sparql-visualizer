@@ -1,0 +1,17 @@
+#id:NXQ_00145
+#title:Proteins which include a mature chain of less or equal to 50 amino acid residues whose C-terminus is amidated
+#tags:processing,PTM,sequence,tutorial
+#acs:P08949,P01298,P01350 ...
+#count:47
+#time: 0.3
+
+select distinct ?entry where {
+?entry :isoform ?isoform.
+?isoform :ptm ?ptm.
+?ptm rdfs:comment ?comment.
+filter regex(?comment, "amid","i")
+?ptm :start ?ptmpos .
+?isoform :matureProtein [ :start ?mstart ; :end ?mend]
+filter ((?mend = ?ptmpos) && (?mend-?mstart < 50))
+}
+

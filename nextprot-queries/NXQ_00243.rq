@@ -1,0 +1,12 @@
+#id:NXQ_00243
+#title:Proteins with a signal sequence 
+#tags:signal sequence,subcellular location,tutorial
+#acs:A6NLX4,O15120,O60477
+#count:3561
+#time:0.3
+
+select distinct ?entry where {
+ ?entry :isoform ?iso.
+ ?iso :signalPeptide ?_.
+}
+

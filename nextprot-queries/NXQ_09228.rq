@@ -1,0 +1,12 @@
+#id:NXQ_09228
+#title:Check there are no entries with metal binding site annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence,interaction
+#acs:
+#count:0
+#time:0.732
+
+select distinct ?entry where {
+  ?entry :isoform /:metalBindingSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

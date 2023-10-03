@@ -1,0 +1,17 @@
+#id:NXQ_00143
+#title:Proteins for which none of the reported proteotypic peptides is from PeptideAtlas nor MassIVE
+#tags:dataset,peptide,proteomics,tutorial
+#acs:NX_A8MWK0,NX_A8MXK1,NX_Q9H521 
+#count:17
+#time:27
+
+select distinct ?entry where {
+?entry :isoform / :peptideMapping ?pm.
+?pm :proteotypic true .
+filter not exists {
+	?entry :isoform / :peptideMapping ?pm2.
+	?pm2 :proteotypic true .
+	?pm2 :peptideSet ?pset .
+	filter(?pset = "MassIVE"^^xsd:string || ?pset = "PeptideAtlas"^^xsd:string)
+	}
+}

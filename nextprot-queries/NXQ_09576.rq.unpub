@@ -1,0 +1,10 @@
+#id:NXQ_09576
+#title:Check there are no entries with the Swiss-Prot keyword Fimbrium biogenesis (KW-1029)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.818
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1029.
+}

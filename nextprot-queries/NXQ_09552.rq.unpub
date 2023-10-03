@@ -1,0 +1,10 @@
+#id:NXQ_09552
+#title:Check there are no entries with the Swiss-Prot keyword Degradation of host lipopolysaccharides during virus entry (KW-1237)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.886
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1237.
+}

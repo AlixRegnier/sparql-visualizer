@@ -1,0 +1,12 @@
+#id:NXQ_09335
+#title:Check there are no entries with expression information annotations with evidence from neXtProt that is negative
+#tags:QC,evidence,negative,expression
+#acs:
+#count:0
+#time:0.736
+
+select distinct ?entry where {
+  ?entry :isoform /:expressionInfo /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

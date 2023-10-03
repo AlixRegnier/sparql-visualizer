@@ -1,0 +1,11 @@
+#id:NXQ_00103
+#title:Proteins that do not have a cross-reference to an Ensembl ENSG
+#tags:cross-reference,tutorial
+#acs:A6NHS1,A8MWK0,Q58FF6
+#count:236
+#time:4.4
+
+select distinct ?entry where {
+  ?entry a :Entry.
+  filter not exists { ?entry :reference / :provenance db:Ensembl . }
+}

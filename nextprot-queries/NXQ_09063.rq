@@ -1,0 +1,12 @@
+#id:NXQ_09063
+#title:Check there are no entries with PDB mapping annotations with evidence NOT from UniProt
+#tags:QC,provenance,3D structure
+#acs:
+#count:0
+#time:0.744
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :pdbMapping /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

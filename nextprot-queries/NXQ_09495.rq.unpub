@@ -1,0 +1,10 @@
+#id:NXQ_09495
+#title:Check there are no entries with the Swiss-Prot keyword Calcium channel impairing toxin (KW-0108)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.892
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0108.
+}

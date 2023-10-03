@@ -1,0 +1,13 @@
+#id:NXQ_09030
+#title:Check there are no entries with electrophysiological parameter annotations with evidence NOT from neXtProt
+#comment:NavMut project BioEditor annotations
+#tags:QC,provenance
+#acs:
+#count:0
+#time:0.418
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :electrophysiologicalParameter /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:NextProt))
+}

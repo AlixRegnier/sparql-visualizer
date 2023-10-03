@@ -1,0 +1,11 @@
+#id:NXQ_00211
+#title:Total count of variants
+#tags:variant,snorql-only
+#acs:
+#count:1
+
+select count (distinct ?id) as ?varcnt where {
+  ?entry :isoform ?iso .
+  ?iso :variant ?var.
+  ?var :entryAnnotationId ?id.
+}

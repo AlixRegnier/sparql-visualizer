@@ -1,0 +1,13 @@
+#id:NXQ_09641
+#title:Check there are no entries with a variant annotation with an xref starting with COSM that do not have evidence from COSMIC
+#tags:QC,variant,xref
+#acs:
+#count:0
+#time:114.531
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :reference /:accession ?xref.
+  filter (regex(?xref, "^COSM"))
+  filter not exists {?ev :assignedBy source:Cosmic.}
+}

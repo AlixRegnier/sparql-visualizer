@@ -1,0 +1,13 @@
+#id:NXQ_09285
+#title:Check there are no entries with GO cellular component annotations from HPA for which the evidence code is NOT direct assay evidence used in manual assertion
+#tags:QC,evidence,ECO,subcellular location
+#acs:
+#count:0
+#time:0.816
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev1.
+  ?ev1 :assignedBy source:Human_protein_atlas.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000314))
+}

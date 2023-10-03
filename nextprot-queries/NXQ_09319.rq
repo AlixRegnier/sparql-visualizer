@@ -1,0 +1,12 @@
+#id:NXQ_09319
+#title:Check there are no entries with coiled coil region annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.712
+
+select distinct ?entry where {
+  ?entry :isoform /:coiledCoilRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

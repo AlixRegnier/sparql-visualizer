@@ -1,0 +1,13 @@
+#id:NXQ_09283
+#title:Check there are no entries with glycosylation site annotations from neXtProt for which the evidence code is NOT mass spectrometry evidence
+#tags:QC,evidence,ECO,glycosylation,sequence 
+#acs:
+#count:0
+#time:0.773
+
+select distinct ?entry where {
+  ?entry :isoform /:glycosylationSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:NextProt.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0001096))
+}

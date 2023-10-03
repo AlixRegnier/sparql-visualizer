@@ -1,0 +1,10 @@
+#id:NXQ_09532
+#title:Check there are no entries with the Swiss-Prot keyword Conjugation (KW-0184)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:1.165
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0184.
+}

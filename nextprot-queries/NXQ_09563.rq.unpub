@@ -1,0 +1,10 @@
+#id:NXQ_09563
+#title:Check there are no entries with the Swiss-Prot keyword Enterotoxin (KW-0260)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.82
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0260.
+}

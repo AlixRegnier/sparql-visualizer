@@ -1,0 +1,10 @@
+#id:NXQ_09637
+#title:Check there are no entries with a variant annotation with no original value
+#tags:QC,variant
+#acs:
+#count:0
+#time:0.325
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:original ""^^xsd:string.
+}

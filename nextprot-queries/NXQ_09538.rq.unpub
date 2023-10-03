@@ -1,0 +1,10 @@
+#id:NXQ_09538
+#title:Check there are no entries with the Swiss-Prot keyword Cuticle (KW-0193)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.791
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0193.
+}

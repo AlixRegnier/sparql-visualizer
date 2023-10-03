@@ -1,0 +1,12 @@
+#id:NXQ_09366
+#title:Check there are no entries with pathway annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,function
+#acs:
+#count:0
+#time:0.711
+
+select distinct ?entry where {
+  ?entry :isoform /:pathway /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

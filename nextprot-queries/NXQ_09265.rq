@@ -1,0 +1,12 @@
+#id:NXQ_09265
+#title:Check there are no entries with transmembrane region annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,region,subcellular location
+#acs:
+#count:0
+#time:0.667
+
+select distinct ?entry where {
+  ?entry :isoform /:transmembraneRegion /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

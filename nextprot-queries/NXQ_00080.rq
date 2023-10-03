@@ -1,0 +1,14 @@
+#id:NXQ_00080
+#title:Proteins with at least one 3D structure of resolution less than 3 Angstroms
+#tags:3D structure,tutorial
+#acs:Q9Y570, P37840, P40394, ...
+#count:4028
+#time: 0.76
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :pdbMapping ?map.
+  ?map :resolution ?res_and_unit.
+  bind (xsd:float(substr(?res_and_unit,0,strlen(?res_and_unit)-2)) as ?res)
+  filter (?res <= 3.0)
+}

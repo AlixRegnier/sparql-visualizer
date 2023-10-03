@@ -1,0 +1,12 @@
+#id:NXQ_09093
+#title:Check there are no entries with allergen annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence
+#acs:
+#count:0
+#time:0.735
+
+select distinct ?entry where {
+  ?entry :isoform /:allergen /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

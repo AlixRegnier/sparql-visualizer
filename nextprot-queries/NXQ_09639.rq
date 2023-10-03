@@ -1,0 +1,17 @@
+#id:NXQ_09639
+#title:Check there are no entries with variant annotations with evidence from COSMIC which are synonymous
+#tags:QC,filtering,variant
+#acs:
+#count:0
+#time:5.044
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :variant ?variant.
+  ?variant :start ?start.
+  ?variant :end ?end.
+  ?variant :original ?ori.
+  ?variant :variation ?var.
+  ?variant :evidence /:assignedBy  source:Cosmic.
+  filter ( ?start = ?end && ?ori = ?var )
+}

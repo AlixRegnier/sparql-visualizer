@@ -1,0 +1,12 @@
+#id:NXQ_09394
+#title:Check there are no entries with transport activity annotations with evidence from TCDB that is negative
+#tags:QC,evidence,negative,function
+#acs:
+#count:0
+#time:0.702
+
+select distinct ?entry where {
+  ?entry :isoform /:transportActivity /:evidence ?ev.
+  ?ev :assignedBy source:TCDB.
+  ?ev :negative 1.
+}

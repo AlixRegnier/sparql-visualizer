@@ -1,0 +1,12 @@
+#id:NXQ_09070
+#title:Check there are no entries with PTM information annotations with evidence NOT from UniProt or neXtProt
+#tags:QC,provenance,PTM
+#acs:
+#count:0
+#time:0.724
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :ptmInfo /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot,source:NextProt))
+}

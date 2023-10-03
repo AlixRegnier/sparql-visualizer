@@ -1,0 +1,14 @@
+#id:NXQ_00130
+#title:Proteins with a DNA-binding region but not located in the nucleus
+#tags:nucleotide binding,domain,region,subcellular location,tutorial
+#acs:P02751,P63132,Q9BXR3
+#count:10
+#time:0.5
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?entry :gene / :name / rdfs:label ?gen .
+  ?iso :dnaBindingRegion ?dnab.
+  filter not exists { ?entry :isoform / :cellularComponent /:term /:childOf cv:SL-0191}  # SL for nucleus
+  filter not exists { ?entry :isoform / :cellularComponent /:term /:childOf cv:GO_0005634} # GO for nucleus
+}

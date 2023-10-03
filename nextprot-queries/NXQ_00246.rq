@@ -1,0 +1,27 @@
+#id:NXQ_00246
+#title:Proteins which are enzymes catalyzing a reaction involving lipids
+#tags:enzyme,function,federated query,tutorial
+#acs:C9JRZ8,O00116,O00154
+#count:309
+#time:7
+
+PREFIX rh:<http://rdf.rhea-db.org/>
+PREFIX ch:<http://purl.obolibrary.org/obo/>
+
+select distinct ?entry  where {
+#select distinct ?entry str(?xlab) where {
+  service <https://sparql.rhea-db.org/sparql> {
+   SELECT distinct ?chebi WHERE {
+   ?reaction rdfs:subClassOf rh:Reaction .
+   ?reaction rh:status rh:Approved .
+   ?reaction rh:side ?reactionSide .
+   ?reactionSide rh:contains ?participant .
+   ?participant rh:compound ?compound .
+   ?compound rh:chebi ?chebi .
+   ?chebi rdfs:subClassOf+ ch:CHEBI_18059 .
+   } 
+  } 
+ ?entry :isoform / :smallMoleculeInteraction / :interactant ?x .
+ ?x rdfs:label ?xlab .
+ ?x skos:exactMatch ?chebi .
+} order by ?entry

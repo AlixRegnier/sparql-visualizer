@@ -1,0 +1,12 @@
+#id:NXQ_09311
+#title:Check there are no entries with binary interaction annotations with evidence from IntAct that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.873
+
+select distinct ?entry where {
+  ?entry :isoform /:binaryInteraction /:evidence ?ev.
+  ?ev :assignedBy source:IntAct.
+  ?ev :negative 1.
+}

@@ -1,0 +1,33 @@
+#id:NXQ_00001
+#title:Proteins phosphorylated and located in the cytoplasm
+#comment:Select protein entries with an isoform. The isoform must have the keyword Phosphorylated.
+#comment:The isoform must also be localized in the subcellular component cytoplasm, or a child term thereof, without a negative evidence.
+#tags:phosphorylation,PTM,subcellular location,tutorial
+#acs:NX_O75952,NX_P04818,NX_Q9Y6X0,NX_Q9NYP3,NX_Q9Y5B6
+#count:8070
+
+select distinct ?entry where {
+  values ?cytoloc {cv:SL-0086 cv:GO_0005737} # SL and GO values for cytoplasm
+  ?entry :isoform ?iso.
+  ?iso :uniprotKeyword / :term cv:KW-0597. # Phosphorylated
+  ?iso :cellularComponent ?loc .
+  ?loc :term /:childOf ?cytoloc.
+  filter not exists {?loc  :negativeEvidence ?negev} # No negative localization evidence
+}
+
+# Assign values to the variable ?cytoloc 
+# The values correspond to the two controlled vocabulary (cv) terms for cytoplam:
+# SL-0086 is the UniProt subcellular location term 
+# GO_0005737 is the Gene Ontology cellular component term
+#
+# Use the same name of the variable (?iso and ?loc) in several statements.
+# It is the name of the variable that enforces the constraints.
+#
+# Phosphorylated proteins are retrieved using a keyword:
+# KW-0597 is the UniProt keyword for phosphorylated
+#
+# Use :childOf to include children of a term.
+# Cytosol (SL-0091), the child term of cytoplasm, will thus be included.
+#
+# Exclude negative locatization evidences.
+# This enforces that the protein is located in the cytoplasm.

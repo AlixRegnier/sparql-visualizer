@@ -1,0 +1,12 @@
+#id:NXQ_09662
+#title:Check there are no entries with interaction mapping annotations with evidence from ENYO of quality SILVER
+#tags:QC,quality,evidence,interaction
+#acs:
+#count:0
+#time:0.477
+
+select distinct ?entry where {
+  ?entry :isoform /:interactionMapping /:evidence ?ev1.
+  ?ev1 :assignedBy source:ENYO.
+  ?ev1 :quality :SILVER.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09373
+#title:Check there are no entries with phenotypic variation annotations with evidence from neXtProt that is negative
+#comment:neXtProt BioEditor data
+#tags:QC,evidence,negative,phenotype
+#acs:
+#count:0
+#time:0.656
+
+select distinct ?entry where {
+  ?entry :isoform /:phenotypicVariation /:evidence ?ev.
+  ?ev :assignedBy source:NextProt.
+  ?ev :negative 1.
+}

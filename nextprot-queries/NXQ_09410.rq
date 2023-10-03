@@ -1,0 +1,23 @@
+#id:NXQ_09410
+#title:Check there are no entries with a PTM on a non-proteotypic peptide (excluding PTMs with evidence from UniProt)
+#tags:QC,mass spectrometry,peptide,PTM,proteomics
+#acs:
+#count:0
+#time:362.651
+
+select distinct ?entry where {
+    ?entry :isoform ?iso.
+    ?iso :swissprotDisplayed true .
+    ?iso :ptm ?ptm .
+    ?ptm :start ?pos.
+    filter not exists { ?ptm :evidence / :assignedBy source:Uniprot. } # <-added clause
+    ?iso :peptideMapping ?pm .
+    ?pm :proteotypic false ; :start ?p1 ; :end ?p2 .
+    filter(?pos >= ?p1 && ?pos <= ?p2)
+    filter not exists {
+      ?iso :peptideMapping ?pm2 .
+      ?pm2 :proteotypic true ; :start ?p21 ; :end ?p22 .
+      filter(?pos >= ?p21 && ?pos <= ?p22)
+      }
+}
+order by ?entry

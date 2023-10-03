@@ -1,0 +1,14 @@
+#id:NXQ_00244
+#title:Proteins with a variant having an impact on a binary interaction 
+#tags:phenotype,PPI,variant,tutorial
+#acs:P08069,P54132,P06400
+#count:55/167
+#time:1.5
+
+
+select distinct ?entry ?interactant where  {
+  ?entry :isoform / :proteoform / :phenotypicVariation ?phvar .
+  ?phvar :term / :childOf cv:ME_0000002 . # children of impact
+  ?phvar :evidence / :quality :GOLD .
+  ?phvar :impactedObject / :interactant ?interactant.
+}

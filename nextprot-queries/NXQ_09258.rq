@@ -1,0 +1,13 @@
+#id:NXQ_09258
+#title:Check there are no entries with SRM peptide mapping annotations with evidence from SRMAtlas of quality SILVER
+#comment:synthetic peptides
+#tags:QC,quality,evidence,proteomics
+#acs:
+#count:0
+#time:0.69
+
+select distinct ?entry where {
+  ?entry :isoform /:srmPeptideMapping /:evidence ?ev1.
+  ?ev1 :assignedBy source:SRMAtlas.
+  ?ev1 :quality :SILVER.
+}

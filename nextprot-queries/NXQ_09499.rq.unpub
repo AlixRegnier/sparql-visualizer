@@ -1,0 +1,10 @@
+#id:NXQ_09499
+#title:Check there are no entries with the Swiss-Prot keyword Capsid decoration protein (KW-1232)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.963
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1232.
+}

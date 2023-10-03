@@ -1,0 +1,12 @@
+#id:NXQ_09616
+#title:Check there are no entries with GO cellular component annotations with evidence from YuBioLab of quality GOLD
+#tags:QC,quality,evidence,cellular component
+#acs:
+#count:0
+#time:0.942
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev1.
+  ?ev1 :assignedBy source:YuBioLab.
+  ?ev1 :quality :GOLD.
+}

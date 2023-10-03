@@ -1,0 +1,29 @@
+#id:NXQ_00263
+#title:Human proteins with baker's yeast orthologs according to OMA
+#tags:federated query,ortholog
+#comment:WARNING This query only works with species with few orthologs
+#acs:P07864,Q6ZMR3,Q9BYZ2 
+#count:2814
+#time:106
+
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX lscr: <http://purl.org/lscr#>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX orth: <http://purl.org/net/orth#>
+
+select distinct ?entry where {
+  SERVICE <https://sparql.omabrowser.org/> {
+  select distinct ?upprotein1  where {
+  ?cluster a orth:OrthologsCluster.
+  ?cluster orth:hasHomologousMember ?node1.
+  ?cluster orth:hasHomologousMember ?node2. 
+  ?node1 orth:hasHomologousMember* ?omaprotein1.
+  ?node2 orth:hasHomologousMember* ?omaprotein2. 
+  ?omaprotein1 orth:organism / obo:RO_0002162 / <http://purl.uniprot.org/core/scientificName> 'Homo sapiens';
+  rdfs:label ?omagen; lscr:xrefUniprot ?upprotein1.
+  ?omaprotein2  orth:organism/obo:RO_0002162 / <http://purl.uniprot.org/core/scientificName> 'Saccharomyces cerevisiae (strain ATCC 204508 / S288c)';
+  lscr:xrefUniprot ?upprotein2.
+     } limit 100 
+   }
+?entry skos:exactMatch ?upprotein1 .
+}

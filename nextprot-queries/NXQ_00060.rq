@@ -1,0 +1,15 @@
+#id:NXQ_00060
+#title:Proteins which have one or more negatively charged residue in a transmembrane domain
+#tags:domain,region,sequence,topology,transmembrane,tutorial
+#acs:A6NGA9, O14678, ,A8MWL7 ...
+#count:2534
+#time: 0.6
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :transmembraneRegion ?tm.
+  ?tm :start ?tmstart ; :end ?tmend.
+  ?iso :sequence /:chain ?chain.
+  bind (substr(?chain, ?tmstart, ?tmend - ?tmstart + 1) as ?tmseq)
+  filter (regex(?tmseq, '([DE]+.*[^DE]){1,}')) # Change the 1 for the number of acidic residues required (5 seems to be the max)
+}

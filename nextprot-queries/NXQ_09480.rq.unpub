@@ -1,0 +1,10 @@
+#id:NXQ_09480
+#title:Check there are no entries with the Swiss-Prot keyword Bacteriochlorophyll biosynthesis (KW-0077)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.782
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0077.
+}

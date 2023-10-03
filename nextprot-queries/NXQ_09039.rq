@@ -1,0 +1,48 @@
+#id:NXQ_09039
+#title:Check there are no entries with GO molecular function annotations with evidence NOT from the GO Consortium or neXtProt
+#comment:neXtProt BioEditor data
+#tags:QC,provenance,function
+#acs:
+#count:0
+#time:0.531
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :goMolecularFunction ?info.
+  ?info :evidence /:assignedBy ?src.
+  filter ( ?src not in (source:AgBase,
+source:Alzheimers_University_of_Toronto,
+source:ARUK-UCL,
+source:BHF-UCL,
+source:CACAO,
+source:CAFA,
+source:DFLAT,
+source:dictyBase,
+source:Ensembl,
+source:FlyBase,
+source:GDB,
+source:GO_central,
+source:GOC,
+source:HGNC,
+source:HGNC-UCL,
+source:IntAct,
+source:InterPro,
+source:LIFEdb,
+source:MGI,
+source:MTBbase,
+source:NTNU_SB,
+source:ParkinsonsUK-UCL,
+source:PINC,
+source:Reactome,
+source:RGD,
+source:RHEA,
+source:Roslin_Institute,
+source:SGD,
+source:SynGO,
+source:SynGO-UCL,
+source:SYSCILIA_CCNET,
+source:Uniprot,
+source:WB,
+source:YuBioLab,
+source:NextProt))
+}

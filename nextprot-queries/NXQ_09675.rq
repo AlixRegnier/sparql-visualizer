@@ -1,0 +1,14 @@
+#id:NXQ_09675
+#title:Check there are no entries with expression profile annotations with evidence from RNA-seq with an expression level other than detected or not detected
+#tags:QC,expression,ECO
+#acs:
+#count:0
+#time:6.427
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :expressionProfile /:evidence ?ev.
+  ?ev :evidenceCode cv:ECO_0000295. # RNA-seq
+  ?ev :expressionLevel ?level
+  filter ( ?level not in (:Negative, :Positive))
+}

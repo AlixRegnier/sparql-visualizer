@@ -1,0 +1,15 @@
+#id:NXQ_00224
+#title:Transmembrane proteins with at least 100 consecutive aa located in the EXTRACELLULAR OR LUMENAL compartment.
+#tags:domain,region,sequence,subcellular location,topology,transmembrane,tutorial
+#acs:O14975,O43916,P09958
+#count:1951
+#time:0.4
+
+select distinct ?entry where { 
+  ?entry :isoform ?iso. 
+  ?iso :topologicalDomain ?topdom . 
+  ?topdom :term ?topterm . 
+  filter (?topterm in (cv:CVTO_0002, cv:CVTO_0003, cv:CVTO_0007)) # extracellular, exoplasmic loop, lumenal
+  ?topdom :start ?domstart; :end ?domend . 
+  filter ((?domend - ?domstart) >= 100) 
+}  

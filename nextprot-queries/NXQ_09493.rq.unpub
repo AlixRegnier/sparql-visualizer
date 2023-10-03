@@ -1,0 +1,10 @@
+#id:NXQ_09493
+#title:Check there are no entries with the Swiss-Prot keyword Activation of host autophagy by virus (KW-1072)
+#tags:QC,keyword
+#acs:NX_Q9P2K8
+#count:1
+#time:0.851
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1072.
+}

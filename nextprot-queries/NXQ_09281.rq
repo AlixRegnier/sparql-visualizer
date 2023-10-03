@@ -1,0 +1,13 @@
+#id:NXQ_09281
+#title:Check there are no entries with expression profile annotations from Bgee for which the evidence code is NOT microarray RNA expression level evidence (ECO:0000104), transcript expression evidence (ECO:0000009) or RNA-sequencing evidence (ECO:0000295)
+#tags:QC,evidence,ECO
+#acs:
+#count:0
+#time:0.065
+
+select distinct ?entry where {
+  ?entry :isoform /:expressionProfile /:evidence ?ev1.
+  ?ev1 :assignedBy source:Bgee.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000104, cv:ECO_0000009, cv:ECO_0000295))
+}

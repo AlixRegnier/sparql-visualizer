@@ -1,0 +1,13 @@
+#id:NXQ_09305
+#title:Check there are no entries with absorption maximum annotations with evidence from UniProt that is negative
+#comment:biophysicochemical property
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.712
+
+select distinct ?entry where {
+  ?entry :isoform /:absorptionMax /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

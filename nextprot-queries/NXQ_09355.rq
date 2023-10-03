@@ -1,0 +1,12 @@
+#id:NXQ_09355
+#title:Check there are no entries with mitochondrial transit peptide annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.724
+
+select distinct ?entry where {
+  ?entry :isoform /:mitochondrialTransitPeptide /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

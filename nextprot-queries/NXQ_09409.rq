@@ -1,0 +1,14 @@
+#id:NXQ_09409
+#title:Check there are no entries with a synthetic peptide from SRMAtlas with an AC which does NOT start with "Pap"
+#tags:QC,mass spectrometry,peptide,proteomics
+#acs:
+#count:0
+#time:1.331
+
+select distinct ?entry where {
+  ?entry :isoform /:srmPeptideMapping  ?pm.
+  ?pm :evidence /:reference ?ref.
+  ?ref :provenance db:SRMAtlas.
+  ?ref :accession ?ac.
+  filter(!strStarts(?ac,"PAp"))
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09396
+#title:Check there are no entries with UniProt keyword annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,keyword
+#acs:
+#count:0
+#time:0.797
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

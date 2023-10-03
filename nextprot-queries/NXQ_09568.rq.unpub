@@ -1,0 +1,10 @@
+#id:NXQ_09568
+#title:Check there are no entries with the Swiss-Prot keyword Eukaryotic host translation shutoff by virus (KW-1193)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.638
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1193.
+}

@@ -1,0 +1,20 @@
+#id:NXQ_09433
+#title:Check there are no entries with an xref to an ENSP but no xref to an ENST
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:5.08
+
+select distinct ?entry where {
+  ?entry a :Entry.
+  filter exists {
+    ?entry :reference ?x.
+    ?x :provenance db:Ensembl ; :accession ?ac.
+    filter (regex(?ac,'^ENSP'))   
+  }
+  filter not exists {
+    ?entry :reference ?x.
+    ?x :provenance db:Ensembl ; :accession ?ac.
+    filter (regex(?ac,'^ENST'))   
+  }           
+}

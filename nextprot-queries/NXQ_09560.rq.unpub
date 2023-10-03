@@ -1,0 +1,10 @@
+#id:NXQ_09560
+#title:Check there are no entries with the Swiss-Prot keyword DNA invertase (KW-0230)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.805
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0230.
+}

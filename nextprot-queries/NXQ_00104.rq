@@ -1,0 +1,12 @@
+#id:NXQ_00104
+#title:Proteins whose gene is on chromosome 21 with at least one disease annotation from Orphanet
+#tags:chromosomal location,disease,tutorial
+#acs:O43918,P57078,P12110
+#count:39 (73 diseases)
+#time:0.5
+
+select distinct ?entry (str(?disname) as ?disease) where {
+  ?entry :isoform ?iso; :gene / :chromosome "21"^^xsd:string .
+  ?iso :disease ?medannot .
+  ?medannot rdfs:comment ?disname; :evidence / :assignedBy source:Orphanet.	 
+}

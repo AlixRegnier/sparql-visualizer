@@ -1,0 +1,12 @@
+#id:NXQ_09688
+#title:Check there are no entries with a variant annotation with evidence from gnomAD that do not have a homozygote count
+#tags:QC,variant
+#acs:
+#count:0
+#time:3.203
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :assignedBy source:gnomAD.
+  filter not exists {?ev :homozygote-count ?count.}
+}

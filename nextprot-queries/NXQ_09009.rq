@@ -1,0 +1,12 @@
+#id:NXQ_09009
+#title:Check there are no entries with allergen annotations with evidence NOT from UniProt
+#tags:QC,provenance
+#acs:
+#count:0
+#time:0.627
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :allergen /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

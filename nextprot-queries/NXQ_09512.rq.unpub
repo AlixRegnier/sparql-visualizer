@@ -1,0 +1,10 @@
+#id:NXQ_09512
+#title:Check there are no entries with the Swiss-Prot keyword Cell wall (KW-0134)
+#tags:QC,keyword
+#acs:
+#count:0
+#time: 0.802
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-0134.
+}

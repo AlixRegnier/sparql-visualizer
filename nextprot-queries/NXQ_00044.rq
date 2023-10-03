@@ -1,0 +1,12 @@
+#id:NXQ_00044
+#title:Proteins involved in the Reactome pathway "Respiratory electron transport"
+#tags:pathway,function,tutorial
+#acs:P12074,O75306,Q9P0S2
+#count:93
+#time:0.3
+
+select distinct ?entry where {
+  ?entry :isoform / :pathway ?p.
+  ?p :evidence /:reference ?xref.
+  ?xref :provenance db:Reactome; :accession "R-HSA-611105"^^xsd:string.
+}

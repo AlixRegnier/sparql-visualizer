@@ -1,0 +1,13 @@
+#id:NXQ_09004
+#title:Check there are no topological domains with no entry associated
+#tags:QC,topology,vocabulary,snorql-only
+#acs:
+#count:0
+#time:306.301
+
+select distinct ?topoac where {
+  ?topo a :TopologicalDomain .
+  ?topo :term ?topoac .
+  filter not exists {?member :isoform /:topology / :term ?topoac .}
+}
+order by ?topoac

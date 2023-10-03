@@ -1,7 +1,7 @@
 import networkx as nx
 from networkx.algorithms.isomorphism import DiGraphMatcher
 from module import Module
-from utils import em
+from utils import edgematch
 from os.path import basename
 import pickle
 import sys
@@ -27,7 +27,7 @@ def isXsubgraphOfY(x, y):
     If a graph X is isomorphic with a subgraph Y' of Y then, we can consider X being a subgraph of Y
     """
 
-    return DiGraphMatcher(y, x, edge_match=em).subgraph_is_isomorphic()
+    return DiGraphMatcher(y, x, edge_match=edgematch).subgraph_is_isomorphic()
 
 #Composition indirecte
 subgraphs = [[] for _ in range(len(modules))]
@@ -137,7 +137,7 @@ if QUERYINDEX > 0:
     for q in queries:
         for m in modules:
             if q not in m.getQueries() and isXsubgraphOfY(m.getGraph(), queries[q]):
-                for mapping in DiGraphMatcher(queries[q], m.getGraph(), edge_match=em).subgraph_isomorphisms_iter():
+                for mapping in DiGraphMatcher(queries[q], m.getGraph(), edge_match=edgematch).subgraph_isomorphisms_iter():
                     m.addQuery(q, { mapping[k] : k for k in mapping })
                 j += 1
             i += 1

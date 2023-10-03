@@ -1,0 +1,14 @@
+#id:NXQ_09467
+#title:Check there are no entries with a ptm info annotation referring to S-nitrosylation that do not have the keyword S-nitrosylation (KW-0702)
+#tags:QC,keyword
+#acs:P12931,P09874,P78527,P34913 
+#count:4
+#time:1.09
+
+select distinct ?entry where {  # Include ?text if result is not 0 to identify problem site
+  ?entry :isoform ?iso.
+  ?iso :ptmInfo /rdfs:comment ?text.
+  filter(contains(?text,"S-nitrosylat")). # Finds S-nitrosylated and S-nitrosylatation
+  filter not exists {?iso :ptmInfo /:negativeEvidence ?negev} # No negative annotations from neXtProt
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0702.} 
+}

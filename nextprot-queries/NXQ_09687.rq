@@ -1,0 +1,13 @@
+#id:NXQ_09687
+#title:Check there are no entries whose gene is on chromosome unknown with a variant annotation with evidence from gnomAD 
+#tags:QC,variant
+#acs:
+#count:0
+#time:0.083
+
+select distinct ?entry where {
+  ?entry :gene / :chromosome "unknown"^^xsd:string.
+  ?entry :isoform ?iso.
+  ?iso :variant /:evidence ?ev.
+  ?ev :assignedBy source:gnomAD.  
+}

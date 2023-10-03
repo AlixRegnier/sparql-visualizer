@@ -1,0 +1,16 @@
+#id:NXQ_09462
+#title:Check there are no entries with methylation annotations that do not have the keyword Methylation (KW-0488)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.876
+
+select distinct ?entry where {  # Include ?methyl if result is not 0 to identify problem site 
+  ?methyl a :UniprotPtmCv.
+  cv:KW-0488 :related  ?methyl.
+  ?entry :isoform ?iso.
+  ?iso :modifiedResidue ?mod.
+  ?mod :term ?methyl.  
+  filter not exists {?mod :negativeEvidence ?negev} # No negative evidence  
+  filter not exists {?entry :isoform /:keyword /:term cv:KW-0488.}
+}

@@ -1,0 +1,12 @@
+#id:NXQ_09010
+#title:Check there are no entries with antibody mapping annotations with evidence NOT from HPA
+#tags:QC,provenance,antibody
+#acs:
+#count:0
+#time:0.732
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :antibodyMapping /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Human_protein_atlas))
+}

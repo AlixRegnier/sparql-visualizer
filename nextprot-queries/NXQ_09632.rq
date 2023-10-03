@@ -1,0 +1,12 @@
+#id:NXQ_09632
+#title:Check there are no entries with a variant annotation with the start less than 1
+#tags:QC,variant
+#acs:
+#count:0
+#time:0.633
+
+select distinct ?entry where {
+  ?entry :isoform /:variant ?var.
+  ?var :start ?start.
+  filter ( ?start < 1)
+}

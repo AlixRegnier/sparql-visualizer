@@ -1,0 +1,11 @@
+#id:NXQ_09702
+#title:Check there are no entries with GO cellular component annotations with evidence from PHI-base of the GO Consortium
+#tags:QC,provenance,subcellular location
+#acs:
+#count:0
+#time:0.321
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :goCellularComponent /:evidence /:assignedBy source:PHI-base.
+}

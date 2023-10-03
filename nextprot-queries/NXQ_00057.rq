@@ -1,0 +1,17 @@
+#id:NXQ_00057
+#title:Proteins that are located in the mitochondrion with an experimental evidence originating not from HPA or DKFZ-GFP
+#tags:method,subcellular location,tutorial
+#acs:Q9Y6N5, O14925, O14879, ...
+#count:1610
+#time:0.7
+
+select distinct ?entry where {
+  values ?mitoloc {cv:SL-0173 cv:GO_0005739} # SL and GO values for mitochondrion
+
+  ?entry :isoform ?iso.
+  ?iso :cellularComponent ?loc.
+  ?loc :term /:childOf ?mitoloc.
+  filter not exists { ?loc :negativeEvidence ?negev. } # No negative localization evidence
+  ?loc :evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Human_protein_atlas, source:GFP-cDNAEMBL))
+}

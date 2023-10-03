@@ -1,0 +1,12 @@
+#id:NXQ_00287
+#title:Proteins with interactions obtained from x-ray crystallography
+#tags:method,PPI,tutorial
+#acs:O00330,P11177,P37023
+#count:33
+#time:0.212
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :binaryInteraction /:evidence ?ev.
+  ?ev :interactionDetectionMethod cv:MI_0114. # x-ray crystallography
+}

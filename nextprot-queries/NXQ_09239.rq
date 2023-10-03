@@ -1,0 +1,12 @@
+#id:NXQ_09239
+#title:Check there are no entries with pathway annotations with evidence from KEGG Pathway of quality SILVER
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.472
+
+select distinct ?entry where {
+  ?entry :isoform /:pathway /:evidence ?ev1.
+  ?ev1 :assignedBy source:KEGG_PTW.
+  ?ev1 :quality :SILVER.
+}

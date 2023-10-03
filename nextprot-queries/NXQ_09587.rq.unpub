@@ -1,0 +1,10 @@
+#id:NXQ_09587
+#title:Check there are no entries with the Swiss-Prot keyword Fusion of virus membrane with host membrane (KW-1168)
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.82
+
+select distinct ?entry where {
+  ?entry :isoform /:keyword / :term cv:KW-1168.
+}

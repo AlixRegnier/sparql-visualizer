@@ -1,0 +1,12 @@
+#id:NXQ_09317
+#title:Check there are no entries with cofactor annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.792
+
+select distinct ?entry where {
+  ?entry :isoform /:cofactor /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

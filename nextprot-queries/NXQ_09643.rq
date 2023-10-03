@@ -1,0 +1,14 @@
+#id:NXQ_09643
+#title:Check there are no entries with a variant annotation with an xref starting with rs that do not have evidence from dbSNP or UniProt
+#tags:QC,variant,xref
+#acs:
+#count:0
+#time:150.463
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :reference /:accession ?xref.
+  filter (regex(?xref, "^rs"))
+  ?ev :assignedBy ?src.
+  filter ( ?src not in (source:dbSNP,source:Uniprot))
+}

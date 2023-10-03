@@ -1,0 +1,16 @@
+#id:NXQ_09403
+#title:Check there are no entries that have the accession number of excluded UniProt entries
+#comment:Unpublished as no longer exclude UniProt entries
+#tags:QC,filtering
+#acs:
+#count:0
+#time:0.474
+
+select ?entry ?ac where {
+  values ?ac {"P04437"^^xsd:string "P01737"^^xsd:string "P01733"^^xsd:string "P04435"^^xsd:string}
+  entry:NX_P01871 :reference ?ref. 
+  ?ref a :Identifier .
+  ?entry :reference ?ref.
+  ?ref :provenance db:UniProtKB.
+  ?ref :accession ?ac.
+}

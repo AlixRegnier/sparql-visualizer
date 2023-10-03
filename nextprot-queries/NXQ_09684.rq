@@ -1,0 +1,12 @@
+#id:NXQ_09684
+#title:Check there are no entries with a variant annotation with evidence from gnomAD that do not have an allele count
+#tags:QC,variant
+#acs:
+#count:0
+#time:27.906
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :assignedBy source:gnomAD.
+  filter not exists {?ev :allele-count ?count.}
+}

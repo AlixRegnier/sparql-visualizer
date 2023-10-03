@@ -1,0 +1,13 @@
+#id:NXQ_09040
+#title:Check there are no entries with helix annotations with evidence NOT from UniProt
+#comment:secondary structure
+#tags:QC,provenance
+#acs:
+#count:0
+#time:0.375
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :helix /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09058
+#title:Check there are no entries with mutagenesis annotations with evidence NOT from neXtProt or UniProt
+#comment:neXtProt BioEditor data
+#tags:QC,provenance,sequence
+#acs:
+#count:0
+#time:0.602
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :mutagenesis /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:NextProt,source:Uniprot))
+}
