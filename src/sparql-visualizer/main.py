@@ -42,9 +42,9 @@ def process(files, render_query = True, render_simple = False, render_relation =
                 name = f"{render_output}/{basename(files[i])}"
             
             #Retrieve parser results
-            maincluster.generateGraph()
+            s = maincluster.generateGraph()
             if render_query:
-                SubDigraph.allSubgraphsToDot(name) #TODO: Replace all static stuff by dynamic ones
+                s.collection.allSubgraphsToDot(name)
 
             fullgraph = maincluster.getFullGraph()
             simplegraph = getSimpleGraph(fullgraph)
@@ -67,7 +67,6 @@ def process(files, render_query = True, render_simple = False, render_relation =
             print("An error occured while trying to parse file\n")
         finally:
             #Reset static values for next iteration
-            SubDigraph.reset()
             Cluster.reset()
     return pfiles, tfiles
 
