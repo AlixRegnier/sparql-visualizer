@@ -41,6 +41,7 @@ class Style:
     GROUP = "dashed"
     OPTIONAL = "dashed"
     SELECT = "dashed"
+    SERVICE = "solid"
     TYPE = "solid"
     UNION = "solid"
 
@@ -441,11 +442,6 @@ class SubDigraphCollection(dict):
 
         self.blankCount += 1
         return f"blank_{self.blankCount}"
-    
-    def reset(self):
-        self.blankCount = 0
-        self.subgraphes = dict()
-        self.nodeAlreadyAdded = set()
 
     def allSubgraphsToDot(self, name, format = "png", view = False, cleanup=False):
         graph = Digraph(name)
@@ -1178,11 +1174,15 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#serviceGraphPattern.
     def enterServiceGraphPattern(self, ctx:SparqlParser.ServiceGraphPatternContext):
         self.enter(ctx)
+        self.addCluster("SERVICE", Style.SERVICE)
         pass
 
     # Exit a parse tree produced by SparqlParser#serviceGraphPattern.
     def exitServiceGraphPattern(self, ctx:SparqlParser.ServiceGraphPatternContext):
+        #Get service URI / Varname
         self.exit(ctx)
+        self.clusters[-1].setLabel(self.clusters[-1].getLabel() + " " + ctx.varOrIri().getText())
+        self.clusters.pop()
         pass
 
     # Enter a parse tree produced by SparqlParser#bind.
