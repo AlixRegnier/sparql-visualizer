@@ -39,6 +39,7 @@ class Style:
     DUPLICATE = "dashed"
     FILTER = "dashed"
     GROUP = "dashed"
+    MINUS = "solid"
     OPTIONAL = "dashed"
     SELECT = "dashed"
     SERVICE = "solid"
@@ -279,7 +280,7 @@ class SubDigraph(nx.MultiDiGraph):
     VALUES = (Shape.VALUES, Color.VALUES, Color.VALUES)
     TYPE = (Shape.TYPE, Color.TYPE, Color.TYPE)
 
-    def __init__(self, cluster : Cluster, collection : SubDigraphCollection, **attr): #TODO: May add MINUS (need to know operand order)
+    def __init__(self, cluster : Cluster, collection : SubDigraphCollection, **attr):
         super().__init__(None, **attr)
         self.collection = collection
 
@@ -522,6 +523,7 @@ class SAL(SparqlListener):
         self.mainclusters = []
         self.clusters = deque()
         self.currentTSS = None
+        self.previouscluster = None
         self.datavars = None
         self.datavalues = None
         self.__ctx = None
@@ -1093,7 +1095,7 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#groupGraphPattern.
     def enterGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
         self.enter(ctx)
-        if self.clusters[-1].getLabel() in ("UNION", ""):
+        if self.clusters[-1].getLabel() in ("UNION", "", "MINUS"):
             self.addCluster("", Style.GROUP)
         pass
 
@@ -1102,19 +1104,18 @@ class SAL(SparqlListener):
         self.exit(ctx)
         if self.clusters[-1].getLabel() == "":
             #Remove sub blank cluster if it has only one subcluster and no TSS !
-            u = self.clusters.pop()
-
-            if len(u.tss) == 0:
+            self.previouscluster = self.clusters.pop()
+            if len(self.previouscluster.tss) == 0:
                 if self.clusters:
-                    for s in u.subclusters:
+                    for s in self.previouscluster.subclusters:
                         self.clusters[-1].addSubCluster(s)
-                    self.clusters[-1].subclusters.remove(u)
-                    self.clusters[-1].tss.extend(u.tss)
+                    self.clusters[-1].subclusters.remove(self.previouscluster)
+                    self.clusters[-1].tss.extend(self.previouscluster.tss)
                 else:
-                    for s in u.subclusters:
+                    for s in self.previouscluster.subclusters:
                         self.mainclusters[-1].addSubCluster(s)
-                    self.mainclusters[-1].subclusters.remove(u)
-                    self.mainclusters[-1].tss.extend(u.tss)
+                    self.mainclusters[-1].subclusters.remove(self.previouscluster)
+                    self.mainclusters[-1].tss.extend(self.previouscluster.tss)
 
 
         pass
@@ -1259,7 +1260,9 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#minusGraphPattern.
     def enterMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.enter(ctx)
-        #self.addCluster("MINUS")
+        self.clusters[-1].subclusters.remove(self.previouscluster)
+        self.addCluster("MINUS", Style.MINUS)
+        self.clusters[-1].addSubCluster(self.previouscluster)
         pass
 
     # Exit a parse tree produced by SparqlParser#minusGraphPattern.
@@ -1276,7 +1279,6 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
     def exitGroupOrUnionGraphPattern(self, ctx:SparqlParser.GroupOrUnionGraphPatternContext):
         self.exit(ctx)
-        
         if self.clusters:
             u = self.clusters.pop()
             if "}union{" not in ctx.getText().lower():
