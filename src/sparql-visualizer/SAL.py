@@ -444,7 +444,7 @@ class SubDigraphCollection(dict):
         self.blankCount += 1
         return f"blank_{self.blankCount}"
 
-    def allSubgraphsToDot(self, name, format = "png", view = False, cleanup=False):
+    def allSubgraphsToDot(self, name, format = "png", view = False, cleanup=True):
         graph = Digraph(name)
         graph.graph_attr["rankdir"] = "LR"
         projections = { "cluster0_" + p for p in self["cluster0"].cluster.getProjections() }
@@ -523,7 +523,6 @@ class SAL(SparqlListener):
         self.mainclusters = []
         self.clusters = deque()
         self.currentTSS = None
-        self.previouscluster = None
         self.datavars = None
         self.datavalues = None
         self.__ctx = None
@@ -564,6 +563,11 @@ class SAL(SparqlListener):
         
         self.clusters.append(s)
         return s
+
+    def popCluster(self):
+        if self.clusters:
+            return self.clusters.pop()
+        print("Warning: no cluster to remove")
 
     def getMainClusters(self):
         return self.mainclusters[:]
@@ -631,7 +635,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#selectQuery.
     def exitSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
-        self.clusters.pop()
+        self.popCluster()
         self.exit(ctx)
         pass
 
@@ -643,7 +647,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#subSelect.
     def exitSubSelect(self, ctx:SparqlParser.SubSelectContext):
-        self.clusters.pop()
+        self.popCluster()
         self.exit(ctx)
         pass
 
@@ -1095,29 +1099,31 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#groupGraphPattern.
     def enterGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
         self.enter(ctx)
-        if self.clusters[-1].getLabel() in ("UNION", "", "MINUS"):
+        if self.clusters[-1].getLabel() in ("UNION", ""):
             self.addCluster("", Style.GROUP)
         pass
 
     # Exit a parse tree produced by SparqlParser#groupGraphPattern.
     def exitGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
         self.exit(ctx)
+
         if self.clusters[-1].getLabel() == "":
             #Remove sub blank cluster if it has only one subcluster and no TSS !
-            self.previouscluster = self.clusters.pop()
-            if len(self.previouscluster.tss) == 0:
+            u = self.popCluster()
+            if len(u.tss) == 0:
                 if self.clusters:
-                    for s in self.previouscluster.subclusters:
+                    for s in u.subclusters:
                         self.clusters[-1].addSubCluster(s)
-                    self.clusters[-1].subclusters.remove(self.previouscluster)
-                    self.clusters[-1].tss.extend(self.previouscluster.tss)
+                    self.clusters[-1].subclusters.remove(u)
+                    u = self.clusters[-1]
+                    self.clusters[-1].tss.extend(u.tss)
                 else:
-                    for s in self.previouscluster.subclusters:
+                    for s in u.subclusters:
                         self.mainclusters[-1].addSubCluster(s)
-                    self.mainclusters[-1].subclusters.remove(self.previouscluster)
-                    self.mainclusters[-1].tss.extend(self.previouscluster.tss)
-
-
+                    self.mainclusters[-1].subclusters.remove(u)
+                    u = self.mainclusters[-1]
+                    self.mainclusters[-1].tss.extend(u.tss)
+        
         pass
 
     # Enter a parse tree produced by SparqlParser#groupGraphPatternSub.
@@ -1159,7 +1165,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
     def exitOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.exit(ctx)
-        self.clusters.pop()
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#graphGraphPattern.
@@ -1183,7 +1189,7 @@ class SAL(SparqlListener):
         #Get service URI / Varname
         self.exit(ctx)
         self.clusters[-1].setLabel(self.clusters[-1].getLabel() + " " + ctx.varOrIri().getText())
-        self.clusters.pop()
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#bind.
@@ -1260,14 +1266,35 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#minusGraphPattern.
     def enterMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.enter(ctx)
-        self.clusters[-1].subclusters.remove(self.previouscluster)
-        self.addCluster("MINUS", Style.MINUS)
-        self.clusters[-1].addSubCluster(self.previouscluster)
+
+        #Retrieve alpha subcluster
+        p = self.clusters[-1].subclusters.pop()
+
+        self.addCluster("α MINUS β", Style.MINUS)
+        self.addCluster("α", Style.GROUP)
+
+        #Fill alpha
+        if p.getLabel() == "":
+            self.clusters[-1].tss.extend(p.tss)
+            self.clusters[-1].vars = p.vars
+        else:
+            self.clusters[-1].addSubCluster(p)
+
+        #Close alpha
+        self.popCluster()
+
+        #Open beta
+        self.addCluster("β", Style.GROUP)
         pass
 
     # Exit a parse tree produced by SparqlParser#minusGraphPattern.
     def exitMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.exit(ctx)
+        while "MINUS" not in self.clusters[-1].getLabel():
+            #Close all betas
+            self.popCluster()
+        #Close MINUS
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
@@ -1279,8 +1306,11 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
     def exitGroupOrUnionGraphPattern(self, ctx:SparqlParser.GroupOrUnionGraphPatternContext):
         self.exit(ctx)
+
         if self.clusters:
-            u = self.clusters.pop()
+            u = self.popCluster()
+
+            #Remove UNION cluster from clusters if there is no UNION
             if "}union{" not in ctx.getText().lower():
                 if self.clusters:
                     for s in u.subclusters:
@@ -1303,7 +1333,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#filterClause.
     def exitFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.exit(ctx)
-        self.clusters.pop()
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#constraint.
@@ -2032,3 +2062,15 @@ class SAL(SparqlListener):
     def exitBlankNode(self, ctx:SparqlParser.BlankNodeContext):
         self.exit(ctx)
         pass
+
+
+def showRecursive(cluster : Cluster):
+    if cluster.supercluster is None:
+        print("*", cluster.name + "\n", cluster.getLabel())
+    else:
+        print("*", cluster.name, "(from", cluster.supercluster.name + ")\n", cluster.getLabel())
+    for t in cluster.tss:
+        print("\t" + str(t))
+
+    for s in cluster.subclusters:
+        showRecursive(s)
