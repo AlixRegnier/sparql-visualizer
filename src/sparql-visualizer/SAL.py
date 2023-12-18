@@ -2062,15 +2062,3 @@ class SAL(SparqlListener):
     def exitBlankNode(self, ctx:SparqlParser.BlankNodeContext):
         self.exit(ctx)
         pass
-
-
-def showRecursive(cluster : Cluster):
-    if cluster.supercluster is None:
-        print("*", cluster.name + "\n", cluster.getLabel())
-    else:
-        print("*", cluster.name, "(from", cluster.supercluster.name + ")\n", cluster.getLabel())
-    for t in cluster.tss:
-        print("\t" + str(t))
-
-    for s in cluster.subclusters:
-        showRecursive(s)
