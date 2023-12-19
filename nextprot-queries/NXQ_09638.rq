@@ -1,0 +1,16 @@
+#id:NXQ_09638
+#title:Check there are no entries where the isoform sequence starts with M and the variant at position 1 does not start with M
+#tags:QC,variant
+#acs:
+#count:0
+#time:5.073
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :variant ?var.
+  ?iso :sequence ?seq.
+  filter (regex(?seq, "^M"))
+  ?var :start 1 .
+  ?var :original ?ori.
+  filter (!regex(?ori, "^M"))
+}

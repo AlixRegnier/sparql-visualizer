@@ -1,0 +1,12 @@
+#id:NXQ_09100
+#title:Check there are no entries with cleavage site annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence
+#acs:
+#count:0
+#time:0.725
+
+select distinct ?entry where {
+  ?entry :isoform /:cleavageSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

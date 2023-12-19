@@ -1,0 +1,12 @@
+#id:NXQ_09312
+#title:Check there are no entries with binding site annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,interaction
+#acs:
+#count:0
+#time:0.642
+
+select distinct ?entry where {
+  ?entry :isoform /:bindingSite /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

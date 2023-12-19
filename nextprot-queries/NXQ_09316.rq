@@ -1,0 +1,12 @@
+#id:NXQ_09316
+#title:Check there are no entries with cleavage site annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.741
+
+select distinct ?entry where {
+  ?entry :isoform /:cleavageSite /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

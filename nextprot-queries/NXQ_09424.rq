@@ -1,0 +1,14 @@
+#id:NXQ_09424
+#title:Check there are no entries whose gene does not have a beginning position which has an end position
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.7
+
+select distinct ?entry where {
+  ?entry :gene ?gene.
+  ?gene :begin ?begin.
+  ?gene :end ?end.
+  filter (?begin = 0)
+  filter (?end > 0)
+}

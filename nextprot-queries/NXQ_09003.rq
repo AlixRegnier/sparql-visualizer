@@ -1,0 +1,14 @@
+#id:NXQ_09003
+#title:Check there are no organelle terms with no entry associated
+#comment:Organelles in which a mature protein is targeted using a transit peptide
+#comment:Does not include lysosome
+#tags:QC,vocabulary,snorql-only
+#acs:
+#count:0
+#time:0.304
+
+select distinct ?orgnl where {
+  ?orgnl a :OrganelleCv .
+  filter not exists {?member :isoform /:processingProduct / :term ?orgnl .}
+}
+order by ?orgnl

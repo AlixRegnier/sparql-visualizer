@@ -1,0 +1,13 @@
+#id:NXQ_09346
+#title:Check there are no entries with kinetic KM annotations with evidence from UniProt that is negative
+#comment:biophysicochemical property
+#tags:QC,evidence,negative,function,enzyme
+#acs:
+#count:0
+#time:0.702
+
+select distinct ?entry where {
+  ?entry :isoform /:kineticKM /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

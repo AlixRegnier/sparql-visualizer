@@ -1,0 +1,13 @@
+#id:NXQ_09274
+#title:Check there are no entries with antibody mapping annotations from HPA for which the evidence code is NOT heterologous protein expression evidence
+#tags:QC,evidence,ECO,antibody
+#acs:
+#count:0
+#time:0.779
+
+select distinct ?entry where {
+  ?entry :isoform / :antibodyMapping /:evidence ?ev1.
+  ?ev1 :assignedBy source:Human_protein_atlas.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000154))
+}

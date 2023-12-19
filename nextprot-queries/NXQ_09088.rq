@@ -1,0 +1,13 @@
+#id:NXQ_09088
+#title:Check there are no entries with variant information annotations with evidence NOT from UniProt
+#comment:polymorphism
+#tags:QC,provenance,variant
+#acs:
+#count:0
+#time:0.676
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :variantInfo /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

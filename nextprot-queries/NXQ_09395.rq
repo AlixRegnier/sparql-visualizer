@@ -1,0 +1,13 @@
+#id:NXQ_09395
+#title:Check there are no entries with turn annotations with evidence from UniProt that is negative
+#comment:secondary structure
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.774
+
+select distinct ?entry where {
+  ?entry :isoform /:turn /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

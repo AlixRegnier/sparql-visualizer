@@ -1,0 +1,12 @@
+#id:NXQ_09264
+#title:Check there are no entries with topological domain annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,topology,subcellular location
+#acs:
+#count:0
+#time:0.626
+
+select distinct ?entry where {
+  ?entry :isoform /:topologicalDomain /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

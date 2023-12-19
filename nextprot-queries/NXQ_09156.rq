@@ -1,0 +1,12 @@
+#id:NXQ_09156
+#title:Check there are no entries with GO cellular component annotations with evidence from HPA of quality GOLD
+#tags:QC,quality,evidence,cellular component
+#acs:
+#count:0
+#time:0.742
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev1.
+  ?ev1 :assignedBy source:Human_protein_atlas.
+  ?ev1 :quality :GOLD.
+}

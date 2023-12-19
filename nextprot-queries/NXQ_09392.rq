@@ -1,0 +1,12 @@
+#id:NXQ_09392
+#title:Check there are no entries with topological domain annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,topology
+#acs:
+#count:0
+#time:0.656
+
+select distinct ?entry where {
+  ?entry :isoform /:topologicalDomain /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

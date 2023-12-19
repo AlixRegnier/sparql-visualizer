@@ -1,0 +1,13 @@
+#id:NXQ_09193
+#title:Check there are no entries with GO molecular function annotations with evidence having the evidence code IEP and quality GOLD
+#comment:ECO:0000270 inferred from expression pattern (IEP)
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.715
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :evidenceCode cv:ECO_0000270.
+  ?ev1 :quality :GOLD.
+}

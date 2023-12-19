@@ -1,0 +1,12 @@
+#id:NXQ_09261
+#title:Check there are no entries with subcellular location annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,subcellular location
+#acs:
+#count:0
+#time:0.695
+
+select distinct ?entry where {
+  ?entry :isoform /:subcellularLocation /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

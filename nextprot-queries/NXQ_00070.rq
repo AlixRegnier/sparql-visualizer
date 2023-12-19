@@ -1,0 +1,18 @@
+#id:NXQ_00070
+#title:Proteins secreted but without a signal sequence
+#tags:signal sequence,subcellular location,tutorial
+#acs:P00739,Q14393,P01344,...
+#count:782/2724
+#time: 9.1
+
+select distinct ?entry where {
+  values ?sloc {cv:GO_0005576 cv:SL-0243} # GO and SL values for secreted
+  ?entry :isoform ?iso.
+  ?iso :cellularComponent ?loc .
+  ?loc :term/:childOf ?sloc .
+  filter not exists {?sloc  :negativeEvidence ?negev} # No negative localization evidence
+  filter not exists {?iso :cellularComponent /:term cv:GO_0070062 .
+					 filter not exists {?iso :cellularComponent /:term /:childOf  cv:SL-0243 .}
+					} # filters out extracellular exosome only location (2758 entries)
+  filter not exists {?iso :signalPeptide ?_}
+}

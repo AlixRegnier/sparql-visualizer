@@ -1,0 +1,12 @@
+#id:NXQ_09329
+#title:Check there are no entries with domain information annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.746
+
+select distinct ?entry where {
+  ?entry :isoform /:domainInfo /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

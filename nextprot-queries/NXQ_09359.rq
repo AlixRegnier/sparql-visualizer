@@ -1,0 +1,12 @@
+#id:NXQ_09359
+#title:Check there are no entries with mutagenesis annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.73
+
+select distinct ?entry where {
+  ?entry :isoform /:mutagenesis /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

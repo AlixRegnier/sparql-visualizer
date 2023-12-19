@@ -1,0 +1,12 @@
+#id:NXQ_09660
+#title:Check there are no entries with interaction mapping annotations with evidence NOT from ENYO
+#tags:QC,provenance,interaction
+#acs:
+#count:0
+#time:0.627
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :interactionMapping /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:ENYO))
+}

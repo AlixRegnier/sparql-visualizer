@@ -38,7 +38,7 @@ def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = 
 
     graph.render(cleanup=cleanup)
 
-def em(e1, e2) -> bool:
+def edgematch(e1, e2) -> bool:
     """
         An arc matches another arc if they have the same label XOR both have no label
     """

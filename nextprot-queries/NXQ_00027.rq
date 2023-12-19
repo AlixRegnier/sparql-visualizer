@@ -1,0 +1,14 @@
+#id:NXQ_00027
+#title:Proteins with one or more glycosylation sites reported in PubMed:20570859 or PubMed:14760718
+#tags:glycosylation,proteomics,PTM,publication,tutorial
+#acs:A2RU67,A6NI73,A8MVS5,O00206,O00241,O00481,O14672,O14786
+#count:332
+#time:0.5
+
+select distinct ?entry ?publications where {
+  values ?pmid {"20570859"^^xsd:string "14760718"^^xsd:string}
+  # get all assertions from the publications
+  ?entry :isoform/:glycosylationSite ?statement.
+  ?statement :evidence/:reference/:from ?xref .
+  ?xref :accession ?pmid ; :provenance db:PubMed .
+}

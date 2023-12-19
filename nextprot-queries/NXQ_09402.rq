@@ -1,0 +1,12 @@
+#id:NXQ_09402
+#title:Check there are no entries with zinc finger region with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,region
+#acs:
+#count:0
+#time:0.684
+
+select distinct ?entry where {
+  ?entry :isoform /:zincFingerRegion /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

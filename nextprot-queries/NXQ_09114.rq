@@ -1,0 +1,12 @@
+#id:NXQ_09114
+#title:Check there are no entries with activity regulation (previously enzyme regulation) annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,function,enzyme
+#acs:
+#count:0
+#time:0.705
+
+select distinct ?entry where {
+  ?entry :isoform /:activityRegulation /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

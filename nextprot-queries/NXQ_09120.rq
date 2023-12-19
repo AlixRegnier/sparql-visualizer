@@ -1,0 +1,12 @@
+#id:NXQ_09120
+#title:Check there are no entries with glycosylation site annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,glycosylation,sequence
+#acs:
+#count:0
+#time:0.699
+
+select distinct ?entry where {
+  ?entry :isoform /:glycosylationSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

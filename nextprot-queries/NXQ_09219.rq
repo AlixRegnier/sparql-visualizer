@@ -1,0 +1,12 @@
+#id:NXQ_09219
+#title:Check there are no entries with initiator methionine annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,sequence
+#acs:
+#count:0
+#time:0.702
+
+select distinct ?entry where {
+  ?entry :isoform /:initiatorMethionine /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

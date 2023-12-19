@@ -1,0 +1,12 @@
+#id:NXQ_09349
+#title:Check there are no entries with lipidation site annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.612
+
+select distinct ?entry where {
+  ?entry :isoform /:lipidationSite /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09217
+#title:Check there are no entries with helix annotations with evidence from UniProt of quality SILVER
+#comment:secondary structure
+#tags:QC,quality,evidence
+#acs:
+#count:0
+#time:0.707
+
+select distinct ?entry where {
+  ?entry :isoform /:helix /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

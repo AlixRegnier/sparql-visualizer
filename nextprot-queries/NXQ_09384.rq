@@ -1,0 +1,12 @@
+#id:NXQ_09384
+#title:Check there are no entries with small molecule interaction annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,interaction
+#acs:
+#count:0
+#time:0.696
+
+select distinct ?entry where {
+  ?entry :isoform /:smallMoleculeInteraction /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

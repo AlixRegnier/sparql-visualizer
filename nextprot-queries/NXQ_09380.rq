@@ -1,0 +1,12 @@
+#id:NXQ_09380
+#title:Check there are no entries with sequence conflict annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.727
+
+select distinct ?entry where {
+  ?entry :isoform /:sequenceConflict /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09095
+#title:Check there are no entries with beta strand annotations with evidence from UniProt of quality SILVER
+#comment:secondary structure
+#tags:QC,quality,evidence
+#acs:
+#count:0
+#time:0.735
+
+select distinct ?entry where {
+  ?entry :isoform / :betaStrand /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

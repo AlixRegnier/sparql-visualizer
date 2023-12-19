@@ -1,0 +1,14 @@
+#id:NXQ_09005
+#title:Check there are no protein modification effect terms with no entry associated
+#comment:Exclude the parent term cv:ME_0000001 
+#tags:QC,phenotype,vocabulary,snorql-info
+#acs:
+#count:0
+#time:0.289
+
+select distinct ?effect where {
+?effect a :NextprotModificationEffectCv .
+filter not exists {  ?entry :isoform  / :proteoform / :phenotypicVariation / :term ?effect. }
+filter ( ?effect not in (cv:ME_0000001))  
+}
+order by ?effect

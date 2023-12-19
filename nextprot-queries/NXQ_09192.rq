@@ -1,0 +1,12 @@
+#id:NXQ_09192
+#title:Check there are no entries with GO molecular function annotations with evidence from Reactome of quality GOLD
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.719
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev1.
+  ?ev1 :assignedBy source:Reactome.
+  ?ev1 :quality :GOLD.
+}

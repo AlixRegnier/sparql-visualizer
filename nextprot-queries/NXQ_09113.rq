@@ -1,0 +1,12 @@
+#id:NXQ_09113
+#title:Check there are no entries with enzyme classification annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,function,enzyme
+#acs:
+#count:0
+#time:0.656
+
+select distinct ?entry where {
+  ?entry :isoform /:enzymeClassification /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

@@ -1,0 +1,14 @@
+#id:NXQ_09210
+#title:Check there are no entries with GO molecular function annotations with evidence from Roslin Institute of quality SILVER and evidence code not IBA, IEP, HMP, HDA or HEP
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.397
+
+select distinct ?entry where {
+  ?entry :isoform /:goMolecularFunction /:evidence ?ev.
+  ?ev :assignedBy source:Roslin_Institute.
+  ?ev :quality :SILVER.
+  ?ev :evidenceCode ?eco.
+  filter ( ?eco not in ( cv:ECO_0000318,cv:ECO_0000270,cv:ECO_0007001,cv:ECO_0007005,cv:ECO_0007007 ))
+}

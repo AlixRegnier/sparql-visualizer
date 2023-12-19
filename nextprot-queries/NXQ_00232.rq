@@ -1,0 +1,14 @@
+#id:NXQ_00232
+#title:Proteins with sequences 100% identical to other proteins, grouped
+#tags:sequence,snorql-only,tutorial
+#acs:A0JP26,B3EWG6,B3EWG6
+#count:100
+#time:0.5
+
+select distinct ?entry (group_concat(distinct substr(str(?entry2),34); separator = ",") as ?sameseq) where {
+  ?entry :isoform / :sequence / :chain ?chain1.
+  ?entry2 :isoform / :sequence / :chain ?chain2.
+  filter ( (?chain1 = ?chain2) && (?entry != ?entry2))
+}
+group by ?entry
+order by ?entry

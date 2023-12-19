@@ -1,0 +1,12 @@
+#id:NXQ_09407
+#title:Check there are no entries with peptide mapping annotations with peptides of length 6 aa or less
+#tags:QC,mass spectrometry,peptide,proteomics
+#acs:
+#count:0
+#time:0.783
+
+select distinct ?entry where {
+  ?entry :isoform / :peptideMapping /:position ?pmpos .
+  ?pmpos :start ?start; :end ?end . 
+  filter((?end - ?start + 1) <= 6 )
+}

@@ -1,0 +1,13 @@
+#id:NXQ_09068
+#title:Check there are no entries with phenotypic variation annotations with evidence NOT from neXtProt
+#comment:neXtProt BioEditor data
+#tags:QC,provenance,phenotype
+#acs:
+#count:0
+#time:0.727
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :proteoform /:phenotypicVariation /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:NextProt))
+}

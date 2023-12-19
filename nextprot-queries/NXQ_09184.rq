@@ -1,0 +1,14 @@
+#id:NXQ_09184
+#title:Check there are no entries with GO cellular component annotations with evidence from WormBase of quality SILVER and evidence code not IBA, IEP, HMP, HDA or HEP
+#tags:QC,quality,evidence,cellular component
+#acs:
+#count:0
+#time:0.399
+
+select distinct ?entry where {
+  ?entry :isoform /:goCellularComponent /:evidence ?ev.
+  ?ev :assignedBy source:WormBase.
+  ?ev :quality :SILVER.
+  ?ev :evidenceCode ?eco.
+  filter ( ?eco not in ( cv:ECO_0000318,cv:ECO_0000270,cv:ECO_0007001,cv:ECO_0007005,cv:ECO_0007007 ))
+}

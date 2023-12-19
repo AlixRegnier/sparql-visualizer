@@ -1,0 +1,12 @@
+#id:NXQ_09338
+#title:Check there are no entries with glycosylation site annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,glycosylation,sequence
+#acs:
+#count:0
+#time:0.685
+
+select distinct ?entry where {
+  ?entry :isoform /:glycosylationSite /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

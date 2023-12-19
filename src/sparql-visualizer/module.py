@@ -1,6 +1,7 @@
 from __future__ import annotations
 import networkx as nx
 from typing import Dict, Set, List
+from utils import edgematch
 
 class Module:
     """
@@ -71,18 +72,11 @@ class Module:
                 self.queries[query][1].append(mapping)
         else:
             self.queries[query] = [1, [mapping]]
-
-    @staticmethod
-    def __edgematch(e1, e2) -> bool:
-        try:
-            return e1["label"] == e2["label"]
-        except KeyError:
-            return "label" not in e1 and "label" not in e2
         
     def __eq__(self, o : Module | nx.DiGraph ) -> bool:
         if isinstance(o, Module):
-            return nx.is_isomorphic(self.graph, o.graph, edge_match=Module.__edgematch)
-        return nx.is_isomorphic(self.graph, o, edge_match=Module.__edgematch)
+            return nx.is_isomorphic(self.graph, o.graph, edge_match=edgematch)
+        return nx.is_isomorphic(self.graph, o, edge_match=edgematch)
     
     def __str__(self) -> str:
         s = f"Nombre d'occurrences:\n{self.getOccurence()}\n\nCommon tags:\n"

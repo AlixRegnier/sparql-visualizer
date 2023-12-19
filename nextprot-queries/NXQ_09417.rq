@@ -1,0 +1,13 @@
+#id:NXQ_09417
+#title:Check there are no entries whose gene is not located on the plus or minus strand or where the strand is unknown
+#tags:QC,chromosomal location
+#acs:
+#count:0
+#time:0.736
+
+select distinct ?entry ?strand where {
+  ?entry :gene / :strand ?strand .
+   filter (!regex (?strand, '1'))
+   filter (!regex (?strand, '-1'))
+   filter (!regex (?strand, '0')) 
+}

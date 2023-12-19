@@ -1,0 +1,13 @@
+#id:NXQ_09300
+#title:Check there are no entries with subcellular location annotations from GFP-cDNAEMBL for which the evidence code is NOT reporter gene assay evidence
+#tags:QC,evidence,ECO,subcellular location
+#acs:
+#count:0
+#time:0.742
+
+select distinct ?entry where {
+  ?entry :isoform /:subcellularLocation /:evidence ?ev1.
+  ?ev1 :assignedBy source:GFP-cDNAEMBL.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000049))
+}

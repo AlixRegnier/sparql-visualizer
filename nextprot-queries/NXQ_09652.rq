@@ -1,0 +1,13 @@
+#id:NXQ_09652
+#title:Check there are no entries with peptide mapping annotations with evidence from MassIVE of quality SILVER
+#tags:QC,quality,evidence,proteomics,peptide
+#acs:
+#count:0
+#time:663.676
+
+select distinct ?entry where {
+  ?entry :isoform /:peptideMapping /:evidence ?ev1.
+  ?ev1 :quality :SILVER.
+  ?ev1 :assignedBy ?src.
+  filter (regex (?src,'MassIVE'))
+}

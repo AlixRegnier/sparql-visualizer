@@ -1,0 +1,32 @@
+#id:NXQ_00265
+#title:Retrieve all positional annotations at a given position on a neXtProt isoform
+#comment:Modified to include phenotype variation annotations (2021-04-19)
+#tags:isoforms,sequence,snorql-only,tutorial
+#acs:Q99728 
+#count: 41
+#time:0.309
+
+select distinct ?iso ?spos ?epos ?annot_type (str(?txt) as ?note) where
+{   
+  values ?iso  { isoform:NX_Q99728-1 }
+  values ?poi {107} # position of interest
+ 
+{   
+  ?iso :positionalAnnotation ?statement .   optional {?statement rdfs:comment ?txt .}
+
+  ?statement a ?annot_type .
+  ?statement :start ?spos; :end ?epos .
+}
+  union
+ 
+{       
+  ?iso :proteoform ?pf .     
+  ?pf :difference ?varmut; :phenotypicVariation ?phvar .     
+  ?varmut :start ?spos; :end ?epos.     
+  ?phvar :term ?phtype; :impactedObject /:term /rdfs:label ?ioTermlab .
+  ?phvar a ?annot_type .
+  ?phtype :childOf cv:ME_0000002; rdfs:label ?effect . # children of impact     
+  bind (concat(CONCAT(?effect," "),?ioTermlab) as ?txt)   }
+
+  filter((?spos <= ?poi) && (?epos >= ?poi)) # select annotations encompassing the position of interest
+} order by ?spos

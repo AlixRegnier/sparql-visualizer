@@ -1,0 +1,12 @@
+#id:NXQ_09249
+#title:Check there are no entries with PTM information annotations with evidence from Uniprot of quality SILVER
+#tags:QC,quality,evidence,PTM
+#acs:
+#count:0
+#time:0.626
+
+select distinct ?entry where {
+  ?entry :isoform /:ptmInfo /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

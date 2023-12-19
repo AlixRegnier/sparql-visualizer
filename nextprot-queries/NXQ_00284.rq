@@ -1,0 +1,15 @@
+#id:NXQ_00284
+#title:Distribution of interaction detection methods for each year (ENYO data)
+#tags:PPI,snorql-only
+#comment:Wait PSIMI from intact
+#acs: 
+#count:209
+#time:5
+
+select distinct (str(?y) as ?year) (str(?psimi) as ?method) (count (distinct ?itid) as ?itcnt) where {
+ ?entry :isoform / :binaryInteraction ?interaction.
+ ?interaction :evidence ?ev; :entryAnnotationId ?itid .
+  ?ev :reference ?publi; :interactionDetectionMethod / rdfs:label ?psimi .
+ ?publi :year ?y.
+} 
+order by desc(?year) desc(?itcnt)

@@ -1,0 +1,13 @@
+#id:NXQ_09340
+#title:Check there are no entries with helix annotations with evidence from UniProt that is negative
+#comment:secondary structure
+#tags:QC,evidence,negative
+#acs:
+#count:0
+#time:0.757
+
+select distinct ?entry where {
+  ?entry :isoform /:helix /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

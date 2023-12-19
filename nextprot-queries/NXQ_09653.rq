@@ -1,0 +1,14 @@
+#id:NXQ_09653
+#title:Check there are no entries with peptide mapping annotations from MassIVE for which the evidence code is NOT mass spectrometry evidence
+#tags:QC,evidence,ECO,mass spectrometry,peptide,proteomics
+#acs:
+#count:0
+#time:95.165
+
+select distinct ?entry where {
+  ?entry :isoform /:peptideMapping /:evidence ?ev1.
+  ?ev1 :assignedBy ?src.
+  filter (regex (?src,'MassIVE'))
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0001096))
+}

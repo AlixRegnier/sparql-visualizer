@@ -1,0 +1,13 @@
+#id:NXQ_09654
+#title:Check there are no entries with peptide mapping annotations with evidence from MassIVE that is negative
+#tags:QC,evidence,negative,peptide,proteomics
+#acs:
+#count:0
+#time:8.958
+
+select distinct ?entry where {
+  ?entry :isoform /:peptideMapping /:evidence ?ev.
+  ?ev :assignedBy ?src.
+  filter (regex (?src,'MassIVE'))
+  ?ev :negative 1.
+}

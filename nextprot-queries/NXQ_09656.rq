@@ -1,0 +1,14 @@
+#id:NXQ_09656
+#title:Check there are no entries with a natural peptide from MassIVE with an AC which does NOT start with "MSVp"
+#tags:QC,mass spectrometry,peptide,proteomics
+#acs:
+#count:0
+#time:1284.465
+
+select distinct ?entry where {
+  ?entry :isoform /:peptideMapping /:evidence ?ev1.
+  ?ev1 :assignedBy ?src.
+  filter (regex (?src,'MassIVE'))
+  ?ev1 :reference /:accession ?pepac .
+  filter (!regex (?pepac,'MSVp'))
+}

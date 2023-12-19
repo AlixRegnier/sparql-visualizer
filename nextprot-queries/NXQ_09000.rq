@@ -1,0 +1,12 @@
+#id:NXQ_09000
+#title:Check there are no protein domains with no entry associated
+#tags:QC,domain,vocabulary,snorql-only
+#acs:cv:DO-00014,cv:DO-00164,cv:DO-00893
+#count:3
+#time:0.373
+
+select distinct ?domain where {
+?domain a :NextprotDomainCv .
+filter not exists {  ?entry :isoform  / :region / :term ?domain. }
+}
+order by ?domain

@@ -1,0 +1,18 @@
+#id:NXQ_09450
+#title:Check there are no entries with a keyword in the category "Disease" that does not apply to human proteins
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.83
+
+select distinct ?entry where {  # Include ?kw if result is not 0 to identify problem keyword
+  values ?kw {
+  cv:KW-0014 # AIDS
+  cv:KW-0192 # Crown gall tumor
+  cv:KW-0214 # Dental caries
+  cv:KW-0461 # Malaria
+  cv:KW-0821 # Trypanosomiasis
+  cv:KW-0855 # Whooping cough 
+  }
+  ?entry :isoform /:keyword /:term ?kw.
+}

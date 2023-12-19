@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from __future__ import annotations
 from antlr4 import *
 from collections import deque
 from graphviz import Digraph
@@ -38,8 +39,10 @@ class Style:
     DUPLICATE = "dashed"
     FILTER = "dashed"
     GROUP = "dashed"
+    MINUS = "solid"
     OPTIONAL = "dashed"
     SELECT = "dashed"
+    SERVICE = "solid"
     TYPE = "solid"
     UNION = "solid"
 
@@ -175,14 +178,17 @@ class Cluster:
         self.addVars(ps)
 
     def generateGraph(self):
-        return SubDigraph(self)
+        collection = SubDigraphCollection()
+        return SubDigraph(self, collection)
     
     def getFullGraph(self):
-        d = nx.DiGraph()
+        d = nx.MultiDiGraph()
+        
+        collection = SubDigraphCollection()
+        SubDigraph(self, collection)
 
-        SubDigraph(self)
-        for name in SubDigraph.subgraphes:
-            d = nx.compose(d, SubDigraph.subgraphes[name])
+        for name in collection:
+            d = nx.compose(d, collection[name])
         return d
     
 class TSS:
@@ -258,7 +264,8 @@ class TSS:
     def __str__(self):
         return f"{self.subject}\n{self.paths}"
 
-class SubDigraph(nx.DiGraph):
+    
+class SubDigraph(nx.MultiDiGraph):
     """
     Class that inherits from NetworkX DiGraph, many instances will be used for the composition of the final graph
     """
@@ -273,17 +280,14 @@ class SubDigraph(nx.DiGraph):
     VALUES = (Shape.VALUES, Color.VALUES, Color.VALUES)
     TYPE = (Shape.TYPE, Color.TYPE, Color.TYPE)
 
-    blankCount = 0
-    subgraphes = dict()
-    nodeAlreadyAdded = set()
-
-    def __init__(self, cluster : Cluster, **attr): #May add MINUS (need to know operand order)
+    def __init__(self, cluster : Cluster, collection : SubDigraphCollection, **attr):
         super().__init__(None, **attr)
+        self.collection = collection
 
-        if cluster.name in SubDigraph.subgraphes:
+        if cluster.name in self.collection:
             return
         
-        SubDigraph.subgraphes[cluster.name] = self
+        self.collection[cluster.name] = self
         
         self.cluster = cluster
 
@@ -295,70 +299,9 @@ class SubDigraph(nx.DiGraph):
                 self.addNode(p, p, *SubDigraph.PROJECTION)
 
         for s in cluster.subclusters:
-            SubDigraph(s)
+            SubDigraph(s, collection)
         
         self.addValues()
-
-    @staticmethod
-    def getNextBlankIdentifier():
-        """
-        If name is None, return a unique blank node identifier
-        else name
-        """
-
-        SubDigraph.blankCount += 1
-        return f"blank_{SubDigraph.blankCount}"
-    
-    @staticmethod
-    def reset():
-        SubDigraph.blankCount = 0
-        SubDigraph.subgraphes = dict()
-        SubDigraph.nodeAlreadyAdded = set()
-
-    @staticmethod
-    def allSubgraphsToDot(name, format = "png", view = False, cleanup=False):
-        graph = Digraph(name)
-        graph.graph_attr["rankdir"] = "LR"
-        projections = { "cluster0_" + p for p in SubDigraph.subgraphes["cluster0"].cluster.getProjections() }
-
-        sg = dict()
-
-        for name in SubDigraph.subgraphes:
-            g = Digraph(name)
-            if name != "cluster0":
-                g.graph_attr["style"] = SubDigraph.subgraphes[name].cluster.getStyle()
-                g.graph_attr["label"] = SubDigraph.subgraphes[name].cluster.getLabel()
-            else:
-                g.graph_attr["style"] = "invis"
-
-            for node in SubDigraph.subgraphes[name].nodes:            
-                x = SubDigraph.subgraphes[name].cluster.getClusterName(node[node.find('_')+1:])
-                if x is None or x == name:
-                    if node in projections:
-                        g.node(hex(hash(node)), label=SubDigraph.subgraphes[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
-                        projections.remove(node)
-                    else:
-                        g.node(hex(hash(node)), **SubDigraph.subgraphes[name].nodes[node])
-        
-            for edge in SubDigraph.subgraphes[name].edges:
-                graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **SubDigraph.subgraphes[name].edges[edge])
-                    
-            sg[g.name] = g
-
-        def __linksubgraph(sdg : SubDigraph):
-            for s in sdg.cluster.subclusters:
-                __linksubgraph(SubDigraph.subgraphes[s.name])
-                sg[sdg.cluster.name].subgraph(sg[s.name])
-            
-        __linksubgraph(SubDigraph.subgraphes["cluster0"])
-        graph.subgraph(sg["cluster0"])
-
-        #Render 
-        graph.format = format
-        if view:
-            graph.view(cleanup=cleanup)
-        else:
-            graph.render(cleanup=cleanup)
 
     def prefixVar(self, name):
         """
@@ -387,13 +330,13 @@ class SubDigraph(nx.DiGraph):
             if label == "[]":
                 shape, color, fontcolor = SubDigraph.BLANK
 
-            name = f"{self.cluster.name}_{self.getNextBlankIdentifier()}"
+            name = f"{self.cluster.name}_{self.collection.getNextBlankIdentifier()}"
         #Node
         else:
             name = self.prefixVar(name)
-        if name not in SubDigraph.nodeAlreadyAdded:
+        if name not in self.collection.nodeAlreadyAdded:
             self.add_node(name, label=label, shape=shape, color=color, fontcolor=fontcolor)
-            SubDigraph.nodeAlreadyAdded.add(name)
+            self.collection.nodeAlreadyAdded.add(name)
         return name
 
     def addValues(self):
@@ -428,7 +371,7 @@ class SubDigraph(nx.DiGraph):
 
                     if xsubject != self.cluster.name:
                         asNode[tss.subject] = self.addNode(f"duplicate_{tss.subject}", tss.subject, *SubDigraph.DUPLICATE)
-                        self.add_edge(SubDigraph.subgraphes[xsubject].addNode(tss.subject, tss.subject), asNode[tss.subject], label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)
+                        self.add_edge(self.collection[xsubject].addNode(tss.subject, tss.subject), asNode[tss.subject], label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)
         
                 for path in tss.paths:
                     if path[-1] not in asNode and (path[-1].startswith('?') or path[-1].startswith('$')):
@@ -439,7 +382,7 @@ class SubDigraph(nx.DiGraph):
 
                         if xend != self.cluster.name:
                             asNode[path[-1]] = self.addNode(f"duplicate_{path[-1]}", path[-1], *SubDigraph.DUPLICATE)
-                            self.add_edge(asNode[path[-1]], SubDigraph.subgraphes[xend].addNode(path[-1], path[-1]), label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)        
+                            self.add_edge(asNode[path[-1]], self.collection[xend].addNode(path[-1], path[-1]), label="", color=Color.DUPLICATE, style=Style.DUPLICATE, arrowhead=ArrowStyle.DUPLICATE)        
 
         for tss in self.cluster.tss:
             if tss.subject in asNode:
@@ -484,6 +427,66 @@ class SubDigraph(nx.DiGraph):
             self.add_edge(aNode, self.addNode(d[a].getTarget(), d[a].getTarget()), label="AS", style=Style.ALIAS_OUT, arrowhead=ArrowStyle.ALIAS_OUT)
             for i in d[a].getVars():
                 self.add_edge(self.addNode(i, i), aNode, color=Color.ALIAS_IN, style=Style.ALIAS_IN, arrowhead=ArrowStyle.ALIAS_IN)
+
+
+class SubDigraphCollection(dict):
+    def __init__(self, **kwargs):
+        super().__init__(kwargs)
+        self.blankCount = 0
+        self.nodeAlreadyAdded = set()
+
+    def getNextBlankIdentifier(self):
+        """
+        If name is None, return a unique blank node identifier
+        else name
+        """
+
+        self.blankCount += 1
+        return f"blank_{self.blankCount}"
+
+    def allSubgraphsToDot(self, name, format = "png", view = False, cleanup=True):
+        graph = Digraph(name)
+        graph.graph_attr["rankdir"] = "LR"
+        projections = { "cluster0_" + p for p in self["cluster0"].cluster.getProjections() }
+
+        sg = dict()
+
+        for name in self:
+            g = Digraph(name)
+            if name != "cluster0":
+                g.graph_attr["style"] = self[name].cluster.getStyle()
+                g.graph_attr["label"] = self[name].cluster.getLabel()
+            else:
+                g.graph_attr["style"] = "invis"
+
+            for node in self[name].nodes:            
+                x = self[name].cluster.getClusterName(node[node.find('_')+1:])
+                if x is None or x == name:
+                    if node in projections:
+                        g.node(hex(hash(node)), label=self[name].nodes[node]["label"], shape=Shape.PROJECTION, color=Color.PROJECTION, fontcolor=Color.PROJECTION)
+                        projections.remove(node)
+                    else:
+                        g.node(hex(hash(node)), **self[name].nodes[node])
+        
+            for edge in self[name].edges:
+                graph.edge(hex(hash(edge[0])), hex(hash(edge[1])), **self[name].edges[edge])
+                    
+            sg[g.name] = g
+
+        def __linksubgraph(sdg : SubDigraph):
+            for s in sdg.cluster.subclusters:
+                __linksubgraph(self[s.name])
+                sg[sdg.cluster.name].subgraph(sg[s.name])
+            
+        __linksubgraph(self["cluster0"])
+        graph.subgraph(sg["cluster0"])
+
+        #Render 
+        graph.format = format
+        if view:
+            graph.view(cleanup=cleanup)
+        else:
+            graph.render(cleanup=cleanup)
 
 def parse_file(file, verbose=False):
     """
@@ -561,6 +564,11 @@ class SAL(SparqlListener):
         self.clusters.append(s)
         return s
 
+    def popCluster(self):
+        if self.clusters:
+            return self.clusters.pop()
+        print("Warning: no cluster to remove")
+
     def getMainClusters(self):
         return self.mainclusters[:]
     
@@ -627,7 +635,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#selectQuery.
     def exitSelectQuery(self, ctx:SparqlParser.SelectQueryContext):
-        self.clusters.pop()
+        self.popCluster()
         self.exit(ctx)
         pass
 
@@ -639,7 +647,7 @@ class SAL(SparqlListener):
 
     # Exit a parse tree produced by SparqlParser#subSelect.
     def exitSubSelect(self, ctx:SparqlParser.SubSelectContext):
-        self.clusters.pop()
+        self.popCluster()
         self.exit(ctx)
         pass
 
@@ -1098,23 +1106,24 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#groupGraphPattern.
     def exitGroupGraphPattern(self, ctx:SparqlParser.GroupGraphPatternContext):
         self.exit(ctx)
+
         if self.clusters[-1].getLabel() == "":
             #Remove sub blank cluster if it has only one subcluster and no TSS !
-            u = self.clusters.pop()
-
+            u = self.popCluster()
             if len(u.tss) == 0:
                 if self.clusters:
                     for s in u.subclusters:
                         self.clusters[-1].addSubCluster(s)
                     self.clusters[-1].subclusters.remove(u)
+                    u = self.clusters[-1]
                     self.clusters[-1].tss.extend(u.tss)
                 else:
                     for s in u.subclusters:
                         self.mainclusters[-1].addSubCluster(s)
                     self.mainclusters[-1].subclusters.remove(u)
+                    u = self.mainclusters[-1]
                     self.mainclusters[-1].tss.extend(u.tss)
-
-
+        
         pass
 
     # Enter a parse tree produced by SparqlParser#groupGraphPatternSub.
@@ -1156,7 +1165,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#optionalGraphPattern.
     def exitOptionalGraphPattern(self, ctx:SparqlParser.OptionalGraphPatternContext):
         self.exit(ctx)
-        self.clusters.pop()
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#graphGraphPattern.
@@ -1172,11 +1181,15 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#serviceGraphPattern.
     def enterServiceGraphPattern(self, ctx:SparqlParser.ServiceGraphPatternContext):
         self.enter(ctx)
+        self.addCluster("SERVICE", Style.SERVICE)
         pass
 
     # Exit a parse tree produced by SparqlParser#serviceGraphPattern.
     def exitServiceGraphPattern(self, ctx:SparqlParser.ServiceGraphPatternContext):
+        #Get service URI / Varname
         self.exit(ctx)
+        self.clusters[-1].setLabel(self.clusters[-1].getLabel() + " " + ctx.varOrIri().getText())
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#bind.
@@ -1253,12 +1266,35 @@ class SAL(SparqlListener):
     # Enter a parse tree produced by SparqlParser#minusGraphPattern.
     def enterMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.enter(ctx)
-        #self.addCluster("MINUS")
+
+        #Retrieve alpha subcluster
+        p = self.clusters[-1].subclusters.pop()
+
+        self.addCluster("α MINUS β", Style.MINUS)
+        self.addCluster("α", Style.GROUP)
+
+        #Fill alpha
+        if p.getLabel() == "":
+            self.clusters[-1].tss.extend(p.tss)
+            self.clusters[-1].vars = p.vars
+        else:
+            self.clusters[-1].addSubCluster(p)
+
+        #Close alpha
+        self.popCluster()
+
+        #Open beta
+        self.addCluster("β", Style.GROUP)
         pass
 
     # Exit a parse tree produced by SparqlParser#minusGraphPattern.
     def exitMinusGraphPattern(self, ctx:SparqlParser.MinusGraphPatternContext):
         self.exit(ctx)
+        while "MINUS" not in self.clusters[-1].getLabel():
+            #Close all betas
+            self.popCluster()
+        #Close MINUS
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
@@ -1270,9 +1306,11 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#groupOrUnionGraphPattern.
     def exitGroupOrUnionGraphPattern(self, ctx:SparqlParser.GroupOrUnionGraphPatternContext):
         self.exit(ctx)
-        
+
         if self.clusters:
-            u = self.clusters.pop()
+            u = self.popCluster()
+
+            #Remove UNION cluster from clusters if there is no UNION
             if "}union{" not in ctx.getText().lower():
                 if self.clusters:
                     for s in u.subclusters:
@@ -1295,7 +1333,7 @@ class SAL(SparqlListener):
     # Exit a parse tree produced by SparqlParser#filterClause.
     def exitFilterClause(self, ctx:SparqlParser.FilterClauseContext):
         self.exit(ctx)
-        self.clusters.pop()
+        self.popCluster()
         pass
 
     # Enter a parse tree produced by SparqlParser#constraint.

@@ -1,0 +1,13 @@
+#id:NXQ_09301
+#title:Check there are no entries with transport activity annotations from TCDB for which the evidence code is NOT curator inference used in manual assertion
+#tags:QC,evidence,ECO,function
+#acs:
+#count:0
+#time:0.702
+
+select distinct ?entry  where {
+  ?entry :isoform /:transportActivity /:evidence ?ev1.
+  ?ev1 :assignedBy source:TCDB.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0000305))
+}

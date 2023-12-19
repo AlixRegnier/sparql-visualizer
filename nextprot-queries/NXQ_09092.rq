@@ -1,0 +1,12 @@
+#id:NXQ_09092
+#title:Check there are no entries with active site annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence,active site
+#acs:
+#count:0
+#time:0.646
+
+select distinct ?entry where {
+  ?entry :isoform /:activeSite /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

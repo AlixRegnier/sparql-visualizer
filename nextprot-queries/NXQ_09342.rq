@@ -1,0 +1,12 @@
+#id:NXQ_09342
+#title:Check there are no entries with initiator methionine annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence
+#acs:
+#count:0
+#time:0.607
+
+select distinct ?entry where {
+  ?entry :isoform /:initiatorMethionine /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

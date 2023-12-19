@@ -1,0 +1,10 @@
+#id:NXQ_09439
+#title:Check there are no entries with no Swiss-Prot keyword
+#tags:QC,keyword
+#acs:
+#count:0
+#time:0.779
+
+select distinct ?entry where {
+  filter not exists {?entry :keyword ?_ }
+}

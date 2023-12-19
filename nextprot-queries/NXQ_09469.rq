@@ -1,0 +1,20 @@
+#id:NXQ_09469
+#title:Check there are no entries with a localization keyword that do not have the corresponding subcellular location annotation and/or GO cellular component annotatio
+#tags:QC,keyword,cellular component,subcellular location
+#acs:
+#count:0
+#time:0.886
+
+select distinct ?entry ?kw ?subcell ?gocc where {
+  ?entry :isoform /:keyword /:term ?kw.
+  ?subcell a :UniprotSubcellularLocationCv.
+  ?kw :related ?subcell.
+  ?gocc a :GoCellularComponentCv.
+  ?kw :related ?gocc.  
+  ?entry :isoform /:goCellularComponent ?comp.
+  filter not exists {?comp :negativeEvidence ?negev} # No negative evidence
+  filter not exists {?comp :term ?gocc.}
+  ?entry :isoform /:subcellularLocation ?comp.
+  filter not exists {?comp :negativeEvidence ?negev} # No negative evidence
+  filter not exists {?comp :term ?gocc.}
+}

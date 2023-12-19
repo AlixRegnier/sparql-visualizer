@@ -1,0 +1,12 @@
+#id:NXQ_09381
+#title:Check there are no entries with short sequence motif annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,sequence,region
+#acs:
+#count:0
+#time:0.618
+
+select distinct ?entry where {
+  ?entry :isoform /:shortSequenceMotif /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

@@ -1,0 +1,11 @@
+#id:NXQ_09438
+#title:Check there are no entries with PDB mapping annotation and no xref to PDB
+#tags:QC,3D structure
+#acs:
+#count:0
+#time:7.579
+
+select distinct ?entry where {
+  ?entry :isoform /:pdbMapping ?map.
+  filter not exists {?entry :reference /:provenance db:PDB.}
+}

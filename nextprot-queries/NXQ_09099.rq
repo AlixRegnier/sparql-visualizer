@@ -1,0 +1,12 @@
+#id:NXQ_09099
+#title:Check there are no entries with caution annotations with evidence from UniProt of quality SILVER
+#tags:QC,quality,evidence
+#acs:
+#count:0
+#time:0.725
+
+select distinct ?entry where {
+  ?entry :isoform /:caution /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

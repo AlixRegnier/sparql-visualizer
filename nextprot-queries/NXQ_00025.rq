@@ -1,0 +1,17 @@
+#id:NXQ_00025
+#title:Proteins with at least 50 interactors that are not associated with a disease
+#comment:We exclude proteins that have either a disease annotation (Xref to Orphanet are considered  disease annotation) and proteins w Disease-category KWs
+#tags:disease,PPI,tutorial
+#acs:Q12906, ...
+#count:617
+#time:12
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :binaryInteraction/:interactant ?interactant.
+  filter not exists { ?iso :medical / rdf:type :Disease. }
+  filter not exists {?iso :uniprotKeyword / :term cv:KW-0043} # tumor suppressor
+  filter not exists {?iso :uniprotKeyword / :term cv:KW-0772} # Systemic lupus erythematosus
+  filter not exists {?iso :uniprotKeyword / :term cv:KW-0026} # Alzheimer disease
+  filter not exists {?iso :uniprotKeyword / :term cv:KW-0219} # Diabetes mellitus
+} group by ?entry ?iso having (count(?interactant) >= 50)

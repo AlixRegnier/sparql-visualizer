@@ -1,0 +1,12 @@
+#id:NXQ_09337
+#title:Check there are no entries with function information annotations with evidence from UniProt that is negative
+#tags:QC,evidence,negative,function
+#acs:
+#count:0
+#time:0.734
+
+select distinct ?entry where {
+  ?entry :isoform /:functionInfo /:evidence ?ev.
+  ?ev :assignedBy source:Uniprot.
+  ?ev :negative 1.
+}

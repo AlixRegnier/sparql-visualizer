@@ -1,0 +1,13 @@
+#id:NXQ_09627
+#title:Check there are no entries with a peptide mapping annotation with evidence from PeptideAtlas but no xref to PeptideAtlas
+#tags:QC,mass spectrometry,peptide,proteomics,cross-reference
+#acs:
+#count:0
+#time:14.838
+ 
+select distinct ?entry where {
+  ?entry a :Entry.
+  ?entry :isoform /:peptideMapping /:evidence /:assignedBy ?src.
+  filter (regex (?src,'PeptideAtlas'))
+  filter not exists {?entry :reference /:provenance db:PeptideAtlas.}
+}

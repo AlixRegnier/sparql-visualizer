@@ -1,0 +1,12 @@
+#id:NXQ_09680
+#title:Check there are no entries with variant annotations with evidence from gnomAD that is negative
+#tags:QC,evidence,negative,variant
+#acs:
+#count:0
+#time:3.672
+
+select distinct ?entry where {
+  ?entry :isoform /:variant /:evidence ?ev.
+  ?ev :assignedBy source:gnomAD.
+  ?ev :negative 1.
+}

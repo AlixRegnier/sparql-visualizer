@@ -1,0 +1,12 @@
+#id:NXQ_09387
+#title:Check there are no entries with subcellular location annotations with evidence from GFP-cDNAEMBL that is negative
+#tags:QC,evidence,negative,subcellular location
+#acs:
+#count:0
+#time:0.763
+
+select distinct ?entry where {
+  ?entry :isoform /:subcellularLocation /:evidence ?ev.
+  ?ev :assignedBy source:GFP-cDNAEMBL.
+  ?ev :negative 1.
+}

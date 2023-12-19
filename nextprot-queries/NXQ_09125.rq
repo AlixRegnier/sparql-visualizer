@@ -1,0 +1,12 @@
+#id:NXQ_09125
+#title:Check there are no entries with GO biological process annotations with evidence from InterPro of quality GOLD
+#tags:QC,quality,evidence,function
+#acs:
+#count:0
+#time:0.752
+
+select distinct ?entry where {
+  ?entry :isoform /:goBiologicalProcess /:evidence ?ev1.
+  ?ev1 :assignedBy source:InterPro.
+  ?ev1 :quality :GOLD.
+}

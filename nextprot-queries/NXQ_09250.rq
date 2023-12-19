@@ -1,0 +1,13 @@
+#id:NXQ_09250
+#title:Check there are no entries with redox potential annotations with evidence from Uniprot of quality SILVER
+#comment:biophysicochemical property
+#tags:QC,quality,evidence,function,enzyme
+#acs:
+#count:0
+#time:0.66
+
+select distinct ?entry where {
+  ?entry :isoform /:redoxPotential /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

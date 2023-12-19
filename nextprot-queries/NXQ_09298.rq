@@ -1,0 +1,13 @@
+#id:NXQ_09298
+#title:Check there are no entries with subcellular location annotations from HPA for which the evidence code is NOT immunocytochemistry evidence
+#tags:QC,evidence,ECO,subcellular location
+#acs:
+#count:0
+#time:0.765
+
+select distinct ?entry where {
+  ?entry :isoform /:subcellularLocation /:evidence ?ev1.
+  ?ev1 :assignedBy source:Human_protein_atlas.
+  ?ev1 :evidenceCode ?eco.
+  filter (?eco not in (cv:ECO_0001053))
+}

@@ -1,0 +1,17 @@
+#id:NXQ_00075
+#title:Proteins which have been detected in the HUPO liver proteome set but not the HUPO plasma proteome set
+#tags:dataset,proteomics,tutorial
+#acs:A6NC98 , A6NK58 , O95848 ,...
+#count:1774
+#time: 51s
+
+select distinct ?entry where {
+values ?pepsources { 
+        source:PeptideAtlas_human_Liver 
+        source:MassIVE_human_Liver
+       }
+  ?entry a :Entry.
+  ?entry :isoform / :peptideMapping / :evidence / :assignedBy ?pepsources .
+  filter not exists { ?entry :isoform / :peptideMapping / :evidence / :assignedBy source:PeptideAtlas_human_Blood_Plasma . }
+  filter not exists { ?entry :isoform / :peptideMapping / :evidence / :assignedBy source:MassIVE_human_Blood_Plasma . }
+}

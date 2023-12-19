@@ -1,0 +1,11 @@
+#id:NXQ_00242
+#title:Proteins with a mitochondrial transit peptide
+#tags:sequence,subcellular location,tutorial
+#acs:A0A096LP55,O00763,P13073
+#count:539
+#time:0.3
+
+select distinct ?entry where {
+ ?entry :isoform ?iso.
+ ?iso :mitochondrialTransitPeptide ?mit.  
+}

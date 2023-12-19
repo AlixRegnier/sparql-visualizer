@@ -1,0 +1,40 @@
+#id:NXQ_00270
+#title:Proteins belonging to Rett syndrome pathways, and their subcellular locations (GOLD)
+#tags:disease,federated query,pathway,snorql-only,subcellular location,tutorial
+#acs:P34903,P35498,P35637
+#count:116
+#time:6
+
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+select ?entry (str(?gen) AS ?gene) ?pathwayname (group_concat(distinct str(?loclab); SEPARATOR = ",") as ?locs)  where {
+    service <http://sparql.wikipathways.org/sparql> {
+
+        {?geneProduct a wp:Protein}
+            union
+        {?geneProduct a wp:GeneProduct}
+ 
+        ?geneProduct rdfs:label ?genraw .
+        bind (concat( ""^^xsd:string, ?genraw) as ?gen).
+
+        filter(!regex(?gen,"[ a-z-]")). # ensures official gene names for subsequent neXtprot matching
+        ?geneProduct dcterms:isPartOf ?pathway .
+        ?pathway a wp:Pathway .
+        ?pathway wp:organism ?organism .
+        filter(contains(str(?organism),"9606"))
+        ?pathway dc:title ?pathwayname .
+        filter(regex(?pathwayname,"rett","i")).
+    }
+    ?entry a :Entry .
+    ?entry :gene / :recommendedName / rdfs:label ?gen .
+    ?entry :isoform ?iso.
+    ?iso :cellularComponent ?locannot .
+    ?locannot :term ?locterm .
+    ?locterm rdfs:label ?loclab .
+    ?locannot :evidence ?locev .
+    ?locev :quality :GOLD .
+    filter not exists {?locannot :negativeEvidence ?locev .}
+}
+group by ?entry ?gen ?pathwayname
+order by ?entry

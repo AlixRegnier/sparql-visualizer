@@ -1,0 +1,16 @@
+#id:NXQ_00144
+#title:Proteins that contains a sequence "QHP" where the Proline is amidated
+#tags:PTM,sequence,tutorial
+#acs:P20396
+#count:1
+#time:0.45
+
+select distinct ?entry where {
+?entry :isoform ?isoform.
+?isoform :ptm ?ptm.
+?ptm :term cv:PTM-0257 . # Proline amide
+?ptm :start ?ptmpos .
+?isoform :sequence / :chain ?seq.
+bind(substr(?seq, ?ptmpos-2, 3) as ?modseq)
+filter ( regex(?modseq, "QHP") )
+}

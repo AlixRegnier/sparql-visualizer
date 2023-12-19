@@ -1,0 +1,12 @@
+#id:NXQ_00247
+#title:Proteins with a molecular weight less than 25 kDa
+#comment:These proteins are amenable to top-down LC-MS proteomics.
+#tags:sequence,tutorial
+#acs:P0DPR3,O00453,P59103
+#count:8893
+#time:1
+
+select distinct ?entry ?mw where {
+  ?entry :isoform / :sequence / :molecularWeight ?mw.
+  filter ( ?mw < 25000) 
+} order by ?mw

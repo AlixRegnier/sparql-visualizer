@@ -1,0 +1,11 @@
+#id:NXQ_09700
+#title:Check there are no entries with GO molecular function annotations with evidence from PHI-base of the GO Consortium
+#tags:QC,provenance,function
+#acs:
+#count:2
+#time:7.544
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :goMolecularFunction /:evidence /:assignedBy source:PHI-base.
+}

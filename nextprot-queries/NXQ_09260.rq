@@ -1,0 +1,12 @@
+#id:NXQ_09259
+#title:Check there are no entries with subcellular location annotations with evidence from GFP-cDNA@EMBL of quality GOLD
+#tags:QC,quality,evidence,subcellular location
+#acs:
+#count:0
+#time:0.679
+
+select distinct ?entry where {
+  ?entry :isoform /:subcellularLocation /:evidence ?ev1.
+  ?ev1 :assignedBy source:GFP-cDNAEMBL.
+  ?ev1 :quality :GOLD.
+}

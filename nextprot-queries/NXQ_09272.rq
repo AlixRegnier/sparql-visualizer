@@ -1,0 +1,13 @@
+#id:NXQ_09272
+#title:Check there are no entries with variant information annotations with evidence from Uniprot of quality SILVER
+#comment:polymorphism
+#tags:QC,quality,evidence,variant
+#acs:
+#count:0
+#time:0.613
+
+select distinct ?entry where {
+  ?entry :isoform /:variantInfo /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}

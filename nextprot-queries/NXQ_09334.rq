@@ -1,0 +1,12 @@
+#id:NXQ_09334
+#title:Check there are no entries with expression information annotations with evidence from HPA that is negative
+#tags:QC,evidence,negative,expression
+#acs:
+#count:0
+#time:1.495
+
+select distinct ?entry where {
+  ?entry :isoform /:expressionInfo /:evidence ?ev.
+  ?ev :assignedBy source:Human_protein_atlas.
+  ?ev :negative 1.
+}

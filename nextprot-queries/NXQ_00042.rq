@@ -1,0 +1,18 @@
+#id:NXQ_00042
+#title:Proteins that bind a metal and are secreted
+#tags:metal binding,subcellular location,tutorial
+#acs:O43852,O43852 P02787, ...
+#count:931/458
+#time:1.8
+
+select distinct ?entry where {
+  values ?sloc {cv:GO_0005576 cv:SL-0243} # GO and SL values for secreted
+  ?entry :isoform ?iso.
+  ?iso :cellularComponent ?loc .
+  ?loc :term /:childOf ?sloc .  
+  filter not exists {?sloc  :negativeEvidence ?negev} # No negative localization evidence
+  #filter not exists {?iso :cellularComponent /:term cv:GO_0070062 .
+					 #filter not exists {?iso :cellularComponent /:term /:childOf  cv:SL-0243 .}
+					#} # filters out extracellular exosome only location (2758 entries)
+  ?iso :goMolecularFunction / :term /:childOf cv:GO_0046872 . # metal-binding	
+}

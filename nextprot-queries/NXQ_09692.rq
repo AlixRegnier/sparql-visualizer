@@ -1,0 +1,14 @@
+#id:NXQ_09692
+#title:Check there are no entries with an interaction mapping annotation from ENYO with no publication in evidence
+#tags:QC,interaction,publication
+#acs:
+#count:0
+#time:0.539
+ 
+select distinct ?entry where {
+  ?entry :isoform /:interactionMapping ?int.
+  ?int :evidence ?ev.
+  ?ev :assignedBy source:ENYO.
+  ?ev :reference ?ref.
+  filter not exists {?ref a :Publication}  
+}

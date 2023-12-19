@@ -1,0 +1,14 @@
+#id:NXQ_09633
+#title:Check there are no entries with a variant annotation with the start greater than the sequence length
+#tags:QC,variant
+#acs:
+#count:0
+#time:10.383
+
+select distinct ?entry where {
+  ?entry :isoform ?iso.
+  ?iso :sequence /:length ?length.
+  ?iso :variant ?var.
+  ?var :start ?start.
+  filter ( ?start > ?length)
+}

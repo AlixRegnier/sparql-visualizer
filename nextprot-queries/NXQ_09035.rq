@@ -1,0 +1,12 @@
+#id:NXQ_09035
+#title:Check there are no entries with family annotations with evidence NOT from UniProt
+#tags:QC,provenance,family
+#acs:
+#count:0
+#time:0.324
+
+select distinct ?entry ?src where {
+  ?entry :isoform ?iso.
+  ?iso :family /:evidence /:assignedBy ?src.
+  filter ( ?src not in (source:Uniprot))
+}

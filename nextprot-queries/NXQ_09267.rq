@@ -1,0 +1,13 @@
+#id:NXQ_09267
+#title:Check there are no entries with turn annotations with evidence from Uniprot of quality SILVER
+#comment:secondary structure
+#tags:QC,quality,evidence
+#acs:
+#count:0
+#time:0.701
+
+select distinct ?entry where {
+  ?entry :isoform /:turn /:evidence ?ev1.
+  ?ev1 :assignedBy source:Uniprot.
+  ?ev1 :quality :SILVER.
+}
