@@ -49,6 +49,8 @@ def process(files, render_query = True, render_simple = False, render_relation =
             fullgraph = maincluster.getFullGraph()
             simplegraph = getSimpleGraph(fullgraph)
 
+            with open(name + ".simple.dat", "wb") as f:
+                pickle.dump(simplegraph, f)
 
             if render_simple:
                 dotGraph(simplegraph, name + ".simple", nodelabel=False)
