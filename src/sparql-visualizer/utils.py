@@ -1,7 +1,6 @@
 from typing import Set
 import networkx as nx
 from graphviz import Digraph
-import matplotlib.pyplot as plt
 
 def get_tags(filename) -> Set[str]:
     try:
@@ -14,10 +13,6 @@ def get_tags(filename) -> Set[str]:
             return tags - {""}
     except IOError:
         print(f"FAILED: {filename}")
-
-def drawGraph(g : nx.DiGraph):
-    nx.draw(g, pos = nx.spring_layout(g, k = 0.5), with_labels = True, labels = { n : g.nodes[n]["label"] for n in g.nodes })
-    plt.show()
 
 def dotGraph(g : nx.DiGraph, name, nodelabel = True, edgelabel = True, format = "png", cleanup=False):
     graph = Digraph(name)
