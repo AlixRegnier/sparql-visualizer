@@ -14,7 +14,7 @@ from os import mkdir
 import sys
 import pickle
 
-def process(files, render_query = True, render_simple = False, render_relation = False, render_output=None, verbose=False):
+def process(files, render_query = True, render_simple = False, render_relation = False, render_output=None, verbose=False, imageFormat = "svg"):
     """
     Return 2 dictionaries G, T
 
@@ -44,17 +44,17 @@ def process(files, render_query = True, render_simple = False, render_relation =
             #Retrieve parser results
             s = maincluster.generateGraph()
             if render_query:
-                s.collection.allSubgraphsToDot(name)
+                s.collection.allSubgraphsToDot(name, format=imageFormat)
 
             fullgraph = maincluster.getFullGraph()
             simplegraph = getSimpleGraph(fullgraph)
 
 
             if render_simple:
-                dotGraph(simplegraph, name + ".simple", nodelabel=False)
+                dotGraph(simplegraph, name + ".simple", nodelabel=False, format=imageFormat)
 
             if render_relation:
-                dotGraph(getRelationGraph(fullgraph), name + ".relation", edgelabel=False)
+                dotGraph(getRelationGraph(fullgraph), name + ".relation", edgelabel=False, format=imageFormat)
 
             #Merge all subdigraphes and simplify it
             k = basename(files[i].stem)
@@ -70,7 +70,7 @@ def process(files, render_query = True, render_simple = False, render_relation =
     return pfiles, tfiles
 
 
-def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extension, render_output, mcs_output ):
+def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extension, render_output, mcs_output, imageFormat = "svg" ):
     try:
         files = []
         for i in range(1, len(sys.argv)):
@@ -86,7 +86,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
             print("No queries were found. Exit")
             exit(0)
 
-        graphs, tags = process(files, flag_graph, flag_simple, flag_relation, render_output, flag_verbose)
+        graphs, tags = process(files, flag_graph, flag_simple, flag_relation, render_output, flag_verbose, imageFormat = imageFormat)
         modules = []
 
         if flag_mcs:
@@ -127,7 +127,7 @@ def main(flag_graph, flag_mcs, flag_relation, flag_simple, flag_verbose, extensi
                 with open(f"{mcs_output}/module{i+1:0{padding}}.txt", "w") as f:
                     f.write(str(m))   
                 print(f"module{i+1:0{padding}} : {m.getOccurence()} occurences")
-                dotGraph(m.getGraph(), f"{mcs_output}/module{i+1:0{padding}}", False, True)
+                dotGraph(m.getGraph(), f"{mcs_output}/module{i+1:0{padding}}", False, True, format=imageFormat)
                 with open(f"{mcs_output}/module{i+1:0{padding}}.dat", "wb") as f:
                     m.setName(f"module{i+1:0{padding}}")
                     pickle.dump(m, f)
@@ -144,6 +144,7 @@ if __name__ == "__main__":
     argparser.add_argument("-m", "--mcs", action="store_true", help="Calculate all MCS")
     argparser.add_argument("-r", "--relation", action="store_true",  help="Render relation graph")
     argparser.add_argument("-s", "--simple", action="store_true",  help="Render simplified graph")
+    argparser.add_argument("-f", "--format", nargs=1, default="svg", help="Set output image format (default: \"svg\")")
     argparser.add_argument("-e", metavar="E", nargs=1, default=".rq", help="Read files in directory suffixed with <E> (default: \".rq\")")
     argparser.add_argument("files", nargs=argparse.ONE_OR_MORE, help=argparse.SUPPRESS)
 
@@ -153,7 +154,7 @@ if __name__ == "__main__":
 
     g2 = argparser.add_argument_group()
     g2.add_argument("-v", "--verbose", action="store_true")
-    argparser.usage = "main.py [-h] (-a | [-gmrs]) [-e E] [-M dir] [-O dir] [-v] FILES"
+    argparser.usage = "main.py [-h] (-a | [-gmrs]) [-e E] [-M dir] [-O dir] [-v] [-f format] FILES"
     args = argparser.parse_args()
 
     if args.all:
@@ -164,8 +165,12 @@ if __name__ == "__main__":
         args.O = args.O[0]
     if isinstance(args.e, list):
         args.e = args.e[0]
+    if isinstance(args.format, list):
+        args.format = args.format[0]
 
     ####################################################################
-
-    main(args.graph, args.mcs, args.relation, args.simple, args.verbose, args.e, args.O, args.M)
+    print("==========")
+    print(args.format)
+    print("==========")
+    main(args.graph, args.mcs, args.relation, args.simple, args.verbose, args.e, args.O, args.M, args.format)
 

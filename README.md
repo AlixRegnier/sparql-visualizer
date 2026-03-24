@@ -15,7 +15,7 @@ pip3 install -r requirements.txt
 <!-- main.py may be changed for another filename, and imported python files may be moved into a new directory -->
 Command line|
 --|
-``python3 main.py (-a \| [-gmrs]) [-e E] [-M dir] [-O dir] [-v] <FILES>``
+``python3 main.py (-a \| [-gmrs]) [-e E] [-M dir] [-O dir] [-v] [-f format] <FILES>``
 
 *files* either can be a set of file or directories containing *.rq
 
@@ -32,6 +32,7 @@ Argument|Long|Value|Description
 -r|--relation|-|Render relation graph
 -s|--simple|-|Render simplified graph
 -v|--verbose|-|Verbose
+-f|--format|FORMAT|Set generated image format to FORMAT
 
 *Examples:*
 ```bash
@@ -39,6 +40,10 @@ Argument|Long|Value|Description
 python3 main.py -g -m -r -s ./queries
 python3 main.py -gmrs ./queries/*.rq
 python3 main.py -a ./queries/*.rq
+```
+
+```bash
+python3 main.py -a -f png ./queries/*.rq
 ```
 
 ```bash
